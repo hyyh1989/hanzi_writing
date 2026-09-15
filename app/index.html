@@ -103,6 +103,14 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
       color:#fff;background:var(--paper);line-height:1}
 .ubox.all{background:var(--teal);border-color:var(--teal)}
 .ubox.some{background:var(--amber);border-color:var(--amber)}
+.wrongbank{border-color:var(--zhu);background:var(--zhu-bg)}
+.wrongbank h3{color:var(--zhu)}
+.wrongbank .lesson-k{color:var(--zhu);background:var(--card)}
+.wrongbank .chip{background:var(--card)}
+.chip .dot.wn{font-size:10px;font-weight:800;color:var(--zhu);letter-spacing:0;
+              right:4px;bottom:2px}
+.chip.pick.del{border-color:var(--bad)}
+.chip.pick.del .dot.wn{color:var(--bad)}
 .chip.pick .g{color:var(--ink-3)}
 .chip.pick.on{border-color:var(--teal);background:var(--teal-soft);border-width:2px}
 .chip.pick.on .g{color:var(--ink)}
@@ -447,10 +455,10 @@ function ensureChars(list,cb){
 const $=s=>document.querySelector(s);
 
 /* ── 存档 ── */
-const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel"};
+const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong"};
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-let stars=load(K.stars,{});
+let stars=load(K.stars,{}), wrong=load(K.wrong,{});
 let cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,lessonMode:"text",
                        voiceURI:"",rate:1}, load(K.cfg,{}));
 
@@ -580,6 +588,21 @@ function chipsHTML(chars){
 function lessonSets(){ return TEXTBOOK.length?TEXTBOOK:LESSONS; }
 function groups(){ return cfg.lessonMode==="stroke" ? LESSONS : lessonSets(); }
 
+/* ── 错字库：任何一次听写写错就攒进来，不自动删 ── */
+function wrongAdd(ch){
+  const e=wrong[ch]||{n:0,t:""};
+  e.n=(e.n||0)+1;
+  e.t=new Date().toISOString().slice(0,10);
+  wrong[ch]=e;
+}
+function wrongList(){
+  return Object.keys(wrong).filter(has).sort(function(a,b){
+    const d=(wrong[b].n||0)-(wrong[a].n||0);
+    return d || (wrong[b].t||"").localeCompare(wrong[a].t||"");
+  });
+}
+function wrongCount(){ return wrongList().length; }
+
 /* ── 练习页：跨单元挑字听写 ── */
 function selSet(){ return new Set(load(K.sel,[])); }
 function saveSel(set){ save(K.sel, Array.from(set)); }
@@ -589,6 +612,8 @@ function selOrdered(){
   lessonSets().forEach(function(l){
     l.chars.forEach(function(c){ if(set.has(c) && out.indexOf(c)<0) out.push(c); });
   });
+  /* 错字库里可能有不在当前教材里的字（换册之后），别漏掉 */
+  wrongList().forEach(function(c){ if(set.has(c) && out.indexOf(c)<0) out.push(c); });
   return out;
 }
 function selChips(chars,set){
@@ -608,14 +633,38 @@ function renderSelBar(){
   $("#go-dict").disabled = (n===0);
   $("#go-print").disabled = (n===0);
 }
+let tidy=false;   /* 错字库的「整理」模式：点字=删掉，不是勾选 */
+function wrongCard(set){
+  const ws=wrongList();
+  if(!ws.length) return "";
+  const on=ws.filter(function(c){return set.has(c)}).length;
+  return '<div class="lesson wrongbank"><div class="lesson-h">'+
+    (tidy?'<span class="ubox" style="visibility:hidden"></span>'
+         :'<button class="ubox'+(on===0?"":(on===ws.length?" all":" some"))+'" data-wu="1"'+
+          ' aria-label="勾选整个错字库">'+(on===ws.length?"✓":(on?"–":""))+'</button>')+
+    '<h3>错字库</h3><span class="lesson-k">'+(tidy?"点字删掉":on+"/"+ws.length)+'</span>'+
+    '<button class="linkbtn" id="tidy-btn" style="flex:none">'+(tidy?"完成":"整理")+'</button>'+
+    '</div><p class="lesson-tip">听写错过的字都攒在这里，<b>不会自己消失</b>。'+
+    '右上角数字是错过几次，错得多的排前面。'+
+    (tidy?'　·　<b class="bad">现在点字就是从库里删掉</b>':'')+'</p>'+
+    '<div class="chips">'+ws.map(function(c){
+      const n=(wrong[c]&&wrong[c].n)||1;
+      return '<button class="chip pick'+(!tidy&&set.has(c)?" on":"")+(tidy?" del":"")+'" '+
+        (tidy?'data-wdel="':'data-pick="')+c+'"><span class="g">'+c+'</span>'+
+        '<span class="dot wn">'+(tidy?"×":n)+'</span></button>';
+    }).join("")+'</div></div>';
+}
 function renderPractice(){
   const set=selSet(), gs=lessonSets();
   $("#home-body").innerHTML=
     '<div class="panel" style="margin-bottom:12px">'+
     '<p class="note" style="margin:0 0 10px">勾选今天要听写的字。<b>可以跨单元一起选</b>——'+
-    '把前面学过的单元也带上，顺便复习旧字。点单元名前面的方块可以整组勾选／取消。</p>'+
+    '把前面学过的单元也带上，顺便复习旧字。点单元名前面的方块可以整组勾选／取消。'+
+    (wrongCount()?'<br>听写错过的字会自动攒进下面的<b>错字库</b>，随时可以多考几次。':'')+'</p>'+
     '<div class="row"><button class="btn quiet" id="sel-write">只选要求会写的</button>'+
+    (wrongCount()?'<button class="btn quiet" id="sel-wrong">只选错字库</button>':'')+
     '<button class="btn quiet" id="sel-none">全部清空</button></div></div>'+
+    wrongCard(set)+
     gs.map(function(l,i){
       const on=l.chars.filter(function(c){return set.has(c)}).length;
       return '<div class="lesson"><div class="lesson-h">'+
@@ -627,6 +676,10 @@ function renderPractice(){
     }).join("");
   renderSelBar();
   $("#sel-none").onclick=function(){ saveSel(new Set()); renderPractice(); beep("tap"); };
+  const sw=$("#sel-wrong");
+  if(sw) sw.onclick=function(){ saveSel(new Set(wrongList())); renderPractice(); beep("good"); };
+  const tb=$("#tidy-btn");
+  if(tb) tb.onclick=function(){ tidy=!tidy; renderPractice(); beep("tap"); };
   $("#sel-write").onclick=function(){
     const w=new Set();
     gs.forEach(function(l){ (l.write||[]).forEach(function(c){ w.add(c) }); });
@@ -680,6 +733,20 @@ $("#home-body").addEventListener("click",e=>{
     const set=selSet(), c=pick.dataset.pick;
     if(set.has(c)) set.delete(c); else set.add(c);
     saveSel(set); renderPractice(); return;
+  }
+  const wd=e.target.closest("[data-wdel]");
+  if(wd){
+    const c=wd.dataset.wdel;
+    delete wrong[c]; save(K.wrong,wrong);
+    const set=selSet(); set.delete(c); saveSel(set);
+    renderPractice(); beep("tap"); return;
+  }
+  const wu=e.target.closest("[data-wu]");
+  if(wu){
+    const ws=wrongList(), set=selSet();
+    const allOn=ws.every(function(c){return set.has(c)});
+    ws.forEach(function(c){ if(allOn) set.delete(c); else set.add(c); });
+    saveSel(set); renderPractice(); beep("tap"); return;
   }
   const ub=e.target.closest("[data-u]");
   if(ub){
@@ -1198,7 +1265,7 @@ function openDict(chars,shuffle){
   if(!chars||!chars.length) return;
   if(chars.some(function(c){return !D[c]}))
     return ensureChars(chars,function(){ openDict(chars,shuffle) });
-  dSrc=chars.slice(); dShuffle=!!shuffle;
+  dSrc=chars.slice(); dShuffle=!!shuffle; dRecorded=false;
   dList=shuffle?shuffled(chars):chars.slice(); dIdx=0;
   dItems=dList.map(function(c){ return {ch:c, ink:[], skipped:false, ok:null}; });
   show("#view-dict"); dRound();
@@ -1275,38 +1342,44 @@ function dReview(){
   setIn("#dctl", btn("看结果 →","",dResult));
   window.scrollTo(0,0);
 }
+let dRecorded=false;
 function dResult(){
-  const wrong=dItems.filter(function(it){return it.ok===false}).map(function(it){return it.ch});
-  const n=dItems.length, ok=n-wrong.length;
+  const bad=dItems.filter(function(it){return it.ok===false}).map(function(it){return it.ch});
+  if(!dRecorded){                    /* 家长判完才入库，且一轮只记一次 */
+    bad.forEach(wrongAdd);
+    save(K.wrong,wrong);
+    dRecorded=true;
+  }
+  const wrongArr=bad, n=dItems.length, ok=n-wrongArr.length;
   $("#title").textContent="听写结果";
-  const line = wrong.length
-    ? ("写对 "+ok+" 个，有 "+wrong.length+" 个还不会：" + wrong.join("、") + "。我们来练一练。")
+  const line = wrongArr.length
+    ? ("写对 "+ok+" 个，有 "+wrongArr.length+" 个还不会：" + wrongArr.join("、") + "。我们来练一练。")
     : ("全对！"+n+" 个字都写对了。");
   $("#view-dict").innerHTML=
     '<div class="score" style="margin-top:16px"><div class="score-top">'+
-    '<span class="score-stars" style="color:var(--amber)">'+(wrong.length?"":"★★★")+'</span>'+
+    '<span class="score-stars" style="color:var(--amber)">'+(wrongArr.length?"":"★★★")+'</span>'+
     '<h3>写对 '+ok+' / '+n+'</h3></div>'+
     '<div class="advice"><span>'+line+'</span>'+
     '<button id="d-replay" aria-label="再说一遍">🔊</button></div>'+
-    (wrong.length? '<div class="chips" style="margin-top:6px">'+
-      wrong.map(function(c){return '<button class="chip" data-ch="'+c+'"><span class="g">'+c+
+    (wrongArr.length? '<div class="chips" style="margin-top:6px">'+
+      wrongArr.map(function(c){return '<button class="chip" data-ch="'+c+'"><span class="g">'+c+
         '</span></button>'}).join("")+'</div>' : '')+
     '</div><div class="controls" id="dctl"></div>';
   say(line,true);
   const rp=$("#d-replay"); if(rp) rp.onclick=function(){ say(line,true) };
   setIn("#dctl",
-    wrong.length? btn("开始练这 "+wrong.length+" 个字 →","",function(){ openChar(wrong[0],wrong) }) : null,
+    wrongArr.length? btn("开始练这 "+wrongArr.length+" 个字 →","",function(){ openChar(wrongArr[0],wrongArr) }) : null,
     btn("再听写一遍","quiet",function(){ openDict(dSrc,dShuffle) }),
     btn("回目录","ghost",goHome));
   $("#view-dict").onclick=function(e){
     const c=e.target.closest("[data-ch]");
-    if(c) openChar(c.dataset.ch, wrong.length?wrong:dList);
+    if(c) openChar(c.dataset.ch, wrongArr.length?wrongArr:dList);
   };
   window.scrollTo(0,0);
 }
 
 /* ── 导航 / 设置 ── */
-function goHome(){show("#view-home");renderSelBar();
+function goHome(){show("#view-home");renderHome();renderSelBar();   /* 听写完错字库变了，要重画 */
   $("#title").textContent="米字格练字本";if(writer)writer.cancelQuiz();
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}}
 $("#btn-back").onclick=goHome;
@@ -1322,7 +1395,7 @@ $("#btn-close").onclick=()=>dlg.close();
 /* ── 备份 / 恢复 ── */
 function bakPayload(){
   return JSON.stringify({v:1, t:new Date().toISOString().slice(0,10),
-    stars:stars, sel:load(K.sel,[]), cfg:cfg});
+    stars:stars, sel:load(K.sel,[]), wrong:wrong, cfg:cfg});
 }
 function bakWhen(){
   const el=$("#bak-when"); if(!el) return;
@@ -1427,12 +1500,13 @@ $("#bak-do").onclick=function(){
   if(!raw){ msg.textContent="先把备份内容贴进上面的框。"; msg.className="note bad"; return; }
   let d;
   try{ d=JSON.parse(raw); }catch(e){ d=null; }
-  if(!d||typeof d!=="object"||!("stars" in d||"sel" in d||"cfg" in d)){
+  if(!d||typeof d!=="object"||!("stars" in d||"sel" in d||"cfg" in d||"wrong" in d)){
     msg.textContent="这段内容看不懂——要贴的是备份里那一整段（以 { 开头、} 结尾）。";
     msg.className="note bad"; return;
   }
   if(d.stars&&typeof d.stars==="object"){ stars=d.stars; save(K.stars,stars); }
   if(Array.isArray(d.sel)){ save(K.sel,d.sel); }
+  if(d.wrong&&typeof d.wrong==="object"){ wrong=d.wrong; save(K.wrong,wrong); }
   if(d.cfg&&typeof d.cfg==="object"){
     cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,recOrder:"write"},d.cfg);
     save(K.cfg,cfg);
