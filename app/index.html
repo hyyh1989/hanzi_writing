@@ -1262,7 +1262,8 @@ function dReview(){
   }).join("");
   $("#view-dict").innerHTML=
     '<h2 class="theme-h" style="margin-top:16px">批改 · 共 '+dItems.length+' 个</h2>'+
-    '<p class="note">默认都算写对了，<b>只要把没写对的点出来</b>就行。空着跳过的已经标成没写对。</p>'+
+    '<p class="note">默认都算写对了，<b>只要把没写对的点出来</b>就行。空着跳过的已经标成没写对。<br>'+
+    '左右两个格子对比着看最快：形近字（天/大、木/本、土/士）只有人眼分得出来。</p>'+
     rows+'<div class="controls" id="dctl"></div>';
   $("#view-dict").onclick=function(e){
     const b=e.target.closest(".jb"); if(!b) return;
