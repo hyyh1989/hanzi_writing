@@ -1,0 +1,1479 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>米字格练字本</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="练字本">
+<meta name="theme-color" content="#FAFAF7">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;800&display=swap">
+<style>
+:root{
+  --paper:#FAFAF7; --card:#FFFFFF; --sunk:#F1F2EE;
+  --ink:#1B2530; --ink-2:#4B5761; --ink-3:#7C8891;
+  --line:#E0E2DB; --line-2:#EDEEE8;
+  --zhu:#CE3E33; --zhu-soft:rgba(206,62,51,.32); --zhu-bg:#FBEDEB;
+  --teal:#12796F; --teal-2:#0D5F57; --teal-soft:#E2F0EE;
+  --amber:#D98C1F; --amber-soft:#FAEDD6;
+  --good:#2F8F4E; --bad:#C4453A;
+  --trace:#EBD2CE;
+  --shadow:0 1px 2px rgba(27,37,48,.05),0 10px 24px -14px rgba(27,37,48,.22);
+  --r:14px;
+  --disp:"Baloo 2","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --body:"Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --han:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
+  --ink:#EAEEF0; --ink-2:#AFB9C0; --ink-3:#828E96;
+  --line:#323C43; --line-2:#272F35;
+  --zhu:#E8695C; --zhu-soft:rgba(232,105,92,.36); --zhu-bg:#2A1D1C;
+  --teal:#4FC3B3; --teal-2:#6FD3C4; --teal-soft:#14312D;
+  --amber:#E8AC4B; --amber-soft:#2E2617;
+  --good:#5BC07C; --bad:#E8756A;
+  --trace:#4A3B39;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
+  --ink:#EAEEF0; --ink-2:#AFB9C0; --ink-3:#828E96;
+  --line:#323C43; --line-2:#272F35;
+  --zhu:#E8695C; --zhu-soft:rgba(232,105,92,.36); --zhu-bg:#2A1D1C;
+  --teal:#4FC3B3; --teal-2:#6FD3C4; --teal-soft:#14312D;
+  --amber:#E8AC4B; --amber-soft:#2E2617;
+  --good:#5BC07C; --bad:#E8756A;
+  --trace:#4A3B39;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);
+     -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+.app{max-width:940px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:var(--disp);font-weight:700;letter-spacing:.01em}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:6px}
+
+/* ── 顶栏 ── */
+.top{position:sticky;top:0;z-index:20;background:var(--paper);
+     border-bottom:1px solid var(--line-2);margin-inline:-16px;
+     padding:10px 16px;display:flex;align-items:center;gap:10px}
+.top h1{font-size:19px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;
+         justify-content:center;text-align:center;font-size:18px;color:var(--ink-2);flex:none}
+.iconbtn:hover{background:var(--sunk)}
+.starcount{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--amber);
+           background:var(--amber-soft);padding:5px 11px;border-radius:999px;white-space:nowrap;
+           font-variant-numeric:tabular-nums}
+
+/* ── 首页 ── */
+.tabs{display:flex;gap:6px;background:var(--sunk);padding:4px;border-radius:12px;margin:18px 0 16px}
+.tabs button{flex:1;padding:9px 4px;border-radius:9px;font-weight:700;font-size:14px;color:var(--ink-3)}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+
+.lesson{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+        padding:14px 15px;margin-bottom:10px;box-shadow:var(--shadow)}
+.lesson-h{display:flex;align-items:baseline;gap:9px;margin-bottom:3px}
+.lesson-n{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--zhu);
+          background:var(--zhu-bg);border-radius:6px;padding:1px 7px;flex:none}
+.lesson-h h3{font-size:16px}
+.lesson-tip{font-size:13px;color:var(--ink-3);margin:0 0 11px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+/* 居中交给里面的 span，不依赖 <button> 自己的 grid/flex 行为（Safari 上会偏） */
+.chip{width:52px;height:52px;border-radius:11px;border:1px solid var(--line);
+      background:var(--paper);position:relative;overflow:hidden;
+      transition:transform .12s ease,border-color .12s ease}
+.chip .g{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+         font-family:var(--han);font-size:26px;line-height:1;text-align:center}
+.chip:hover{border-color:var(--teal);transform:translateY(-2px)}
+.chip[data-done="1"]{border-color:var(--amber);background:var(--amber-soft)}
+.chip .dot{position:absolute;right:3px;bottom:2px;font-size:9px;color:var(--amber);letter-spacing:-1px}
+
+.theme-h{font-family:var(--disp);font-weight:700;font-size:14px;color:var(--ink-2);
+         margin:16px 0 9px;display:flex;align-items:center;gap:9px}
+.theme-h::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.lesson-k{font-size:11.5px;color:var(--teal);background:var(--teal-soft);padding:2px 9px;
+          border-radius:999px;margin-left:auto;flex:none;font-weight:700;white-space:nowrap}
+.chip.unknown{opacity:.38}
+.lesson-tip .wz{font-family:var(--han);color:var(--zhu);font-weight:600;letter-spacing:.04em}
+.ubox{width:26px;height:26px;border-radius:7px;border:2px solid var(--line);flex:none;
+      display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;
+      color:#fff;background:var(--paper);line-height:1}
+.ubox.all{background:var(--teal);border-color:var(--teal)}
+.ubox.some{background:var(--amber);border-color:var(--amber)}
+.chip.pick .g{color:var(--ink-3)}
+.chip.pick.on{border-color:var(--teal);background:var(--teal-soft);border-width:2px}
+.chip.pick.on .g{color:var(--ink)}
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);
+        border-top:1px solid var(--line);box-shadow:0 -6px 20px -12px rgba(0,0,0,.3)}
+.selbar-in{max-width:940px;margin:0 auto;padding:11px 16px;display:flex;align-items:center;
+           justify-content:space-between;gap:12px;font-size:14px;color:var(--ink-2)}
+.selbar-in b{font-family:var(--disp);font-size:19px;color:var(--teal);
+             font-variant-numeric:tabular-nums}
+.selbar-in .btn{min-height:46px;padding:11px 16px;font-size:14px}
+.selbar-btns{display:flex;gap:8px;flex:none}
+body.has-bar .app{padding-bottom:100px}
+.pt{font-size:15px;margin-bottom:7px}
+.note{font-size:12.5px;color:var(--ink-3);line-height:1.55;margin:0 0 10px}
+.count{font-size:13px;color:var(--ink-3);align-self:center}
+.dict-h{display:flex;align-items:center;justify-content:space-between;gap:10px;
+        margin:16px 0 10px;font-size:13.5px;color:var(--ink-2);font-weight:800}
+.dict-h b{color:var(--teal);font-size:16px}
+.dict-py{font-family:var(--han);font-size:30px;font-weight:600;color:var(--teal);
+         text-align:center;margin-bottom:12px;letter-spacing:.02em}
+.dcatch{position:absolute;inset:0;z-index:5;cursor:crosshair}
+.jrow{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+      padding:13px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;gap:13px;
+      align-items:flex-start;flex-wrap:wrap}
+.jpair{display:flex;gap:7px;flex:none}
+.jc{width:72px;text-align:center}
+.jc svg{width:72px;height:72px;display:block;background:var(--paper);
+        border:1px solid var(--line-2);border-radius:6px}
+.jc span{display:block;font-size:10.5px;color:var(--ink-3);margin-top:3px}
+.jinfo{flex:1;min-width:150px}
+.jch{font-family:var(--han);font-size:26px;font-weight:600;line-height:1.1}
+.jch small{font-size:14px;color:var(--teal);font-weight:600}
+.jbtns{display:flex;gap:7px;margin-top:9px}
+.jb{font-size:13px;font-weight:800;padding:9px 13px;border-radius:9px;min-height:40px;
+    border:1.5px solid var(--line);color:var(--ink-3)}
+.jb.on.ok{background:var(--teal);border-color:var(--teal);color:#fff}
+.jb.on.no{background:var(--bad);border-color:var(--bad);color:#fff}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;
+       background:var(--ink);color:var(--paper);font-size:13.5px;font-weight:700;
+       padding:10px 18px;border-radius:999px;box-shadow:var(--shadow)}
+.linkbtn{font-size:12.5px;font-weight:700;color:var(--teal);background:var(--teal-soft);
+         padding:3px 10px;border-radius:7px}
+.sel{font:inherit;font-size:13.5px;padding:7px 9px;border-radius:9px;border:1px solid var(--line);
+     background:var(--paper);color:var(--ink);max-width:100%}
+.vrow{display:flex;gap:8px;align-items:center;flex:1;min-width:0;justify-content:flex-end}
+.vrow .sel{flex:1;min-width:0}
+.vrow .linkbtn{flex:none}
+.lrow{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+.lrow .linkbtn{padding:7px 12px;font-size:13px}
+.eg{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.7;
+    background:var(--sunk);border-radius:8px;padding:9px 11px;margin:0 0 10px;overflow-x:auto;
+    color:var(--ink-2);white-space:pre}
+.upv{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line-2);
+     font-size:13px}
+.upv b{flex:none;color:var(--ink-2);font-size:12.5px;min-width:96px}
+.upv span{font-family:var(--han);font-size:17px;flex:1;word-break:break-all;line-height:1.5}
+.upv i{flex:none;font-style:normal;color:var(--ink-3);font-size:11.5px}
+textarea.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+              line-height:1.45;word-break:break-all}
+.ok{color:var(--good)} .bad{color:var(--bad)}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;
+       box-shadow:var(--shadow)}
+.panel p{margin:0 0 11px;font-size:13.5px;color:var(--ink-3);line-height:1.6}
+textarea,input[type=text]{width:100%;font-family:var(--han);font-size:19px;padding:11px 12px;
+  border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);resize:vertical}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--teal);
+     color:#fff;font-weight:800;font-size:15px;padding:13px 20px;border-radius:11px;min-height:50px}
+.btn:hover{background:var(--teal-2)}
+.btn.ghost{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+.btn.ghost:hover{background:var(--teal-soft)}
+.btn.quiet{background:var(--sunk);color:var(--ink-2)}
+.btn.quiet:hover{background:var(--line-2)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.row{display:flex;gap:9px;flex-wrap:wrap}
+.miss{color:var(--bad);font-size:13px;margin-top:9px}
+
+/* ── 练习页 ── */
+.pr-head{display:flex;align-items:center;gap:12px;margin:16px 0 12px}
+.pr-char{font-family:var(--han);font-size:34px;line-height:1;font-weight:600}
+.pr-meta{flex:1;min-width:0}
+.pr-py{font-family:var(--han);font-size:17px;color:var(--teal);font-weight:600}
+.pr-sub{font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+.rowstrip{margin:0 0 13px}
+.rc-h{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px;
+      color:var(--ink-3);font-weight:800;flex-wrap:wrap}
+.rc-h button{font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-soft);
+             padding:5px 11px;border-radius:8px}
+.rc-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:5px;-webkit-overflow-scrolling:touch}
+.rc{flex:none;width:56px;text-align:center}
+.rc svg{width:56px;height:56px;display:block;background:var(--card);
+        border:1px solid var(--line-2);border-radius:6px}
+.rc.now svg{border-color:var(--teal);border-width:2px}
+.rc.model{margin-right:11px;position:relative}
+.rc.model::after{content:"";position:absolute;right:-6px;top:3px;bottom:17px;
+                 border-right:1px dashed var(--line)}
+.rc span{display:block;font-size:10.5px;color:var(--amber);margin-top:3px;height:14px;
+         letter-spacing:-.5px;white-space:nowrap}
+.rc.now span{color:var(--teal);font-weight:800}
+.rc.model span{color:var(--ink-3);font-weight:700}
+.stage{display:grid;place-items:center;margin-bottom:14px}
+.gridwrap{position:relative;background:var(--card);border-radius:6px;touch-action:none}
+.gridwrap svg.deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mzg rect{fill:none;stroke:var(--zhu);stroke-width:6}
+.mzg line{stroke:var(--zhu-soft);stroke-width:4;stroke-dasharray:24 18}
+#writer{position:relative;z-index:2}
+.ovl{z-index:3}
+
+.hintbar{text-align:center;font-size:14px;color:var(--ink-2);min-height:22px;margin-bottom:12px;
+         line-height:1.5;padding-inline:8px}
+.hintbar b{color:var(--zhu)}
+.controls{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+
+.strip-h{font-size:12px;font-weight:800;color:var(--ink-3);letter-spacing:.08em;margin:0 0 7px}
+.strip-h small{font-weight:600;letter-spacing:0;opacity:.75}
+.strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:5px;margin-bottom:13px;
+       -webkit-overflow-scrolling:touch}
+.strip-cell{flex:none;width:46px}
+.strip-cell svg{width:46px;height:46px;display:block;background:var(--card);
+                border:1px solid var(--line-2);border-radius:5px}
+.strip-cell span{display:block;text-align:center;font-family:var(--disp);font-size:11px;
+                 color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* ── 评分 ── */
+.score{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;
+       box-shadow:var(--shadow);margin-bottom:14px}
+.score-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.score-stars{font-size:28px;letter-spacing:2px;line-height:1}
+.score-top h3{font-size:17px}
+.metric{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:11px;
+        padding:9px 0;border-top:1px solid var(--line-2)}
+.metric-k{font-size:13px;font-weight:800;color:var(--ink-2)}
+.metric-v{font-size:13.5px;color:var(--ink-2);line-height:1.45}
+.metric-s{font-size:14px;letter-spacing:1px;white-space:nowrap}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-3);
+        margin-bottom:12px;justify-content:center}
+.legend i{display:inline-block;width:14px;height:0;border-top-width:2px;vertical-align:middle;
+          margin-right:5px}
+.lg-t{border-top:2px dashed var(--teal)}
+.lg-u{border-top:2px solid var(--amber)}
+
+/* ── 设置 ── */
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);
+       padding:20px;max-width:340px;width:calc(100vw - 32px);box-shadow:0 24px 60px -20px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(20,26,30,.45)}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;
+        border-bottom:1px solid var(--line-2);font-size:14.5px}
+.setrow:last-of-type{border-bottom:0}
+.sw{width:52px;height:31px;border-radius:999px;background:var(--line);position:relative;flex:none;
+    transition:background .16s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:25px;height:25px;border-radius:50%;
+           background:#fff;transition:transform .16s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sw[aria-pressed="true"]{background:var(--teal)}
+.sw[aria-pressed="true"]::after{transform:translateX(21px)}
+
+/* ── 打印 ── */
+.p-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:10px}
+#printable{width:max-content}
+.p-page{width:210mm;padding:11mm;background:#fff;color:#1B2530;margin-bottom:16px;
+        border-radius:4px;box-shadow:0 3px 16px -8px rgba(0,0,0,.45)}
+.p-title{font-family:var(--han);font-size:10.5pt;color:#333;margin:0 0 4mm;
+         display:flex;justify-content:space-between;border-bottom:.4pt solid #bbb;
+         padding-bottom:2mm}
+.p-ch{margin-bottom:5mm}
+.p-ch-h{font-family:var(--han);font-size:11pt;color:#333;margin-bottom:1.5mm}
+.p-ch-h b{font-size:15pt}
+.p-ch-h i{font-style:normal;color:#888;font-size:9pt}
+.p-ord{display:flex;flex-wrap:wrap;gap:1mm;margin-bottom:1.5mm}
+.p-oc{text-align:center}
+.p-oc span{display:block;font-size:7pt;color:#888;font-family:var(--disp)}
+.p-row{display:flex;gap:0}
+@media print{
+  @page{size:A4 portrait;margin:11mm}
+  body{background:#fff}
+  .top,.no-print,.selbar{display:none !important}
+  .app{max-width:none;margin:0;padding:0}
+  .p-scroll{overflow:visible}
+  #printable{width:auto}
+  .p-page{width:auto;padding:0;margin:0;box-shadow:none;border-radius:0;
+          page-break-after:always}
+  .p-page:last-child{page-break-after:auto}
+  .p-ch{page-break-inside:avoid}
+}
+/* 起笔点 + 反复练 + 改正建议 */
+.startdot{animation:dotpulse 1.5s ease-in-out infinite}
+@keyframes dotpulse{0%,100%{fill-opacity:.92}50%{fill-opacity:.28}}
+.advice{display:flex;gap:11px;align-items:flex-start;background:var(--teal-soft);border-radius:11px;
+        padding:12px 13px;margin-bottom:13px;font-size:14.5px;line-height:1.55;color:var(--ink)}
+.advice button{flex:none;font-size:19px;line-height:1.2;color:var(--teal)}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+@media (max-width:420px){
+  .chip{width:46px;height:46px}
+  .chip .g{font-size:23px}
+  .strip-cell,.strip-cell svg{width:42px}
+  .strip-cell svg{height:42px}
+  .rc,.rc svg{width:48px}
+  .rc svg{height:48px}
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <button class="iconbtn" id="btn-back" hidden aria-label="返回">‹</button>
+    <h1 id="title">米字格练字本</h1>
+    <span class="starcount" id="starcount">★ 0</span>
+    <button class="iconbtn" id="btn-set" aria-label="设置">⚙</button>
+  </header>
+
+  <section id="view-home">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-lesson" aria-selected="true">学习</button>
+      <button role="tab" id="tab-theme" aria-selected="false">字库</button>
+      <button role="tab" id="tab-practice" aria-selected="false">练习</button>
+    </div>
+    <div id="home-body"></div>
+  </section>
+
+  <section id="view-practice" hidden>
+    <div class="pr-head">
+      <span class="pr-char" id="pr-char">字</span>
+      <div class="pr-meta">
+        <div class="pr-py" id="pr-py">zì</div>
+        <div class="pr-sub" id="pr-sub">共 6 画</div>
+      </div>
+      <button class="iconbtn" id="btn-say" aria-label="朗读这个字">🔊</button>
+    </div>
+    <div class="rowstrip" id="rowstrip"></div>
+    <h2 class="strip-h">笔顺表　<small>照着这个写</small></h2>
+    <div class="strip" id="strip"></div>
+    <div class="stage"><div class="gridwrap" id="gridwrap"></div></div>
+    <div class="hintbar" id="hintbar"></div>
+    <div class="controls" id="controls"></div>
+    <div id="scorebox"></div>
+  </section>
+
+  <section id="view-dict" hidden></section>
+  <section id="view-print" hidden></section>
+</div>
+
+<div class="selbar" id="selbar" hidden>
+  <div class="selbar-in"><span>已选 <b id="sel-n">0</b> 个字</span>
+  <span class="selbar-btns"><button class="btn ghost" id="go-print">打印字帖</button>
+  <button class="btn" id="go-dict">开始听写 →</button></span></div>
+</div>
+
+<dialog id="dlg">
+  <h2 style="font-size:17px;margin-bottom:12px">设置</h2>
+  <div class="setrow"><span>朗读读音</span><button class="sw" id="sw-speak" aria-pressed="true" aria-label="朗读读音"></button></div>
+  <div class="setrow"><span>提示音效</span><button class="sw" id="sw-sound" aria-pressed="true" aria-label="提示音效"></button></div>
+  <div class="setrow"><span>判定宽松<br><small style="color:var(--ink-3);font-size:12px">刚开始建议宽松</small></span><button class="sw" id="sw-easy" aria-pressed="true" aria-label="判定宽松"></button></div>
+  <div class="setrow"><span>语音点评<br><small style="color:var(--ink-3);font-size:12px">写完念出问题和改法</small></span><button class="sw" id="sw-voice" aria-pressed="true" aria-label="语音点评"></button></div>
+  <div class="setrow"><span>起笔点提示<br><small style="color:var(--ink-3);font-size:12px">默写时也标出每笔从哪起</small></span><button class="sw" id="sw-dot" aria-pressed="true" aria-label="起笔点提示"></button></div>
+  <div class="setrow" style="display:block">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <span style="flex:none">朗读声音</span>
+      <span class="vrow">
+        <select id="sel-voice" class="sel"><option value="">系统默认</option></select>
+        <button class="linkbtn" id="btn-vrefresh">刷新</button></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:9px">
+      <span>语速</span>
+      <span style="display:flex;gap:8px;align-items:center">
+        <select id="sel-rate" class="sel">
+          <option value="0.85">慢</option><option value="1">正常</option><option value="1.15">快</option>
+        </select>
+        <button class="linkbtn" id="btn-try">试听</button></span>
+    </div>
+    <p class="note" id="voice-msg" style="margin:9px 0 0;display:none"></p>
+    <p class="note" id="voice-tip" style="margin:9px 0 0"></p>
+  </div>
+  <div class="setrow"><span>版本<br><small style="color:var(--ink-3);font-size:12px" id="build-n"></small></span><button class="linkbtn" id="btn-update">检查更新</button></div>
+  <div class="setrow"><span>备份 / 恢复<br><small style="color:var(--ink-3);font-size:12px" id="bak-when">从未备份</small></span><button class="linkbtn" id="btn-bak">打开</button></div>
+  <div class="row" style="margin-top:16px">
+    <button class="btn quiet" id="btn-reset" style="flex:1">清空星星</button>
+    <button class="btn" id="btn-close" style="flex:1">好了</button>
+  </div>
+</dialog>
+
+<dialog id="dlgbak">
+  <h2 style="font-size:17px;margin-bottom:8px">备份 / 恢复</h2>
+  <p class="note">练习记录只存在这台设备的浏览器里。<b>换设备、清理 Safari 数据、或者换了网址，记录都会没。</b>
+     把下面这段复制到备忘录里存着，随时能恢复。</p>
+  <textarea id="bak-out" class="code" rows="5" readonly></textarea>
+  <div class="row" style="margin-top:9px">
+    <button class="btn" id="bak-copy" style="flex:1">复制</button>
+    <button class="btn ghost" id="bak-file" style="flex:1">存成文件</button>
+  </div>
+  <p class="note" id="bak-hint" style="margin:7px 0 0"></p>
+  <h3 class="pt" style="margin-top:18px">恢复</h3>
+  <p class="note">把之前备份的那段文字整个贴进来，点恢复。原来的记录会被覆盖。</p>
+  <textarea id="bak-in" class="code" rows="3" placeholder="粘贴备份内容…"></textarea>
+  <p class="note" id="bak-msg" style="margin-top:8px"></p>
+  <div class="row">
+    <button class="btn" id="bak-do" style="flex:1">恢复</button>
+    <button class="btn quiet" id="bak-close" style="flex:1">关闭</button>
+  </div>
+</dialog>
+
+<script src="hanzi-writer.min.js"></script>
+<script src="chardata.js"></script>
+<script src="words.js"></script>
+<script>
+(function(){
+"use strict";
+const D=window.CHARS, LESSONS=window.LESSONS, THEMES=window.THEMES;
+const TEXTBOOK=window.TEXTBOOK||[];   /* 人教版一上 识字表，按课本顺序 */
+const BUILD="__BUILD__";              /* 部署时由 build/deploy.sh 盖上时间戳 */
+const AVAIL=new Set(window.AVAIL||""), SHARDS=window.SHARDS||1;
+
+/* 字库一共 9574 个字。常用的 392 个随页面一起到，其余的用到哪片下哪片 */
+function has(c){return !!D[c]||AVAIL.has(c)}
+const shardState={};
+function loadShard(n,cb){
+  const st=shardState[n];
+  if(st==="loaded") return cb();
+  if(Array.isArray(st)){ st.push(cb); return; }
+  shardState[n]=[cb];
+  const el=document.createElement("script");
+  el.src="sd/"+String(n).padStart(3,"0")+".js";
+  el.onload=el.onerror=function(){
+    const q=shardState[n]; shardState[n]="loaded";
+    (q||[]).forEach(function(f){f()});
+  };
+  document.head.appendChild(el);
+}
+function toast(msg){
+  let t=document.getElementById("toast");
+  if(!t){ t=document.createElement("div"); t.id="toast"; t.className="toast";
+          document.body.appendChild(t); }
+  t.textContent=msg||""; t.hidden=!msg;
+}
+function ensureChars(list,cb){
+  const need={};
+  list.forEach(function(c){ if(!D[c]&&AVAIL.has(c)) need[c.codePointAt(0)%SHARDS]=1 });
+  const ks=Object.keys(need);
+  if(!ks.length) return cb();
+  toast("正在取笔顺数据…");
+  let left=ks.length;
+  ks.forEach(function(n){ loadShard(+n,function(){ if(--left===0){ toast(""); cb(); } }) });
+}
+const $=s=>document.querySelector(s);
+
+/* ── 存档 ── */
+const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel"};
+function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let stars=load(K.stars,{});
+let cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,lessonMode:"text",
+                       voiceURI:"",rate:1}, load(K.cfg,{}));
+
+/* ── 声音 ── */
+let ac=null;
+function beep(type){
+  if(!cfg.sound) return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==="suspended") ac.resume();
+    const seq = type==="good"?[[660,0],[880,.09],[1175,.18]] : type==="bad"?[[300,0],[240,.1]] : [[880,0]];
+    seq.forEach(([f,t])=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.type="sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(.0001,ac.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(.13,ac.currentTime+t+.015);
+      g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+t+.16);
+      o.connect(g); g.connect(ac.destination); o.start(ac.currentTime+t); o.stop(ac.currentTime+t+.18);
+    });
+  }catch(e){}
+}
+function speak(ch){
+  if(!cfg.speak||!window.speechSynthesis) return;
+  try{ speechSynthesis.cancel(); speechSynthesis.speak(utter(ch,.7)); }catch(e){}
+}
+
+let VOICES=[];
+function loadVoices(){
+  try{
+    VOICES=(window.speechSynthesis.getVoices()||[]).filter(function(v){
+      return /^zh/i.test(v.lang||"");
+    });
+  }catch(e){ VOICES=[]; }
+}
+function pickVoice(){
+  if(!cfg.voiceURI) return null;
+  for(let i=0;i<VOICES.length;i++) if(VOICES[i].voiceURI===cfg.voiceURI) return VOICES[i];
+  return null;
+}
+/* 统一造句子：声音、语速都走设置 */
+function utter(txt,base){
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang="zh-CN"; u.pitch=1;                    /* 1.06 偏"播音腔"，压回 1 */
+  u.rate=(base||.8)*(cfg.rate||1);
+  const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang||u.lang; }
+  return u;
+}
+function say(txt,cut){
+  if(!cfg.voice||!window.speechSynthesis) return;
+  try{
+    if(cut) speechSynthesis.cancel();
+    speechSynthesis.speak(utter(txt,.86));
+  }catch(e){}
+}
+
+/* ── 米字格方位（写字教学的说法）── */
+function regionName(pt){
+  const C=512, NEAR=112;
+  const nx=Math.abs(pt.x-C)<NEAR, ny=Math.abs(pt.y-C)<NEAR;
+  if(nx&&ny) return "正中间的中心点";
+  if(nx) return pt.y<C ? "竖中线的上半段" : "竖中线的下半段";
+  if(ny) return pt.x<C ? "横中线的左边" : "横中线的右边";
+  return (pt.x<C?"左":"右")+(pt.y<C?"上":"下")+"格";
+}
+function strokeStart(i){
+  const d=D[cur]; if(!d||!d.m[i]||!d.m[i].length) return null;
+  const m=d.m[i];
+  const a={x:m[0][0], y:900-m[0][1]};
+  const j=Math.min(m.length-1, Math.max(1, Math.round(m.length*.3)));
+  const b={x:m[j][0], y:900-m[j][1]};
+  return {a,b};
+}
+function showStartDot(i,on){
+  const el=$("#ovl"); if(!el) return;
+  if(!on||i==null||i<0||!D[cur]||i>=D[cur].n){ el.innerHTML=""; return; }
+  const s=strokeStart(i); if(!s){ el.innerHTML=""; return; }
+  const dx=s.b.x-s.a.x, dy=s.b.y-s.a.y, L=Math.hypot(dx,dy)||1;
+  const ux=dx/L, uy=dy/L, len=Math.min(140,L);
+  const ex=s.a.x+ux*len, ey=s.a.y+uy*len, h=30;
+  const tri=[[ex+ux*h,ey+uy*h],[ex-uy*h*.55,ey+ux*h*.55],[ex+uy*h*.55,ey-ux*h*.55]]
+            .map(q=>q[0].toFixed(0)+","+q[1].toFixed(0)).join(" ");
+  el.innerHTML=
+    '<line x1="'+s.a.x+'" y1="'+s.a.y+'" x2="'+ex.toFixed(0)+'" y2="'+ey.toFixed(0)+
+    '" stroke="var(--teal)" stroke-width="10" stroke-linecap="round" stroke-opacity=".5"/>'+
+    '<polygon points="'+tri+'" fill="var(--teal)" fill-opacity=".5"/>'+
+    '<circle class="startdot" cx="'+s.a.x+'" cy="'+s.a.y+'" r="34" fill="var(--zhu)"/>'+
+    '<text x="'+s.a.x+'" y="'+(s.a.y+15)+'" text-anchor="middle" font-size="40" '+
+    'font-weight="700" fill="#fff" font-family="sans-serif">'+(i+1)+'</text>';
+}
+
+/* ── 字形 SVG ── */
+const XF='scale(1,-1) translate(0,-900)';
+function charSVG(ch,upto,opt){
+  const d=D[ch]; if(!d) return "";
+  opt=opt||{};
+  const n = upto==null ? d.s.length-1 : upto;
+  let p="";
+  for(let i=0;i<=n && i<d.s.length;i++){
+    const last = (i===n && opt.hi);
+    p+='<path d="'+d.s[i]+'" fill="'+(last?"var(--zhu)":(opt.fill||"var(--ink)"))+'"/>';
+  }
+  return '<svg viewBox="0 0 1024 1024" aria-hidden="true">'+(opt.grid||"")+
+         '<g transform="'+XF+'">'+p+'</g></svg>';
+}
+const MZG='<g class="mzg"><rect x="8" y="8" width="1008" height="1008" rx="14"/>'+
+  '<line x1="512" y1="8" x2="512" y2="1016"/><line x1="8" y1="512" x2="1016" y2="512"/>'+
+  '<line x1="8" y1="8" x2="1016" y2="1016"/><line x1="1016" y1="8" x2="8" y2="1016"/></g>';
+
+/* ── 首页 ── */
+let tab="lesson";
+function starsOf(ch){return stars[ch]||0}
+function totalStars(){let t=0;for(const k in stars)t+=stars[k];return t}
+function refreshStars(){$("#starcount").textContent="★ "+totalStars()}
+
+function esc(t){return String(t).replace(/[&<>"]/g,function(m){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m];});}
+
+/* ── 学习页：浏览、点字进练习 ── */
+function chipsHTML(chars){
+  return '<div class="chips">'+chars.map(function(c){
+    if(!has(c)) return "";
+    const st=starsOf(c);
+    return '<button class="chip" data-ch="'+c+'" data-done="'+(st?1:0)+'"><span class="g">'+c+
+           '</span>'+(st?'<span class="dot">'+"★".repeat(st)+'</span>':'')+'</button>';
+  }).join("")+'</div>';
+}
+function lessonSets(){ return TEXTBOOK.length?TEXTBOOK:LESSONS; }
+function groups(){ return cfg.lessonMode==="stroke" ? LESSONS : lessonSets(); }
+
+/* ── 练习页：跨单元挑字听写 ── */
+function selSet(){ return new Set(load(K.sel,[])); }
+function saveSel(set){ save(K.sel, Array.from(set)); }
+/* 按课本顺序排，不按勾选顺序 */
+function selOrdered(){
+  const set=selSet(), out=[];
+  lessonSets().forEach(function(l){
+    l.chars.forEach(function(c){ if(set.has(c) && out.indexOf(c)<0) out.push(c); });
+  });
+  return out;
+}
+function selChips(chars,set){
+  return '<div class="chips">'+chars.map(function(c){
+    if(!has(c)) return "";
+    const on=set.has(c);
+    return '<button class="chip pick'+(on?" on":"")+'" data-pick="'+c+'">'+
+           '<span class="g">'+c+'</span></button>';
+  }).join("")+'</div>';
+}
+function renderSelBar(){
+  const n=selSet().size, bar=$("#selbar");
+  if(!bar) return;
+  bar.hidden = !($("#view-home") && !$("#view-home").hidden && tab==="practice");
+  document.body.classList.toggle("has-bar", !bar.hidden);
+  $("#sel-n").textContent=n;
+  $("#go-dict").disabled = (n===0);
+  $("#go-print").disabled = (n===0);
+}
+function renderPractice(){
+  const set=selSet(), gs=lessonSets();
+  $("#home-body").innerHTML=
+    '<div class="panel" style="margin-bottom:12px">'+
+    '<p class="note" style="margin:0 0 10px">勾选今天要听写的字。<b>可以跨单元一起选</b>——'+
+    '把前面学过的单元也带上，顺便复习旧字。点单元名前面的方块可以整组勾选／取消。</p>'+
+    '<div class="row"><button class="btn quiet" id="sel-write">只选要求会写的</button>'+
+    '<button class="btn quiet" id="sel-none">全部清空</button></div></div>'+
+    gs.map(function(l,i){
+      const on=l.chars.filter(function(c){return set.has(c)}).length;
+      return '<div class="lesson"><div class="lesson-h">'+
+        '<button class="ubox'+(on===0?"":(on===l.chars.length?" all":" some"))+'" data-u="'+i+
+        '" aria-label="勾选整组">'+(on===l.chars.length?"✓":(on?"–":""))+'</button>'+
+        '<h3>'+l.name+'</h3>'+
+        '<span class="lesson-k">'+on+'/'+l.chars.length+'</span></div>'+
+        selChips(l.chars,set)+'</div>';
+    }).join("");
+  renderSelBar();
+  $("#sel-none").onclick=function(){ saveSel(new Set()); renderPractice(); beep("tap"); };
+  $("#sel-write").onclick=function(){
+    const w=new Set();
+    gs.forEach(function(l){ (l.write||[]).forEach(function(c){ w.add(c) }); });
+    saveSel(w); renderPractice(); beep("good");
+  };
+}
+function renderHome(){
+  const b=$("#home-body");
+  if(tab==="practice"){ renderPractice(); return; }
+  renderSelBar();
+  if(tab==="lesson"){
+    const gs=groups(), stroke=(cfg.lessonMode==="stroke");
+    const tab1=function(id,label,on){
+      return '<button id="'+id+'" aria-selected="'+(on?"true":"false")+'">'+label+'</button>';
+    };
+    b.innerHTML=(TEXTBOOK.length?
+      '<div class="tabs" style="margin:0 0 14px">'+tab1("lm-text","教材",!stroke)+
+      tab1("lm-stroke","按笔画难度",stroke)+'</div>':'')+
+      (stroke
+        ? '<p class="note" style="margin:-4px 0 12px">按<b>写字</b>难度从易到难，和课本顺序无关。</p>'
+        : '<p class="note" style="margin:-4px 0 12px">人教版一年级上册 <b>识字表</b>，按课本顺序，共 '+
+          TEXTBOOK.length+' 课 300 字。其中 100 个字本册要求会写，每课下面标了出来。</p>')+
+      gs.map(function(l,i){
+        let tip=l.tip||"";
+        if(!stroke){
+          tip=(l.write&&l.write.length)
+            ? ('这一课的字里，<b>本册要求会写</b>的有 '+l.write.length+' 个：<b class="wz">'+
+               l.write.join("")+'</b>　·　其余只要求认识')
+            : '这一课的字，本册都只要求认识，不要求会写';
+        }
+        return '<div class="lesson"><div class="lesson-h">'+
+          (stroke?'<span class="lesson-n">第 '+(i+1)+' 关</span>':'')+
+          '<h3>'+l.name+'</h3></div>'+
+          (tip?('<p class="lesson-tip">'+tip+'</p>'):'')+
+          chipsHTML(l.chars)+
+          '<div class="lrow"><button class="linkbtn" data-pr="'+i+'">打印字帖</button></div></div>';
+      }).join("");
+    [["#lm-text","text"],["#lm-stroke","stroke"]].forEach(function(x){
+      const el=$(x[0]);
+      if(el) el.onclick=function(){cfg.lessonMode=x[1];save(K.cfg,cfg);renderHome();beep("tap")};
+    });
+  }else{
+    b.innerHTML=THEMES.map(function(t){
+      return '<h2 class="theme-h">'+t.name+'</h2>'+chipsHTML(t.chars)}).join("");
+  }
+}
+$("#home-body").addEventListener("click",e=>{
+  /* 练习页：勾选 */
+  const pick=e.target.closest("[data-pick]");
+  if(pick){
+    const set=selSet(), c=pick.dataset.pick;
+    if(set.has(c)) set.delete(c); else set.add(c);
+    saveSel(set); renderPractice(); return;
+  }
+  const ub=e.target.closest("[data-u]");
+  if(ub){
+    const l=lessonSets()[+ub.dataset.u]; if(!l) return;
+    const set=selSet();
+    const allOn=l.chars.every(function(c){return set.has(c)});
+    l.chars.forEach(function(c){ if(allOn) set.delete(c); else set.add(c); });
+    saveSel(set); renderPractice(); beep("tap"); return;
+  }
+  /* 学习页：点字进练习 */
+  const chip=e.target.closest("[data-ch]");
+  if(chip){
+    const list=[...chip.closest(".chips").querySelectorAll("[data-ch]")].map(x=>x.dataset.ch);
+    openChar(chip.dataset.ch,list); return;
+  }
+  const pr=e.target.closest("[data-pr]");
+  if(pr){ const i=+pr.dataset.pr, g=groups()[i];
+          if(g) openPrint(g.chars, cfg.lessonMode==="stroke"? ("第"+(i+1)+"关 · "+g.name) : g.name); return; }
+});
+[["#tab-lesson","lesson"],["#tab-theme","theme"],["#tab-practice","practice"]].forEach(([sel,v])=>{
+  $(sel).onclick=()=>{tab=v;
+    ["#tab-lesson","#tab-theme","#tab-practice"].forEach(s=>$(s).setAttribute("aria-selected",String(s===sel)));
+    renderHome(); window.scrollTo(0,0);};
+});
+
+/* ── 练习：范字 → 描红 ×N → 默写 ×M ── */
+let writer=null, cur="", curList=[], curIdx=0, ink=[], mistakes=0, gsize=340;
+let plan=[], cellIdx=0, cells=[], nTrace=3, nWrite=3, phase="watch", awaiting=false;
+const INK_W=40;
+
+function gridSize(){
+  const w=Math.min($(".app").clientWidth-32,430);
+  const h=window.innerHeight-470;   /* 上面有练习行 + 笔顺表 */
+  return Math.round(Math.max(230,Math.min(w,h,430)));
+}
+function show(view){
+  ["#view-home","#view-practice","#view-dict","#view-print"].forEach(x=>$(x).hidden=(x!==view));
+  $("#btn-back").hidden=(view==="#view-home");
+  const bar=$("#selbar");
+  if(bar){ bar.hidden = !(view==="#view-home" && tab==="practice");
+           document.body.classList.toggle("has-bar", !bar.hidden); }
+  window.scrollTo(0,0);
+}
+function modelPaths(fill){
+  return '<g transform="'+XF+'" fill="'+fill+'">'+
+    D[cur].s.map(d=>'<path d="'+d+'"/>').join("")+'</g>';
+}
+/* 把小朋友自己的笔迹画出来——不是字库里的标准笔画 */
+function inkPaths(strokes,color,w){
+  return strokes.map(st=>{
+    if(st.length>1) return '<polyline points="'+
+      st.map(q=>q.x.toFixed(0)+","+q.y.toFixed(0)).join(" ")+'" fill="none" stroke="'+color+
+      '" stroke-width="'+(w||INK_W)+'" stroke-linecap="round" stroke-linejoin="round"/>';
+    if(st.length===1) return '<circle cx="'+st[0].x.toFixed(0)+'" cy="'+st[0].y.toFixed(0)+
+      '" r="'+((w||INK_W)/2)+'" fill="'+color+'"/>';
+    return "";
+  }).join("");
+}
+function dotMarkup(i,on){
+  if(!on||i==null||i<0||!D[cur]||i>=D[cur].n) return "";
+  const s=strokeStart(i); if(!s) return "";
+  const dx=s.b.x-s.a.x, dy=s.b.y-s.a.y, L=Math.hypot(dx,dy)||1;
+  const ux=dx/L, uy=dy/L, len=Math.min(140,L);
+  const ex=s.a.x+ux*len, ey=s.a.y+uy*len, h=30;
+  const tri=[[ex+ux*h,ey+uy*h],[ex-uy*h*.55,ey+ux*h*.55],[ex+uy*h*.55,ey-ux*h*.55]]
+            .map(q=>q[0].toFixed(0)+","+q[1].toFixed(0)).join(" ");
+  return '<line x1="'+s.a.x+'" y1="'+s.a.y+'" x2="'+ex.toFixed(0)+'" y2="'+ey.toFixed(0)+
+    '" stroke="var(--teal)" stroke-width="10" stroke-linecap="round" stroke-opacity=".5"/>'+
+    '<polygon points="'+tri+'" fill="var(--teal)" fill-opacity=".5"/>'+
+    '<circle class="startdot" cx="'+s.a.x+'" cy="'+s.a.y+'" r="34" fill="var(--zhu)"/>'+
+    '<text x="'+s.a.x+'" y="'+(s.a.y+15)+'" text-anchor="middle" font-size="40" '+
+    'font-weight="700" fill="#fff" font-family="sans-serif">'+(i+1)+'</text>';
+}
+function paintOverlay(dotIdx,dotOn){
+  const el=$("#ovl"); if(!el) return;
+  el.innerHTML = inkPaths(ink,"var(--ink)") + dotMarkup(dotIdx,dotOn);
+}
+/* 练习时把字库的标准笔画隐形，格子里只留她自己写的 */
+function setModelVisible(v){
+  if(!writer) return;
+  try{ writer.updateColor("strokeColor",
+        v ? (getComputedStyle(document.body).getPropertyValue("--ink").trim()||"#1B2530")
+          : "rgba(0,0,0,0)", {duration:0}); }catch(e){}
+}
+function buildGrid(){
+  gsize=gridSize();
+  const w=$("#gridwrap");
+  w.style.width=w.style.height=gsize+"px";
+  w.innerHTML='<svg class="deco" viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+'</svg>'+
+              '<div id="writer"></div>'+
+              '<svg class="deco ovl" id="ovl" viewBox="0 0 1024 1024" aria-hidden="true"></svg>';
+  const css=n=>getComputedStyle(document.body).getPropertyValue(n).trim();
+  writer=HanziWriter.create($("#writer"),cur,{
+    width:gsize,height:gsize,padding:0,
+    strokeColor:css("--ink")||"#1B2530",
+    outlineColor:css("--trace")||"#EBD2CE",
+    drawingColor:css("--ink")||"#1B2530",
+    drawingWidth:Math.round(gsize/15),
+    strokeAnimationSpeed:.85, delayBetweenStrokes:420,
+    showCharacter:false, showOutline:true,
+    charDataLoader:(c,done)=>done(D[c]?{strokes:D[c].s,medians:D[c].m}:null)
+  });
+}
+function btn(label,cls,fn){
+  const b=document.createElement("button"); b.className="btn "+(cls||"");
+  b.textContent=label; b.onclick=fn; return b;
+}
+function setIn(sel){
+  const c=$(sel); if(!c) return;
+  c.innerHTML="";
+  [].slice.call(arguments,1).forEach(b=>b&&c.appendChild(b));
+}
+/* 练习页和听写页各有自己的按钮区，不能共用 id */
+function setControls(){ setIn.apply(null,["#controls"].concat([].slice.call(arguments))); }
+
+function buildPlan(){
+  plan=[];
+  for(let i=0;i<nTrace;i++) plan.push("trace");
+  for(let i=0;i<nWrite;i++) plan.push("write");
+  cells=[]; cellIdx=0;
+}
+function renderRow(){
+  const parts=['<div class="rc model"><svg viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+
+    modelPaths("var(--ink)")+'</svg><span>范字</span></div>'];
+  plan.forEach((kind,i)=>{
+    const e=cells[i], now=(phase==="do"&&i===cellIdx);
+    const g = e ? inkPaths(e.ink,"var(--ink)")
+                : (kind==="trace" ? modelPaths("var(--trace)") : "");
+    parts.push('<div class="rc'+(now?" now":"")+'">'+
+      '<svg viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+g+'</svg>'+
+      '<span>'+(e?"★".repeat(e.stars):(kind==="trace"?"描":"写"))+'</span></div>');
+  });
+  $("#rowstrip").innerHTML=
+    '<div class="rc-h"><span>描红 '+nTrace+' 格　·　默写 '+nWrite+' 格</span>'+
+    '<button id="rc-n">改格数</button></div><div class="rc-row">'+parts.join("")+'</div>';
+  const b=$("#rc-n");
+  if(b) b.onclick=()=>{ nTrace=nWrite=(nTrace===3?5:3);
+                        buildPlan(); goWatch(); beep("tap"); };
+}
+function openChar(ch,list){
+  if(!has(ch)) return;
+  if(!D[ch]) return ensureChars([ch],function(){ if(D[ch]) openChar(ch,list) });
+  cur=ch; curList=list&&list.length?list:[ch]; curIdx=Math.max(0,curList.indexOf(ch));
+  show("#view-practice"); $("#title").textContent="练 “"+ch+"”";
+  $("#pr-char").textContent=ch; $("#pr-py").textContent=D[ch].p;
+  $("#pr-sub").textContent="共 "+D[ch].n+" 画　·　第 "+(curIdx+1)+"/"+curList.length+" 个";
+  $("#strip").innerHTML=D[ch].s.map((_,i)=>
+    '<div class="strip-cell">'+charSVG(ch,i,{hi:true,fill:"var(--ink-3)",grid:MZG})+
+    '<span>'+(i+1)+'</span></div>').join("");
+  buildPlan(); buildGrid(); goWatch(); speak(ch);
+}
+function goWatch(){
+  phase="watch"; awaiting=false; ink=[]; mistakes=0;
+  $("#scorebox").innerHTML="";
+  if(writer){ writer.cancelQuiz(); setModelVisible(true);
+              writer.showOutline(); writer.animateCharacter(); }
+  paintOverlay(null,false); renderRow();
+  $("#hintbar").innerHTML="看清楚<b>每一笔从哪里起笔</b>，再往下走。";
+  setControls(btn("再看一遍","quiet",()=>writer.animateCharacter()),
+              btn("开始描红 →","",()=>runCell(0)));
+}
+function runCell(i){
+  if(i>=plan.length) return finishAll();
+  phase="do"; awaiting=false; cellIdx=i; ink=[]; mistakes=0;
+  const trace=(plan[i]==="trace");
+  $("#scorebox").innerHTML="";
+  writer.cancelQuiz(); setModelVisible(false);
+  if(trace) writer.showOutline(); else writer.hideOutline();
+  $("#hintbar").innerHTML= trace
+    ? "第 <b>"+(i+1)+"</b> 格 · 描红　顺着浅色的字描"
+    : "第 <b>"+(i+1)+"</b> 格 · 默写　<b>写在正中间、填满格子</b>";
+  renderRow();
+  /* 只在第一格描红、第一格默写时念起笔提示，免得每格都啰嗦 */
+  startQuiz(trace, i===0 || plan[i-1]!==plan[i]);
+  setControls(btn("这格重写","quiet",()=>runCell(i)), btn("看笔顺","ghost",goWatch));
+}
+function startQuiz(trace,cue){
+  ink=[]; mistakes=0;
+  const guide = trace || cfg.dot;
+  writer.quiz({
+    showOutline:trace,
+    leniency:(cfg.easy?1.5:1.0)*(trace?1.25:1),
+    showHintAfterMisses:trace?1:3,
+    highlightOnComplete:false,      /* 别闪标准字形 */
+    onMistake:d=>{
+      mistakes++; beep("bad");
+      if(d.mistakesOnStroke===1){
+        const st=strokeStart(d.strokeNum);
+        if(st) say("这一笔要从"+regionName(st.a)+"起笔。",true);
+      }
+      paintOverlay(d.strokeNum,true);
+    },
+    onCorrectStroke:d=>{
+      beep("tap");
+      const pts=(d.drawnPath&&d.drawnPath.points)||[];
+      /* drawnPath.points 是字形内部坐标(y 轴朝上)，与 medians 同一套 */
+      ink.push(pts.map(q=>({x:q.x, y:900-q.y})));
+      paintOverlay(d.strokesRemaining>0?d.strokeNum+1:null, guide);
+    },
+    onComplete:()=>{ paintOverlay(null,false); cellDone(); }
+  });
+  paintOverlay(0,guide);
+  const s0=strokeStart(0);
+  if(guide&&cue&&s0) say("第一笔，从"+regionName(s0.a)+"起笔。",true);
+}
+
+/* ── 评分：位置 / 大小 / 间架 ── */
+function bbox(p){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const q of p){if(q.x<x0)x0=q.x;if(q.x>x1)x1=q.x;if(q.y<y0)y0=q.y;if(q.y>y1)y1=q.y;}
+  return {x0,y0,x1,y1,w:x1-x0,h:y1-y0,cx:(x0+x1)/2,cy:(y0+y1)/2};
+}
+function centroid(p){let x=0,y=0;for(const q of p){x+=q.x;y+=q.y}return {x:x/p.length,y:y/p.length}}
+/* 该怎么改——用小朋友听得懂的说法 */
+function fixDir(dx,dy){
+  const t=28,a=[];
+  if(dy>t) a.push("高一点"); else if(dy<-t) a.push("低一点");
+  if(dx>t) a.push("往左一点"); else if(dx<-t) a.push("往右一点");
+  return a.join("、");
+}
+function dirName(dx,dy){
+  const t=32,a=[];
+  if(dx<-t)a.push("左"); else if(dx>t)a.push("右");   /* 中文说"左上""右下"，横向在前 */
+  if(dy<-t)a.push("上"); else if(dy>t)a.push("下");
+  return a.join("")||"中间";
+}
+function score(ch,user){
+  const d=D[ch];
+  const std=d.m.map(m=>m.map(p=>({x:p[0],y:900-p[1]}))).filter(m=>m.length);
+  const uAll=[].concat.apply([],user.filter(s=>s.length));
+  if(uAll.length<3||!std.length) return null;
+  const sAll=[].concat.apply([],std);
+  const ub=bbox(uAll), sb=bbox(sAll);
+  const uM=Math.max(ub.w,ub.h,1), sM=Math.max(sb.w,sb.h,1);
+  const dx=ub.cx-sb.cx, dy=ub.cy-sb.cy;
+  const posMag=Math.hypot(dx,dy)/1024;
+  const ratio=uM/sM;
+  const k=sM/uM;
+  const n=Math.min(std.length,user.length);
+  let sum=0,cnt=0,worst=1,worstV=-1,wdx=0,wdy=0,wstart=null;
+  for(let i=0;i<n;i++){
+    if(!user[i]||!user[i].length) continue;
+    const uc=centroid(user[i]), sc=centroid(std[i]);
+    const nx=(uc.x-ub.cx)*k+sb.cx, ny=(uc.y-ub.cy)*k+sb.cy;
+    const dd=Math.hypot(nx-sc.x,ny-sc.y);
+    sum+=dd; cnt++;
+    if(dd>worstV){ worstV=dd; worst=i+1; wdx=nx-sc.x; wdy=ny-sc.y; wstart=std[i][0]; }
+  }
+  const resid=cnt?sum/cnt/1024:0;
+  const L=cfg.easy?1.35:1;
+  const lr=Math.abs(Math.log(ratio));
+  const pos = posMag<.055*L?3 : posMag<.11*L?2 : 1;
+  const size= lr<.14*L?3 : lr<.30*L?2 : 1;
+  const str = resid<.065*L?3 : resid<.12*L?2 : 1;
+  let total=Math.round((pos+size+str)/3);
+  if(mistakes>=4) total=Math.max(1,total-1);
+  total=Math.max(1,Math.min(3,total));
+  const dn=dirName(dx,dy), pct=Math.round(ratio*100);
+  const fix=fixDir(dx,dy), wfix=fixDir(wdx,wdy), wreg=wstart?regionName(wstart):"";
+  return {pos,size,str,total,ub,sb,resid,ratio,worst,dn,fix,wfix,wreg,
+    posMsg: pos===3 ? "正中间，很稳"
+          : "整个字要"+(fix||"再对准一点")+"（现在偏"+dn+"）",
+    sizeMsg: size===3 ? "大小刚刚好"
+          : (ratio<1 ? ("写小了，只有该有的 "+pct+"%，笔画伸展开、填满格子")
+                     : ("写大了，撑到了 "+pct+"%，往里收一收")),
+    strMsg: str===3 ? "每一笔都落在该在的位置"
+          : ("第 "+worst+" 笔要"+(wfix||"再准一点")+"；这一笔从"+wreg+"起笔"),
+    ordMsg: mistakes===0?"一次就写对了" : ("笔顺提示了 "+mistakes+" 次")};
+}
+function drawOverlay(r){
+  const rect=(bb,c,dash)=>'<rect x="'+bb.x0+'" y="'+bb.y0+'" width="'+Math.max(bb.w,4)+
+    '" height="'+Math.max(bb.h,4)+'" fill="none" stroke="'+c+'" stroke-width="6"'+
+    (dash?' stroke-dasharray="20 14"':'')+'/>';
+  /* 她的笔迹保持原来的粗细，两个框画在上面 */
+  $("#ovl").innerHTML = inkPaths(ink,"var(--ink)") +
+    rect(r.sb,"var(--teal)",true) + rect(r.ub,"var(--amber)",false);
+}
+function starStr(n){return "★".repeat(n)+"☆".repeat(3-n)}
+function advice(r){
+  const w=[["pos",r.pos],["size",r.size],["str",r.str],
+           ["ord",mistakes===0?3:mistakes<=2?2:1]].sort((a,b)=>a[1]-b[1])[0];
+  if(w[1]>=3) return "每一笔都落在该在的位置，保持住。";
+  const fix = w[0]==="pos" ? ("这个字要"+(r.fix||"再对准一点")+"，落笔前先看准中心点。")
+            : w[0]==="size" ? (r.ratio<1 ? "字写小了。笔画伸展开，把格子填满。"
+                                         : "字写大了，撑出格子了，往里收一收。")
+            : w[0]==="str"  ? ("第 "+r.worst+" 笔要"+(r.wfix||"再准一点")+"，这一笔应该从"+r.wreg+"起笔。")
+            : "笔顺记错了。我们回去把笔顺动画再看一遍。";
+  return r.total>=3 ? "再注意一点会更棒："+fix : fix;
+}
+function nextBtn(){
+  const i=cellIdx;
+  if(i<plan.length-1){
+    const k=plan[i+1]==="trace"?"描红":"默写";
+    return btn("下一格 · "+k+" →","",()=>runCell(i+1));
+  }
+  return btn("看这一行的结果 →","",finishAll);
+}
+function cellDone(){
+  awaiting=true;
+  const trace=(plan[cellIdx]==="trace");
+  const snap=ink.map(a=>a.slice());
+  if(trace){
+    /* 描红只看笔顺对不对——位置和大小是底字给的，评了没意义 */
+    const st = mistakes===0?3 : mistakes<=2?2 : 1;
+    cells[cellIdx]={kind:"trace", ink:snap, stars:st, mistakes:mistakes};
+    beep(st===3?"good":"tap"); renderRow();
+    const msg = mistakes===0 ? "笔顺全对，描得很好。" : "笔顺提示了 "+mistakes+" 次，再描一格试试。";
+    $("#hintbar").innerHTML=msg;
+    say(msg,true);
+    setControls(btn("这格重描","quiet",()=>runCell(cellIdx)), nextBtn());
+    return;
+  }
+  const r=score(cur,ink);
+  if(!r){ $("#hintbar").textContent="没记录到笔迹，再写一次试试。";
+          setControls(btn("再写一遍","",()=>runCell(cellIdx))); return; }
+  beep(r.total===3?"good":"tap");
+  drawOverlay(r);
+  cells[cellIdx]={kind:"write", ink:snap, stars:r.total, mistakes:mistakes,
+                  pos:r.pos, size:r.size, str:r.str};
+  renderRow();
+  if(r.total>starsOf(cur)){stars[cur]=r.total;save(K.stars,stars);refreshStars()}
+  const head=r.total===3?"写得真好！":r.total===2?"不错，还能更好。":"再练一次会更好。";
+  const adv=advice(r), line=head+"　"+adv;
+  $("#hintbar").innerHTML='<span class="legend"><span><i class="lg-t"></i>应该占的位置</span>'+
+    '<span><i class="lg-u"></i>你写的位置</span></span>';
+  $("#scorebox").innerHTML=
+    '<div class="score"><div class="score-top"><span class="score-stars" style="color:var(--amber)">'+
+    starStr(r.total)+'</span><h3>'+head+'</h3></div>'+
+    '<div class="advice"><span>'+adv+'</span><button id="replay" aria-label="再说一遍">🔊</button></div>'+
+    [["位置",r.posMsg,r.pos],["大小",r.sizeMsg,r.size],["间架",r.strMsg,r.str],
+     ["笔顺",r.ordMsg,mistakes===0?3:mistakes<=2?2:1]]
+      .map(([k,v,st])=>'<div class="metric"><span class="metric-k">'+k+'</span>'+
+        '<span class="metric-v">'+v+'</span><span class="metric-s" style="color:var(--amber)">'+
+        starStr(st)+'</span></div>').join("")+'</div>';
+  say(line,true);
+  const rp=$("#replay"); if(rp) rp.onclick=()=>say(line,true);
+  setControls(btn("这格重写","quiet",()=>runCell(cellIdx)), nextBtn());
+  $("#scorebox").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function finishAll(){
+  phase="done"; awaiting=true;
+  if(writer){ writer.cancelQuiz(); }
+  paintOverlay(null,false); renderRow();
+  const ws=cells.filter(c=>c&&c.kind==="write");
+  if(!ws.length){ goWatch(); return; }
+  const n=ws.length, avg=ws.reduce((a,e)=>a+e.stars,0)/n;
+  const dims=[["位置","pos","落笔前先找准中心点"],["大小","size","把笔画伸展开，填满格子"],
+              ["间架","str","对着笔顺表，看每一笔该从哪起"]]
+    .map(d=>[d[0], ws.reduce((a,e)=>a+e[d[1]],0)/n, d[2]]).sort((a,b)=>a[1]-b[1]);
+  let trend="";
+  if(n>=4){
+    const h=Math.ceil(n/2);
+    const f=ws.slice(0,h).reduce((a,e)=>a+e.stars,0)/h;
+    const l=ws.slice(h).reduce((a,e)=>a+e.stars,0)/(n-h);
+    trend = l-f>=.4 ? "越写越好，后面几格明显稳了。"
+          : f-l>=.4 ? "后面几格有点松，可能写累了，休息一下再练。" : "这一行发挥很稳定。";
+  }
+  const w=dims[0];
+  const line="默写了 "+n+" 格，平均 "+avg.toFixed(1)+" 颗星。"+trend+"最需要改的是"+w[0]+"，"+w[2]+"。";
+  $("#hintbar").innerHTML="";
+  $("#scorebox").innerHTML='<div class="score"><div class="score-top">'+
+    '<span class="score-stars" style="color:var(--amber)">'+starStr(Math.round(avg))+'</span>'+
+    '<h3>“'+cur+'” 写完一行</h3></div>'+
+    '<div class="advice"><span>'+line+'</span><button id="replay2" aria-label="再说一遍">🔊</button></div>'+
+    dims.map(d=>'<div class="metric"><span class="metric-k">'+d[0]+'</span>'+
+      '<span class="metric-v">'+n+' 格平均 '+d[1].toFixed(1)+' 星</span>'+
+      '<span class="metric-s" style="color:var(--amber)">'+starStr(Math.round(d[1]))+
+      '</span></div>').join("")+'</div>';
+  say(line,true);
+  const rp=$("#replay2"); if(rp) rp.onclick=()=>say(line,true);
+  const nx = curIdx<curList.length-1
+    ? btn("下一个字 「"+curList[curIdx+1]+"」 →","",()=>openChar(curList[curIdx+1],curList)) : null;
+  setControls(btn("再写一行","",()=>{buildPlan();goWatch()}), nx,
+              nx?null:btn("回目录","ghost",goHome));
+  $("#scorebox").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ── 打印字帖：每个字 = 笔顺分解行 + 练习行 ── */
+const P_GRID='<rect x="4" y="4" width="1016" height="1016" fill="#fff" stroke="#C8463C" stroke-width="6"/>'+
+  '<g stroke="#E8A9A3" stroke-width="4" stroke-dasharray="26 20">'+
+  '<line x1="512" y1="4" x2="512" y2="1020"/><line x1="4" y1="512" x2="1020" y2="512"/>'+
+  '<line x1="4" y1="4" x2="1020" y2="1020"/><line x1="1020" y1="4" x2="4" y2="1020"/></g>';
+function pSvg(u,inner){
+  return '<svg viewBox="0 0 1024 1024" style="width:'+u+';height:'+u+';flex:none">'+P_GRID+inner+'</svg>';
+}
+function pModel(ch,fill){
+  return '<g transform="'+XF+'" fill="'+fill+'">'+
+    D[ch].s.map(d=>'<path d="'+d+'"/>').join("")+'</g>';
+}
+/* 笔顺分解：画到第 i 笔，这一笔用红色，起笔处点一个红点 */
+function pOrder(ch,i){
+  const d=D[ch];
+  let g='<g transform="'+XF+'">';
+  for(let k=0;k<=i;k++)
+    g+='<path d="'+d.s[k]+'" fill="'+(k===i?"#C8463C":"#C6CCD0")+'"/>';
+  g+='</g>';
+  const m=d.m[i];
+  if(m&&m.length) g+='<circle cx="'+m[0][0]+'" cy="'+(900-m[0][1])+'" r="74" fill="#1B2530"/>';
+  return g;
+}
+function pBlock(ch,U,UO){
+  const d=D[ch];
+  const ord=d.s.map((_,i)=>
+    '<div class="p-oc">'+pSvg(UO,pOrder(ch,i))+'<span>'+(i+1)+'</span></div>').join("");
+  const kinds=["model","trace","trace","none","none"];
+  const row=kinds.map(k=>pSvg(U, k==="model"?pModel(ch,"#1B2530")
+                              : k==="trace"?pModel(ch,"#E3CFCC") : "")).join("");
+  return '<div class="p-ch"><div class="p-ch-h"><b>'+ch+'</b>　'+d.p+'　共 '+d.n+' 画'+
+    '　<i>黑点＝这一笔从哪里起笔</i></div>'+
+    '<div class="p-ord">'+ord+'</div><div class="p-row">'+row+'</div></div>';
+}
+function pPages(chars,title,U,UO,per){
+  let out="";
+  for(let i=0;i<chars.length;i+=per){
+    out+='<div class="p-page"><div class="p-title"><span>'+title+
+      '　（'+(Math.floor(i/per)+1)+'/'+Math.ceil(chars.length/per)+'）</span>'+
+      '<span>姓名 __________　日期 __________</span></div>'+
+      chars.slice(i,i+per).map(c=>pBlock(c,U,UO)).join("")+'</div>';
+  }
+  return out;
+}
+function openPrint(chars,title){
+  if(!chars.length) return;
+  if(chars.some(function(c){return !D[c]}))
+    return ensureChars(chars,function(){ openPrint(chars,title) });
+  const per=4, pages=Math.ceil(chars.length/per);
+  $("#title").textContent="打印字帖";
+  $("#view-print").innerHTML=
+    '<div class="panel no-print" style="margin-top:16px"><h3 class="pt">'+title+'　·　'+
+    chars.length+' 个字　·　'+pages+' 页</h3>'+
+    '<p class="note">每个字两行：上面是<b>笔顺分解</b>（黑点标出每一笔从哪里起笔），'+
+    '下面是<b>练习行</b>——1 格范字、2 格描红、2 格自己写。米字格 35mm，适合 5 岁的手。</p>'+
+    '<p class="note">点下面的按钮会打开系统打印窗口。没有打印机的话选「存储为 PDF」，'+
+    '发到手机拿去打印店印，几毛钱一张。</p>'+
+    (chars.length>60?'<p class="miss">选了 '+chars.length+' 个字，'+pages+
+      ' 页，下面的预览可能要等几秒才画完。</p>':'')+
+    '<div class="row"><button class="btn" id="do-print">打印 / 存为 PDF</button>'+
+    '<button class="btn ghost" id="print-back">返回</button></div></div>'+
+    '<h2 class="theme-h no-print">预览　<small style="font-weight:600;color:var(--ink-3)">'+
+    '下面就是打印出来的样子，全部 '+pages+' 页（可以横向滑动）</small></h2>'+
+    '<div class="p-scroll"><div id="printable"></div></div>';
+  show("#view-print");
+  $("#printable").innerHTML=pPages(chars,title,"35mm","17mm",per);
+  $("#do-print").onclick=()=>window.print();
+  $("#print-back").onclick=()=>goHome();
+}
+
+/* ── 听写：先测，再练 ── */
+const WORDS = window.WORDS || {};
+let dList=[], dIdx=0, dItems=[], dInk=[], dDraw=null, dSize=340;
+let dSrc=[], dShuffle=false;
+function shuffled(a){
+  const x=a.slice();
+  for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));
+    const t=x[i]; x[i]=x[j]; x[j]=t; }
+  return x;
+}
+
+function dictWords(ch){
+  const w=WORDS[ch];
+  return !w ? [] : (typeof w==="string" ? [w] : w);
+}
+function dSpeak(ch){
+  if(!window.speechSynthesis) return;          /* 听写就是靠听，不受「朗读」开关影响 */
+  try{ speechSynthesis.cancel(); }catch(e){}
+  try{
+    speechSynthesis.speak(utter(ch,.66));
+    /* 一个词有时还对不上，两个词基本就懂了：地，大地的地，土地的地 */
+    dictWords(ch).forEach(function(w){
+      speechSynthesis.speak(utter(w+"的"+ch,.82));
+    });
+  }catch(e){}
+}
+function dictSize(){
+  const w=Math.min($(".app").clientWidth-32,430);
+  return Math.round(Math.max(230,Math.min(w, window.innerHeight-330, 430)));
+}
+function dPaint(){
+  const el=$("#dink"); if(!el) return;
+  el.innerHTML=inkPaths(dDraw?dInk.concat([dDraw]):dInk, "var(--ink)");
+}
+function dBind(){
+  const g=$("#dgrid"), el=$("#dcatch");
+  if(!g||!el) return;
+  const pt=function(e){
+    const r=g.getBoundingClientRect();
+    return {x:(e.clientX-r.left)*1024/r.width, y:(e.clientY-r.top)*1024/r.height};
+  };
+  el.onpointerdown=function(e){
+    e.preventDefault();
+    try{ el.setPointerCapture(e.pointerId); }catch(x){}
+    dDraw=[pt(e)]; dPaint();
+  };
+  el.onpointermove=function(e){
+    if(!dDraw) return;
+    const q=pt(e), last=dDraw[dDraw.length-1];
+    if(Math.hypot(q.x-last.x,q.y-last.y)>6){ dDraw.push(q); dPaint(); }
+  };
+  el.onpointerup=el.onpointercancel=el.onpointerleave=function(){
+    if(!dDraw) return;
+    dInk.push(dDraw); dDraw=null; dPaint(); dCtl();
+  };
+}
+function dCtl(){
+  const has=dInk.length>0, i=dIdx;
+  const done=btn(has?"写好了 →":"写好了 →","",function(){ dNext(false) });
+  if(!has) done.disabled=true;
+  setIn("#dctl",
+    has?btn("撤销一笔","quiet",function(){ dInk.pop(); dPaint(); dCtl(); }):null,
+    has?btn("清空","quiet",function(){ dInk=[]; dPaint(); dCtl(); }):null,
+    btn("不会，跳过","ghost",function(){ dNext(true) }),
+    done);
+}
+/* shuffle=true：听写打乱顺序，免得她靠"第几个"猜；打印字帖仍按课本顺序 */
+function openDict(chars,shuffle){
+  if(!chars||!chars.length) return;
+  if(chars.some(function(c){return !D[c]}))
+    return ensureChars(chars,function(){ openDict(chars,shuffle) });
+  dSrc=chars.slice(); dShuffle=!!shuffle;
+  dList=shuffle?shuffled(chars):chars.slice(); dIdx=0;
+  dItems=dList.map(function(c){ return {ch:c, ink:[], skipped:false, ok:null}; });
+  show("#view-dict"); dRound();
+}
+function dRound(){
+  dInk=[]; dDraw=null; dSize=dictSize();
+  const it=dItems[dIdx], ch=it.ch;
+  $("#title").textContent="听写 "+(dIdx+1)+"/"+dItems.length;
+  $("#view-dict").innerHTML=
+    '<div class="dict-h"><span>第 <b>'+(dIdx+1)+'</b> / '+dItems.length+' 个</span>'+
+    '<button class="linkbtn" id="d-say">🔊 再念一遍</button></div>'+
+    '<div class="dict-py">'+D[ch].p+'</div>'+
+    '<div class="stage"><div class="gridwrap" id="dgrid" style="width:'+dSize+'px;height:'+dSize+'px">'+
+      '<svg class="deco" viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+'</svg>'+
+      '<svg class="deco" id="dink" viewBox="0 0 1024 1024" aria-hidden="true"></svg>'+
+      '<div class="dcatch" id="dcatch"></div></div></div>'+
+    '<div class="hintbar">听清楚了再写。<b>没有提示、没有笔顺</b>——这是考试，不是练习。</div>'+
+    '<div class="controls" id="dctl"></div>';
+  dBind(); dPaint(); dCtl();
+  $("#d-say").onclick=function(){ dSpeak(ch) };
+  setTimeout(function(){ dSpeak(ch) },250);
+}
+function dNext(skipped){
+  const it=dItems[dIdx];
+  it.ink=dInk.map(function(a){return a.slice()});
+  it.skipped=!!skipped;
+  it.ok = skipped ? false : true;     /* 默认算写对，家长只需要挑出错的 */
+  dIdx++;
+  if(dIdx>=dItems.length) dReview(); else dRound();
+}
+/* 自动提示：只用笔画数和外框，不需要笔画一一对应，所以自由书写也算得准 */
+function dHints(it){
+  if(it.skipped||!it.ink.length) return "空着没写";
+  const a=[], want=D[it.ch].n, n=it.ink.length;
+  a.push("写了 "+n+" 笔"+(n===want?"（笔数对）":"（这个字 "+want+" 笔）"));
+  const pts=[].concat.apply([], it.ink);
+  const ub=bbox(pts), b=D[it.ch].b;
+  const sw=Math.max(b[2]-b[0],1), sh=Math.max(b[3]-b[1],1);
+  const dx=ub.cx-(b[0]+b[2])/2, dy=ub.cy-(b[1]+b[3])/2;
+  if(Math.hypot(dx,dy)>95) a.push("整体偏"+dirName(dx,dy));
+  const r=Math.max(ub.w,ub.h)/Math.max(sw,sh);
+  if(r<.72) a.push("写小了"); else if(r>1.32) a.push("写大了");
+  return a.join("　·　");
+}
+function dReview(){
+  $("#title").textContent="批改";
+  const rows=dItems.map(function(it,i){
+    return '<div class="jrow" data-i="'+i+'"><div class="jpair">'+
+      '<div class="jc"><svg viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+
+        (it.ink.length?inkPaths(it.ink,"var(--ink)"):"")+'</svg><span>她写的</span></div>'+
+      '<div class="jc"><svg viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+
+        '<g transform="'+XF+'" fill="var(--ink-3)">'+
+        D[it.ch].s.map(function(d){return '<path d="'+d+'"/>'}).join("")+
+        '</g></svg><span>标准</span></div></div>'+
+      '<div class="jinfo"><div class="jch">'+it.ch+' <small>'+D[it.ch].p+
+        (dictWords(it.ch).length?('　'+dictWords(it.ch).join('／')):'')+'</small></div>'+
+      '<div class="note" style="margin:5px 0 0">'+dHints(it)+'</div>'+
+      '<div class="jbtns"><button class="jb ok'+(it.ok===true?" on":"")+'" data-j="1">✓ 写对了</button>'+
+      '<button class="jb no'+(it.ok===false?" on":"")+'" data-j="0">✗ 没写对</button>'+
+      '</div></div></div>';
+  }).join("");
+  $("#view-dict").innerHTML=
+    '<h2 class="theme-h" style="margin-top:16px">批改 · 共 '+dItems.length+' 个</h2>'+
+    '<p class="note">默认都算写对了，<b>只要把没写对的点出来</b>就行。空着跳过的已经标成没写对。</p>'+
+    rows+'<div class="controls" id="dctl"></div>';
+  $("#view-dict").onclick=function(e){
+    const b=e.target.closest(".jb"); if(!b) return;
+    const row=b.closest(".jrow"), i=+row.dataset.i;
+    dItems[i].ok = b.dataset.j==="1";
+    row.querySelectorAll(".jb").forEach(function(x){ x.classList.remove("on") });
+    b.classList.add("on"); beep("tap");
+  };
+  setIn("#dctl", btn("看结果 →","",dResult));
+  window.scrollTo(0,0);
+}
+function dResult(){
+  const wrong=dItems.filter(function(it){return it.ok===false}).map(function(it){return it.ch});
+  const n=dItems.length, ok=n-wrong.length;
+  $("#title").textContent="听写结果";
+  const line = wrong.length
+    ? ("写对 "+ok+" 个，有 "+wrong.length+" 个还不会：" + wrong.join("、") + "。我们来练一练。")
+    : ("全对！"+n+" 个字都写对了。");
+  $("#view-dict").innerHTML=
+    '<div class="score" style="margin-top:16px"><div class="score-top">'+
+    '<span class="score-stars" style="color:var(--amber)">'+(wrong.length?"":"★★★")+'</span>'+
+    '<h3>写对 '+ok+' / '+n+'</h3></div>'+
+    '<div class="advice"><span>'+line+'</span>'+
+    '<button id="d-replay" aria-label="再说一遍">🔊</button></div>'+
+    (wrong.length? '<div class="chips" style="margin-top:6px">'+
+      wrong.map(function(c){return '<button class="chip" data-ch="'+c+'"><span class="g">'+c+
+        '</span></button>'}).join("")+'</div>' : '')+
+    '</div><div class="controls" id="dctl"></div>';
+  say(line,true);
+  const rp=$("#d-replay"); if(rp) rp.onclick=function(){ say(line,true) };
+  setIn("#dctl",
+    wrong.length? btn("开始练这 "+wrong.length+" 个字 →","",function(){ openChar(wrong[0],wrong) }) : null,
+    btn("再听写一遍","quiet",function(){ openDict(dSrc,dShuffle) }),
+    btn("回目录","ghost",goHome));
+  $("#view-dict").onclick=function(e){
+    const c=e.target.closest("[data-ch]");
+    if(c) openChar(c.dataset.ch, wrong.length?wrong:dList);
+  };
+  window.scrollTo(0,0);
+}
+
+/* ── 导航 / 设置 ── */
+function goHome(){show("#view-home");renderSelBar();
+  $("#title").textContent="米字格练字本";if(writer)writer.cancelQuiz();
+  if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}}
+$("#btn-back").onclick=goHome;
+$("#btn-say").onclick=()=>speak(cur);
+const dlg=$("#dlg");
+$("#btn-close").onclick=()=>dlg.close();
+[["#sw-speak","speak"],["#sw-sound","sound"],["#sw-easy","easy"],
+ ["#sw-voice","voice"],["#sw-dot","dot"]].forEach(([sel,key])=>{
+  const el=$(sel);
+  el.setAttribute("aria-pressed",String(!!cfg[key]));
+  el.onclick=()=>{cfg[key]=!cfg[key];el.setAttribute("aria-pressed",String(cfg[key]));save(K.cfg,cfg);beep("tap")};
+});
+/* ── 备份 / 恢复 ── */
+function bakPayload(){
+  return JSON.stringify({v:1, t:new Date().toISOString().slice(0,10),
+    stars:stars, sel:load(K.sel,[]), cfg:cfg});
+}
+function bakWhen(){
+  const el=$("#bak-when"); if(!el) return;
+  const t=load("mzg.bakAt","");
+  el.textContent = t ? ("上次备份 "+t) : "从未备份 —— 建议存一份";
+  el.className = t ? "" : "bad";
+}
+/* Artifact 查看器把页面嵌在 iframe 里且禁止下载；部署到自己的网址后（顶层窗口）才可以。
+   window.claude 在未声明 capability 的 artifact 里不一定存在，所以用 iframe 判据兜底。 */
+let CAN_DOWNLOAD = true;
+try{ CAN_DOWNLOAD = (window.self===window.top) && !window.claude; }catch(e){ CAN_DOWNLOAD=false; }
+function openBak(){
+  $("#bak-out").value=bakPayload();
+  $("#bak-in").value=""; $("#bak-msg").textContent="";
+  const fb=$("#bak-file");
+  if(fb) fb.hidden=!CAN_DOWNLOAD;
+  const hint=$("#bak-hint");
+  if(hint) hint.textContent = CAN_DOWNLOAD ? "" : "（当前网址不支持下载文件，请用「复制」）";
+  dlg.close(); $("#dlgbak").showModal();
+}
+function markBaked(){ save("mzg.bakAt", new Date().toISOString().slice(0,16).replace("T"," ")); bakWhen(); }
+function fillVoiceSel(){
+  const el=$("#sel-voice"); if(!el) return;
+  const cur=cfg.voiceURI||"";
+  el.innerHTML='<option value="">系统默认</option>'+VOICES.map(function(v){
+    return '<option value="'+esc(v.voiceURI)+'">'+esc(v.name)+'</option>';
+  }).join("");
+  el.value = VOICES.some(function(v){return v.voiceURI===cur}) ? cur : "";
+  const m=$("#voice-msg"); if(m) m.style.display="none";
+  const tip=$("#voice-tip");
+  if(tip) tip.innerHTML =
+    '这台设备上有 <b>'+VOICES.length+'</b> 个中文声音。列表里只会出现<b>本机已经装了的</b>——'+
+    '网页没法自己加音色，所以每台设备看到的都不一样。<br>'+
+    '想要更自然的：<b>iPad 设置 → 辅助功能 → 朗读内容 → 声音 → 中文</b>（不同 iPadOS 版本'+
+    '措辞略有出入），把带下载标记的音色下下来，尤其是标「增强」或「高级」的。'+
+    '下完回到这里点<b>刷新</b>；还没出现就把这个页面关掉重开一次。';
+}
+$("#sel-voice").onchange=function(){ cfg.voiceURI=this.value; save(K.cfg,cfg); };
+$("#btn-vrefresh").onclick=function(){
+  const before=VOICES.length;
+  loadVoices(); fillVoiceSel(); beep("tap");
+  const m=$("#voice-msg"); if(!m) return;
+  m.style.display="block";
+  m.innerHTML = VOICES.length>before
+    ? '<b class="ok">找到 '+(VOICES.length-before)+' 个新声音。</b>'
+    : '还是 <b>'+before+'</b> 个，没找到新的。刚下载完的话，把页面<b>关掉重新打开</b>再看'+
+      '（iOS 有时要重开才认新装的语音）。';
+};
+$("#sel-rate").onchange=function(){ cfg.rate=parseFloat(this.value)||1; save(K.cfg,cfg); };
+$("#btn-try").onclick=function(){
+  if(!window.speechSynthesis) return;
+  try{ speechSynthesis.cancel();
+       speechSynthesis.speak(utter("天",.66));
+       speechSynthesis.speak(utter("今天的天",.82));
+       speechSynthesis.speak(utter("天空的天",.82)); }catch(e){}
+};
+$("#btn-set").onclick=function(){ loadVoices(); fillVoiceSel();
+  const rs=$("#sel-rate");
+  rs.value=String(cfg.rate||1);
+  if(!rs.value){ rs.value="1"; cfg.rate=1; save(K.cfg,cfg); }  /* 存的档位没了就回正常 */
+  dlg.showModal(); };
+$("#build-n").textContent = /^__/.test(BUILD) ? "本地开发版" : BUILD;
+$("#btn-update").onclick=function(){
+  /* 加个时间戳强制绕过缓存，等于"硬刷新" */
+  location.replace(location.pathname+"?v="+Date.now());
+};
+$("#btn-bak").onclick=openBak;
+$("#bak-close").onclick=()=>$("#dlgbak").close();
+$("#bak-copy").onclick=function(){
+  const ta=$("#bak-out");
+  ta.select(); ta.setSelectionRange(0,999999);
+  const done=function(){ $("#bak-msg").textContent="已复制，去备忘录粘贴保存。";
+                         $("#bak-msg").className="note ok"; markBaked(); beep("good"); };
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(ta.value).then(done,function(){
+      $("#bak-msg").textContent="复制没成功——长按上面的文字，选「全选」再「拷贝」。";
+      $("#bak-msg").className="note bad";
+    });
+  else { $("#bak-msg").textContent="已选中——长按选「拷贝」。"; $("#bak-msg").className="note"; markBaked(); }
+};
+$("#bak-file").onclick=function(){
+  if(!CAN_DOWNLOAD){
+    $("#bak-msg").textContent="当前网址不支持下载文件，请用「复制」。";
+    $("#bak-msg").className="note bad"; return;
+  }
+  try{
+    const b=new Blob([bakPayload()],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(b);
+    a.download="练字记录-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    $("#bak-msg").textContent="已存到「文件」App（看下载项）。如果没看到，请改用「复制」。";
+    $("#bak-msg").className="note"; markBaked();
+  }catch(e){
+    $("#bak-msg").textContent="存文件失败，请改用「复制」。"; $("#bak-msg").className="note bad";
+  }
+};
+$("#bak-do").onclick=function(){
+  const raw=$("#bak-in").value.trim();
+  const msg=$("#bak-msg");
+  if(!raw){ msg.textContent="先把备份内容贴进上面的框。"; msg.className="note bad"; return; }
+  let d;
+  try{ d=JSON.parse(raw); }catch(e){ d=null; }
+  if(!d||typeof d!=="object"||!("stars" in d||"sel" in d||"cfg" in d)){
+    msg.textContent="这段内容看不懂——要贴的是备份里那一整段（以 { 开头、} 结尾）。";
+    msg.className="note bad"; return;
+  }
+  if(d.stars&&typeof d.stars==="object"){ stars=d.stars; save(K.stars,stars); }
+  if(Array.isArray(d.sel)){ save(K.sel,d.sel); }
+  if(d.cfg&&typeof d.cfg==="object"){
+    cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,recOrder:"write"},d.cfg);
+    save(K.cfg,cfg);
+    [["#sw-speak","speak"],["#sw-sound","sound"],["#sw-easy","easy"],
+     ["#sw-voice","voice"],["#sw-dot","dot"]].forEach(function(x){
+       const el=$(x[0]); if(el) el.setAttribute("aria-pressed",String(!!cfg[x[1]]));
+     });
+  }
+  refreshStars(); renderHome();
+  $("#bak-out").value=bakPayload();   /* 恢复后把备份框也刷新，免得显示的是旧的 */
+  msg.textContent="恢复好了"+(d.t?("（备份日期 "+d.t+"）"):"")+"。";
+  msg.className="note ok"; beep("good");
+};
+
+if(window.speechSynthesis){
+  loadVoices();
+  try{ window.speechSynthesis.onvoiceschanged=function(){ loadVoices(); fillVoiceSel(); }; }catch(e){}
+}
+
+/* 请求持久化存储，减少 iOS 自动清理的概率 */
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+
+$("#btn-reset").onclick=()=>{
+  if(confirm("把所有星星清空？")){stars={};save(K.stars,stars);refreshStars();renderHome();}
+};
+let rt=null;
+window.addEventListener("resize",()=>{
+  clearTimeout(rt);
+  rt=setTimeout(()=>{
+    if(awaiting) return;              /* 正在看评分：转屏不重建，免得结果被冲掉 */
+    if(!$("#view-practice").hidden&&Math.abs(gridSize()-gsize)>12){
+      buildGrid(); if(phase==="do") runCell(cellIdx); else goWatch();
+    }},220);
+});
+$("#go-dict").onclick=function(){
+  const list=selOrdered();
+  if(list.length) openDict(list,true);      /* 听写打乱 */
+};
+$("#go-print").onclick=function(){
+  const list=selOrdered();
+  if(list.length) openPrint(list, "选中的字");
+};
+refreshStars(); renderHome(); bakWhen();
+})();
+</script>

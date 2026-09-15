@@ -1,0 +1,9 @@
+# Cloudflare Pages 缓存策略。
+# no-cache 不是"不缓存"，是"每次用之前先问服务器有没有变"——没变就回 304，很快，
+# 但保证 iPad 上永远不会拿到旧版本。
+/*
+  Cache-Control: no-cache
+/sd/*
+  Cache-Control: public, max-age=86400, must-revalidate
+/icon-*.png
+  Cache-Control: public, max-age=604800

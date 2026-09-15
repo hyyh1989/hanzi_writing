@@ -1,0 +1,11 @@
+# 可重新下载的原始数据 / 工具，不进仓库
+# build/cache  = 9574 个字的笔顺原始数据（46M），用 build/fetch_all.py 重下
+# jieba 词典   = 5M，只在生成听写组词时用一次
+build/cache/
+build/jieba.dict.utf8
+build/pinyin-pro.js
+
+# 工具的本地状态
+.wrangler/
+.DS_Store
+__pycache__/
