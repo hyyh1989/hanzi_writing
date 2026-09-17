@@ -66,9 +66,15 @@ def main():
     keep = lambda cs: [c for c in dict.fromkeys(cs) if c in CORE]
     lessons = [{'id': i, 'name': n, 'tip': t, 'chars': keep(cs)} for i, n, t, cs in LESSONS]
     themes = [{'name': n, 'chars': keep(cs)} for n, cs in THEMES]
-    xz = set(XIEZI)
-    textbook = [{'name': n, 'chars': keep(cs),
-                 'write': [c for c in keep(cs) if c in xz]} for n, cs in TEXTBOOK]
+    # 每个字只在【第一次出现的那一课】标"要求会写"。4 个蓝色多音字会在两课各出现
+    # 一次（长 就在写字表里），不去重的话第二课也会跟着标，把 100 字算成 101。
+    xz, marked = set(XIEZI), set()
+    textbook = []
+    for n, cs in TEXTBOOK:
+        chars = keep(cs)
+        write = [c for c in chars if c in xz and c not in marked]
+        marked.update(write)
+        textbook.append({'name': n, 'chars': chars, 'write': write})
 
     with io.open(os.path.join(APP, 'chardata.js'), 'w', encoding='utf-8') as f:
         f.write('window.CHARS=' + j(CORE) + ';\n')

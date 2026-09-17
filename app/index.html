@@ -704,8 +704,13 @@ function renderHome(){
       tab1("lm-stroke","按笔画难度",stroke)+'</div>':'')+
       (stroke
         ? '<p class="note" style="margin:-4px 0 12px">按<b>写字</b>难度从易到难，和课本顺序无关。</p>'
-        : '<p class="note" style="margin:-4px 0 12px">人教版一年级上册 <b>识字表</b>，按课本顺序，共 '+
-          TEXTBOOK.length+' 课 300 字。其中 100 个字本册要求会写，每课下面标了出来。</p>')+
+        : '<p class="note" style="margin:-4px 0 12px">人教版（2024 新版）一年级上册 <b>识字表</b>，'+
+          '按课本顺序，共 '+TEXTBOOK.length+' 课 '+
+          /* 字数从字库现算，别写死——换版本时写死的数字必忘记改。
+             要【去重】：4 个蓝色多音字在两课里各出现一次，不去重会算成 284。 */
+          (function(){const u={};TEXTBOOK.forEach(l=>l.chars.forEach(c=>u[c]=1));
+                      return Object.keys(u).length})()+
+          ' 字。其中 100 个字本册要求会写，每课下面标了出来。</p>')+
       gs.map(function(l,i){
         let tip=l.tip||"";
         if(!stroke){

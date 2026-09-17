@@ -10,3 +10,7 @@ build/pinyin-pro.js
 .claude/
 .DS_Store
 __pycache__/
+
+# 课本 PDF：版权页写明"仅供个人学习使用，未经授权不得另做他用"，不进仓库
+# 解析脚本在 build/parse_textbook_pdf.py，要重跑自己把 PDF 放回 textbooks/
+textbooks/
