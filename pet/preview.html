@@ -1,0 +1,149 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>练字本小猫</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;800&display=swap">
+<style>
+:root{
+  --paper:#FAFAF7; --card:#FFFFFF; --sunk:#F1F2EE;
+  --ink:#1B2530; --ink-2:#4B5761; --ink-3:#7C8891;
+  --line:#E0E2DB; --line-2:#EDEEE8;
+  --zhu:#CE3E33; --zhu-soft:rgba(206,62,51,.32);
+  --teal:#12796F; --teal-2:#0D5F57; --teal-soft:#E2F0EE;
+  --amber:#D98C1F; --amber-soft:#FAEDD6;
+  --shadow:0 1px 2px rgba(27,37,48,.05),0 10px 24px -14px rgba(27,37,48,.22);
+  --disp:"Baloo 2","PingFang SC","Hiragino Sans GB",sans-serif;
+  --body:"Nunito","PingFang SC","Hiragino Sans GB",sans-serif;
+  --han:"PingFang SC","Hiragino Sans GB",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
+  --ink:#EAEEF0; --ink-2:#AFB9C0; --ink-3:#828E96;
+  --line:#323C43; --line-2:#272F35;
+  --zhu:#E8695C; --zhu-soft:rgba(232,105,92,.36);
+  --teal:#4FC3B3; --teal-2:#6FD3C4; --teal-soft:#14312D;
+  --amber:#E8AC4B; --amber-soft:#2E2617;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
+  --ink:#EAEEF0; --ink-2:#AFB9C0; --ink-3:#828E96;
+  --line:#323C43; --line-2:#272F35;
+  --zhu:#E8695C; --zhu-soft:rgba(232,105,92,.36);
+  --teal:#4FC3B3; --teal-2:#6FD3C4; --teal-soft:#14312D;
+  --amber:#E8AC4B; --amber-soft:#2E2617;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);
+     -webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:22px 48px}
+h1{font-family:var(--disp);font-size:21px;margin:0 0 4px}
+h2{font-family:var(--disp);font-size:14px;color:var(--ink-2);margin:0 0 9px;
+   display:flex;align-items:center;gap:9px;letter-spacing:.02em}
+h2::after{content:"";flex:1;height:1px;background:var(--line-2)}
+.sub{font-size:13px;color:var(--ink-3);line-height:1.6;margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+      padding:16px;box-shadow:var(--shadow);margin-bottom:16px}
+.stage{display:grid;place-items:center;padding:6px 0 14px}
+.stage .box{width:250px;height:250px}
+.row{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0}
+.btn{background:var(--teal);color:#fff;font-weight:800;font-size:14.5px;
+     padding:12px 18px;border-radius:11px;min-height:48px}
+.btn.q{background:var(--sunk);color:var(--ink-2)}
+.btn.g{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+.seg{display:flex;gap:6px;background:var(--sunk);padding:4px;border-radius:12px;margin-top:14px}
+.seg button{flex:1;padding:10px 4px;border-radius:9px;font-weight:700;font-size:13.5px;
+            color:var(--ink-3)}
+.seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.note{font-size:12.5px;color:var(--ink-3);line-height:1.6;margin:12px 0 0}
+.note b{color:var(--ink-2)}
+
+/* 实际大小：和练字页一样的米字格，猫按真实尺寸放旁边 */
+.real{display:flex;align-items:flex-end;gap:14px;justify-content:center;padding:8px 0 4px}
+.mzg{width:200px;height:200px;flex:none;background:var(--card);border-radius:6px}
+.mzg rect{fill:none;stroke:var(--zhu);stroke-width:6}
+.mzg line{stroke:var(--zhu-soft);stroke-width:4;stroke-dasharray:24 18}
+.real .box{width:96px;height:96px;flex:none}
+.tiny{width:62px;height:62px}
+.sizes{display:flex;align-items:flex-end;gap:18px;justify-content:center;margin-top:14px}
+.sizes figure{margin:0;text-align:center}
+.sizes figcaption{font-size:11px;color:var(--ink-3);margin-top:4px}
+</style>
+
+<div class="wrap">
+  <h1>小猫 · 预览</h1>
+  <p class="sub">手画的 SVG，配色对齐练字本（朱红项圈、杏黄铃铛）。
+    现在是<b>安静陪着</b>的性格。<br>
+    你要判断的只有一件事：<b>这个可爱程度，够不够让她愿意为了见它而来练字。</b></p>
+
+  <div class="card">
+    <div class="stage"><div class="box" id="big"></div></div>
+    <div class="row">
+      <button class="btn" id="b-happy">写完一个字 · 开心</button>
+      <button class="btn g" id="b-cheer">鼓励一下</button>
+      <button class="btn q" id="b-idle">回到安静</button>
+    </div>
+    <div class="seg" role="tablist">
+      <button id="m-calm" aria-selected="true">安静陪着</button>
+      <button id="m-lively" aria-selected="false">活泼捧场</button>
+    </div>
+    <p class="note">两种性格是<b>同一只猫换参数</b>（浮动幅度、摇尾快慢、蹦多高、眨眼频率），
+      不是两套画。以后在游戏交互里想调成活泼的，改一行数值就行。<br>
+      「开心」带一声轻轻的叫——<b>合成的，不是音频文件</b>，不用下载不用联网。
+      <button class="btn q" id="b-mute" style="min-height:34px;padding:6px 12px;font-size:12.5px;margin-top:8px">声音：开</button></p>
+  </div>
+
+  <h2>实际大小</h2>
+  <div class="card">
+    <div class="real">
+      <svg class="mzg" viewBox="0 0 1024 1024" aria-hidden="true">
+        <rect x="8" y="8" width="1008" height="1008" rx="14"/>
+        <line x1="512" y1="8" x2="512" y2="1016"/><line x1="8" y1="512" x2="1016" y2="512"/>
+        <line x1="8" y1="8" x2="1016" y2="1016"/><line x1="1016" y1="8" x2="8" y2="1016"/>
+      </svg>
+      <div class="box" id="side"></div>
+    </div>
+    <p class="note">这是它在练字页里的真实大小——蹲在米字格旁边。
+      <b>小尺寸下还认得出、还可爱，才算过关。</b></p>
+    <div class="sizes">
+      <figure><div class="box tiny" id="t1"></div><figcaption>62px</figcaption></figure>
+      <figure><div class="box" style="width:44px;height:44px" id="t2"></div><figcaption>44px</figcaption></figure>
+    </div>
+  </div>
+
+  <p class="note">觉得可以 → 我接进练字页（只在写完一个字时开心一下，别的时候安静待着）。<br>
+    觉得不行 → 退回用 Kenney 的兔子／熊猫（CC0 最稳），或者从 ONWA 挑一只精致的静态猫。</p>
+</div>
+
+<script src="cat.js"></script>
+<script>
+(function(){
+  var big  = Cat.attach(document.getElementById("big"),  {mood:"calm"});
+  var side = Cat.attach(document.getElementById("side"), {mood:"calm"});
+  var t1   = Cat.attach(document.getElementById("t1"),   {mood:"calm"});
+  var t2   = Cat.attach(document.getElementById("t2"),   {mood:"calm"});
+  var all  = [big, side, t1, t2];
+  var sound = true;
+
+  document.getElementById("b-happy").onclick = function(){
+    big.happy(sound ? 1 : 0);
+    side.happy(0); t1.happy(0); t2.happy(0);
+  };
+  document.getElementById("b-cheer").onclick = function(){ all.forEach(function(c){c.cheer()}); };
+  document.getElementById("b-idle").onclick  = function(){ all.forEach(function(c){c.idle()}); };
+
+  function mood(name){
+    all.forEach(function(c){ c.setMood(name); });
+    document.getElementById("m-calm").setAttribute("aria-selected", String(name==="calm"));
+    document.getElementById("m-lively").setAttribute("aria-selected", String(name==="lively"));
+  }
+  document.getElementById("m-calm").onclick   = function(){ mood("calm"); };
+  document.getElementById("m-lively").onclick = function(){ mood("lively"); };
+
+  var mb = document.getElementById("b-mute");
+  mb.onclick = function(){ sound = !sound; mb.textContent = "声音：" + (sound ? "开" : "关"); };
+})();
+</script>
