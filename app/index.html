@@ -919,23 +919,28 @@ function runCell(i){
     ? "第 <b>"+(i+1)+"</b> 格 · 描红　顺着浅色的字描"
     : "第 <b>"+(i+1)+"</b> 格 · 默写　<b>写在正中间、填满格子</b>";
   renderRow();
-  /* 只在第一格描红、第一格默写时念起笔提示，免得每格都啰嗦 */
-  startQuiz(trace, i===0 || plan[i-1]!==plan[i]);
-  setControls(btn("这格重写","quiet",()=>runCell(i)), btn("看笔顺","ghost",goWatch));
+  /* 起笔提示只在这个字的第一格念一次，后面每格都念太啰嗦 */
+  startQuiz(trace, i===0, 0);
+  cellControls();
 }
-function startQuiz(trace,cue){
-  ink=[]; mistakes=0;
+/* from = 从第几笔开始（撤销后接着写）。注意 quiz() 是把选项【合并】进 writer 的
+   持久配置，quizStartStrokeNum 传过一次就会粘住，所以每次都要显式传。
+   ⚠️ 这里不再清空 ink / mistakes —— 撤销要保留前面的笔画，由 runCell 负责清。 */
+function startQuiz(trace,cue,from){
+  const start = from||0;
   const guide = trace || cfg.dot;
   writer.quiz({
+    quizStartStrokeNum:start,
     showOutline:trace,
     leniency:(cfg.easy?1.5:1.0)*(trace?1.25:1),
     showHintAfterMisses:trace?1:3,
     highlightOnComplete:false,      /* 别闪标准字形 */
     onMistake:d=>{
       mistakes++; beep("bad");
-      if(d.mistakesOnStroke===1){
+      /* 一格里最多提醒两次起笔，再多就只留红点不出声——越急躁越帮倒忙 */
+      if(d.mistakesOnStroke===1 && mistakes<=2){
         const st=strokeStart(d.strokeNum);
-        if(st) say("这一笔要从"+regionName(st.a)+"起笔。",true);
+        if(st) say("这一笔从"+regionName(st.a)+"起笔。",true);
       }
       paintOverlay(d.strokeNum,true);
     },
@@ -945,12 +950,27 @@ function startQuiz(trace,cue){
       /* drawnPath.points 是字形内部坐标(y 轴朝上)，与 medians 同一套 */
       ink.push(pts.map(q=>({x:q.x, y:900-q.y})));
       paintOverlay(d.strokesRemaining>0?d.strokeNum+1:null, guide);
+      cellControls();               /* 写了笔才出现「这笔重写」 */
     },
     onComplete:()=>{ paintOverlay(null,false); cellDone(); }
   });
-  paintOverlay(0,guide);
-  const s0=strokeStart(0);
-  if(guide&&cue&&s0) say("第一笔，从"+regionName(s0.a)+"起笔。",true);
+  paintOverlay(start,guide);
+  const s0=strokeStart(start);
+  if(guide&&cue&&s0) say((start?"接着写，":"第一笔，")+"从"+regionName(s0.a)+"起笔。",true);
+}
+/* 上一笔写得不满意，退回去重写这一笔 */
+function undoStroke(){
+  if(!ink.length) return;
+  ink.pop();
+  writer.cancelQuiz();
+  startQuiz(plan[cellIdx]==="trace", false, ink.length);
+  cellControls(); beep("tap");
+}
+function cellControls(){
+  setControls(
+    ink.length ? btn("↶ 这笔重写","quiet",undoStroke) : null,
+    btn("这格重写","quiet",()=>runCell(cellIdx)),
+    btn("看笔顺","ghost",goWatch));
 }
 
 /* ── 评分：位置 / 大小 / 间架 ── */
@@ -1055,7 +1075,7 @@ function cellDone(){
     beep(st===3?"good":"tap"); renderRow();
     const msg = mistakes===0 ? "笔顺全对，描得很好。" : "笔顺提示了 "+mistakes+" 次，再描一格试试。";
     $("#hintbar").innerHTML=msg;
-    say(msg,true);
+    say(mistakes===0 ? "很好，继续。" : "没关系，继续。", true);   /* 每格只给一句短的 */
     setControls(btn("这格重描","quiet",()=>runCell(cellIdx)), nextBtn());
     return;
   }
@@ -1081,8 +1101,9 @@ function cellDone(){
       .map(([k,v,st])=>'<div class="metric"><span class="metric-k">'+k+'</span>'+
         '<span class="metric-v">'+v+'</span><span class="metric-s" style="color:var(--amber)">'+
         starStr(st)+'</span></div>').join("")+'</div>';
-  say(line,true);
-  const rp=$("#replay"); if(rp) rp.onclick=()=>say(line,true);
+  /* 每格只说一句鼓励；具体怎么改留到整行写完再说，免得一个字被念六遍 */
+  say(r.total===3 ? "写得真好！" : r.total===2 ? "不错，继续。" : "没关系，再来一格。", true);
+  const rp=$("#replay"); if(rp) rp.onclick=()=>say(line,true);   /* 想听详细的自己点 🔊 */
   setControls(btn("这格重写","quiet",()=>runCell(cellIdx)), nextBtn());
   $("#scorebox").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
@@ -1105,7 +1126,9 @@ function finishAll(){
           : f-l>=.4 ? "后面几格有点松，可能写累了，休息一下再练。" : "这一行发挥很稳定。";
   }
   const w=dims[0];
-  const line="默写了 "+n+" 格，平均 "+avg.toFixed(1)+" 颗星。"+trend+"最需要改的是"+w[0]+"，"+w[2]+"。";
+  const line = avg>=2.6
+    ? ("默写了 "+n+" 格，平均 "+avg.toFixed(1)+" 颗星。"+trend+"写得很好，保持住。")
+    : ("默写了 "+n+" 格，平均 "+avg.toFixed(1)+" 颗星。"+trend+"最需要改的是"+w[0]+"，"+w[2]+"。");
   $("#hintbar").innerHTML="";
   $("#scorebox").innerHTML='<div class="score"><div class="score-top">'+
     '<span class="score-stars" style="color:var(--amber)">'+starStr(Math.round(avg))+'</span>'+
