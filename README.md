@@ -9,6 +9,7 @@
 | **线上地址（正式）** | https://hanzi-writing.pages.dev |
 | 预览地址（Claude 里改完先看） | https://claude.ai/artifact/5EQPQamRk8mMnu7dMJtdhu |
 | 代码 | `~/MyProjects/hanzi_writing/` |
+| 怎么下课本 PDF | [TEXTBOOKS.md](TEXTBOOKS.md) |
 
 ---
 
