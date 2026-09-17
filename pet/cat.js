@@ -35,14 +35,14 @@
       tailAmp: 7, tailDur: 4.4,
       bounce: 0.09, bounceDur: 700,
       blinkMin: 4200, blinkMax: 9000,
-      tiltDeg: 7, hearts: 3
+      tiltDeg: 7, hearts: 7
     },
     lively: {                     /* 活泼捧场——以后游戏里用 */
       floatAmp: 5.0, floatDur: 1.9,
       tailAmp: 17, tailDur: 1.5,
       bounce: 0.22, bounceDur: 520,
       blinkMin: 1800, blinkMax: 4200,
-      tiltDeg: 12, hearts: 5
+      tiltDeg: 12, hearts: 10
     }
   };
 
@@ -139,25 +139,37 @@
     '</g>' +
   '</g>' +
   /* 爱心在 cat-all 外面：跟着蹦会被挤压拉伸带歪 */
-  '<g class="cat-hearts">' +
-    heart('h1',  100, 28, 1.30, 0) +
-    heart('h2',   74, 36, 1.05, -14) +
-    heart('h3',  126, 36, 1.05, 14) +
-    heart('h4',   86, 24, 0.82, -22) +
-    heart('h5',  114, 24, 0.82, 22) +
-  '</g>' +
+  '<g class="cat-hearts">' + HEARTS.map(function (h, i) {
+    return heart(i + 1, h);
+  }).join('') + '</g>' +
 '</svg>';
   }
 
-  /* 一颗小爱心。dx = 上浮时往哪边飘 */
-  function heart(cls, x, y, scale, dx) {
+  /* 10 颗爱心的排布：x/y 起点、大小、飘向、升高、延迟都错开，
+     这样它们会前后叠着升起来，而不是整齐划一一排。
+     [x, y, scale, dx, dy, delay] */
+  var HEARTS = [
+    [100, 24, 1.85,   0, -52, 0.00],
+    [ 74, 34, 1.45, -20, -44, 0.07],
+    [126, 34, 1.45,  20, -44, 0.12],
+    [ 88, 18, 1.20, -34, -56, 0.18],
+    [112, 18, 1.20,  34, -56, 0.23],
+    [ 62, 44, 1.30, -30, -40, 0.29],
+    [138, 44, 1.30,  30, -40, 0.34],
+    [100, 12, 1.55, -10, -60, 0.40],
+    [ 78, 48, 1.00, -44, -36, 0.45],
+    [122, 48, 1.00,  44, -36, 0.50]
+  ];
+
+  /* 一颗小爱心 */
+  function heart(n, h) {
     var d = 'M0 4.2 C -5.6 -1.4, -5.6 -7, -2 -7 C -0.6 -7, 0 -5.9, 0 -5.3 ' +
             'C 0 -5.9, 0.6 -7, 2 -7 C 5.6 -7, 5.6 -1.4, 0 4.2 Z';
     /* 定位放外层 <g> 的 transform 属性，动画放内层 path 的 CSS transform——
        两者写在同一个元素上会互相覆盖（CSS 赢），爱心会跳到左上角。 */
-    return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')">' +
-             '<path class="cat-heart ' + cls + '" d="' + d + '" fill="' + C.nose + '" ' +
-                   'style="--dx:' + dx + 'px"/>' +
+    return '<g transform="translate(' + h[0] + ' ' + h[1] + ') scale(' + h[2] + ')">' +
+             '<path class="cat-heart hn' + n + '" d="' + d + '" fill="' + C.nose + '" ' +
+                   'style="--dx:' + h[3] + 'px;--dy:' + h[4] + 'px;--d:' + h[5] + 's"/>' +
            '</g>';
   }
 
@@ -179,15 +191,12 @@
 '.cat[data-act="happy"] .cat-cheek{opacity:.8}' +
 '.cat[data-act="cheer"] .cat-head{transform:rotate(var(--tilt))}' +
 '.cat-heart{opacity:0;transform-box:fill-box;transform-origin:50% 50%}' +
-'.cat[data-act="happy"] .cat-heart{animation:catHeart 1.15s ease-out}' +
-'.cat[data-act="happy"] .h2{animation-delay:.10s}' +
-'.cat[data-act="happy"] .h3{animation-delay:.19s}' +
-'.cat[data-act="happy"] .h4{animation-delay:.28s}' +
-'.cat[data-act="happy"] .h5{animation-delay:.36s}' +
-'.cat[data-hearts="3"] .h4,.cat[data-hearts="3"] .h5{display:none}' +
-'@keyframes catHeart{0%{opacity:0;transform:translate(0,4px) scale(.35)}' +
-  '22%{opacity:1;transform:translate(calc(var(--dx)*.35),-10px) scale(1.05)}' +
-  '100%{opacity:0;transform:translate(var(--dx),-34px) scale(.72)}}' +
+'.cat[data-act="happy"] .cat-heart{animation:catHeart 1.25s ease-out var(--d) both}' +
+/* 超出当前性格颗数的先藏起来 */
+'.cat[data-hearts="7"] .hn8,.cat[data-hearts="7"] .hn9,.cat[data-hearts="7"] .hn10{display:none}' +
+'@keyframes catHeart{0%{opacity:0;transform:translate(0,4px) scale(.3)}' +
+  '20%{opacity:1;transform:translate(calc(var(--dx)*.3),calc(var(--dy)*.22)) scale(1.1)}' +
+  '100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.75)}}' +
 '@keyframes catFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--float-amp)*-1px))}}' +
 '@keyframes catTail{0%,100%{transform:rotate(calc(var(--tail-amp)*-1deg))}' +
                   '50%{transform:rotate(var(--tail-amp))}}' +
@@ -300,7 +309,7 @@
       setMood: applyMood,
       idle: function () { clearTimeout(actTimer); el.dataset.act = ""; el.dataset.eyes = "open"; },
       happy: function (vol) {
-        act("happy", "glad", Math.max(mood.bounceDur, 1600));   /* 撑到爱心飘完 */
+        act("happy", "glad", Math.max(mood.bounceDur, 1900));   /* 撑到最后一颗爱心飘完 */
         meow(vol == null ? 1 : vol);
       },
       cheer: function () { act("cheer", "open", 1400); },
