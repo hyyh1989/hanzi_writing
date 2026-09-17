@@ -35,14 +35,14 @@
       tailAmp: 7, tailDur: 4.4,
       bounce: 0.09, bounceDur: 700,
       blinkMin: 4200, blinkMax: 9000,
-      tiltDeg: 7
+      tiltDeg: 7, hearts: 3
     },
     lively: {                     /* 活泼捧场——以后游戏里用 */
       floatAmp: 5.0, floatDur: 1.9,
       tailAmp: 17, tailDur: 1.5,
       bounce: 0.22, bounceDur: 520,
       blinkMin: 1800, blinkMax: 4200,
-      tiltDeg: 12
+      tiltDeg: 12, hearts: 5
     }
   };
 
@@ -138,7 +138,27 @@
       '</g>' +
     '</g>' +
   '</g>' +
+  /* 爱心在 cat-all 外面：跟着蹦会被挤压拉伸带歪 */
+  '<g class="cat-hearts">' +
+    heart('h1',  100, 28, 1.30, 0) +
+    heart('h2',   74, 36, 1.05, -14) +
+    heart('h3',  126, 36, 1.05, 14) +
+    heart('h4',   86, 24, 0.82, -22) +
+    heart('h5',  114, 24, 0.82, 22) +
+  '</g>' +
 '</svg>';
+  }
+
+  /* 一颗小爱心。dx = 上浮时往哪边飘 */
+  function heart(cls, x, y, scale, dx) {
+    var d = 'M0 4.2 C -5.6 -1.4, -5.6 -7, -2 -7 C -0.6 -7, 0 -5.9, 0 -5.3 ' +
+            'C 0 -5.9, 0.6 -7, 2 -7 C 5.6 -7, 5.6 -1.4, 0 4.2 Z';
+    /* 定位放外层 <g> 的 transform 属性，动画放内层 path 的 CSS transform——
+       两者写在同一个元素上会互相覆盖（CSS 赢），爱心会跳到左上角。 */
+    return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ')">' +
+             '<path class="cat-heart ' + cls + '" d="' + d + '" fill="' + C.nose + '" ' +
+                   'style="--dx:' + dx + 'px"/>' +
+           '</g>';
   }
 
   var CSS = '' +
@@ -158,6 +178,16 @@
 '.cat[data-act="happy"] .cat-tail{animation-duration:calc(var(--tail-dur)/3)}' +
 '.cat[data-act="happy"] .cat-cheek{opacity:.8}' +
 '.cat[data-act="cheer"] .cat-head{transform:rotate(var(--tilt))}' +
+'.cat-heart{opacity:0;transform-box:fill-box;transform-origin:50% 50%}' +
+'.cat[data-act="happy"] .cat-heart{animation:catHeart 1.15s ease-out}' +
+'.cat[data-act="happy"] .h2{animation-delay:.10s}' +
+'.cat[data-act="happy"] .h3{animation-delay:.19s}' +
+'.cat[data-act="happy"] .h4{animation-delay:.28s}' +
+'.cat[data-act="happy"] .h5{animation-delay:.36s}' +
+'.cat[data-hearts="3"] .h4,.cat[data-hearts="3"] .h5{display:none}' +
+'@keyframes catHeart{0%{opacity:0;transform:translate(0,4px) scale(.35)}' +
+  '22%{opacity:1;transform:translate(calc(var(--dx)*.35),-10px) scale(1.05)}' +
+  '100%{opacity:0;transform:translate(var(--dx),-34px) scale(.72)}}' +
 '@keyframes catFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--float-amp)*-1px))}}' +
 '@keyframes catTail{0%,100%{transform:rotate(calc(var(--tail-amp)*-1deg))}' +
                   '50%{transform:rotate(var(--tail-amp))}}' +
@@ -166,7 +196,7 @@
   '48%{transform:translateY(calc(var(--bounce)*-64px)) scale(calc(1 - var(--bounce)*.6),calc(1 + var(--bounce)*.6))}' +
   '76%{transform:translateY(0) scale(calc(1 + var(--bounce)*.5),calc(1 - var(--bounce)*.5))}' +
   '100%{transform:translateY(0) scale(1,1)}}' +
-'@media (prefers-reduced-motion:reduce){.cat-all,.cat-tail{animation:none}}';
+'@media (prefers-reduced-motion:reduce){.cat-all,.cat-tail,.cat-heart{animation:none}}';
 
   function injectCSS() {
     if (document.getElementById("cat-css")) return;
@@ -176,7 +206,26 @@
     document.head.appendChild(s);
   }
 
-  /* 一声轻轻的叫。不是真猫叫——是合成的两段小音，不用音频文件、不用联网。 */
+  /* 叫声：优先放真猫叫（CC0 录音，见 meow.wav 旁注），放不出来再退回合成音。
+     iOS 要求音频由用户操作触发——这里的调用链都始于孩子的一次落笔，没问题。 */
+  var meowEl = null, meowBad = false;
+  function meow(vol) {
+    if (!vol) return;
+    if (meowBad) return chirp(vol);
+    try {
+      if (!meowEl) {
+        meowEl = new Audio(root.Cat.soundURL);
+        meowEl.preload = "auto";
+        meowEl.addEventListener("error", function () { meowBad = true; });
+      }
+      meowEl.volume = Math.max(0, Math.min(1, vol * 0.75));
+      meowEl.currentTime = 0;
+      var p = meowEl.play();
+      if (p && p.catch) p.catch(function () { meowBad = true; chirp(vol); });
+    } catch (e) { meowBad = true; chirp(vol); }
+  }
+
+  /* 合成的兜底音：不是猫叫，只是一声可爱的小音 */
   var ac = null;
   function chirp(vol) {
     if (!vol) return;
@@ -214,6 +263,7 @@
       el.style.setProperty("--bounce", mood.bounce);
       el.style.setProperty("--bounce-dur", mood.bounceDur + "ms");
       el.style.setProperty("--tilt", mood.tiltDeg + "deg");
+      el.dataset.hearts = mood.hearts;
       scheduleBlink();
     }
     function scheduleBlink() {
@@ -249,11 +299,18 @@
       el: el,
       setMood: applyMood,
       idle: function () { clearTimeout(actTimer); el.dataset.act = ""; el.dataset.eyes = "open"; },
-      happy: function (vol) { act("happy", "glad", Math.max(mood.bounceDur, 900)); chirp(vol == null ? 1 : vol); },
+      happy: function (vol) {
+        act("happy", "glad", Math.max(mood.bounceDur, 1600));   /* 撑到爱心飘完 */
+        meow(vol == null ? 1 : vol);
+      },
       cheer: function () { act("cheer", "open", 1400); },
       destroy: function () { clearTimeout(timer); clearTimeout(actTimer); host.innerHTML = ""; }
     };
   }
 
-  root.Cat = { svg: svg, attach: attach, MOODS: MOODS, colors: C };
+  root.Cat = {
+    svg: svg, attach: attach, MOODS: MOODS, colors: C,
+    /* 猫叫文件位置。放到别的目录用时改这个（例如 "pet/meow.wav"） */
+    soundURL: "meow.wav"
+  };
 })(window);
