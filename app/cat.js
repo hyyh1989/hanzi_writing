@@ -190,8 +190,14 @@
 '.cat[data-act="happy"] .cat-tail{animation-duration:calc(var(--tail-dur)/3)}' +
 '.cat[data-act="happy"] .cat-cheek{opacity:.8}' +
 '.cat[data-act="cheer"] .cat-head{transform:rotate(var(--tilt))}' +
+/* praise = 写好一格的小反应：只歪一下头 + 2 颗爱心，不蹦也不叫。
+   和写完整个字的 happy（蹦 + 7 颗 + 猫叫）刻意拉开差距。 */
+'.cat[data-act="praise"] .cat-head{transform:rotate(calc(var(--tilt)*-.55))}' +
+'.cat[data-act="praise"] .cat-cheek{opacity:.7}' +
 '.cat-heart{opacity:0;transform-box:fill-box;transform-origin:50% 50%}' +
 '.cat[data-act="happy"] .cat-heart{animation:catHeart 1.25s ease-out var(--d) both}' +
+'.cat[data-act="praise"] .hn2,.cat[data-act="praise"] .hn3'+
+  '{animation:catHeart 1.5s ease-out var(--d) both}' +
 /* 超出当前性格颗数的先藏起来 */
 '.cat[data-hearts="7"] .hn8,.cat[data-hearts="7"] .hn9,.cat[data-hearts="7"] .hn10{display:none}' +
 '@keyframes catHeart{0%{opacity:0;transform:translate(0,4px) scale(.3)}' +
@@ -316,6 +322,8 @@
         meow(vol == null ? 1 : vol);
       },
       cheer: function () { act("cheer", "open", 1400); },
+      /* 写好一格时的小反应。无声——这是给孩子的余光看的，不该打断她写下一格。 */
+      praise: function () { act("praise", "glad", 1800); },
       destroy: function () { clearTimeout(timer); clearTimeout(actTimer); host.innerHTML = ""; }
     };
   }

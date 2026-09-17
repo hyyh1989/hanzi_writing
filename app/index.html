@@ -882,7 +882,13 @@ function petOn(){
   placePet();
 }
 function petOff(){ if(pet){ pet.destroy(); pet=null; } }
-function petHappy(){ if(pet) pet.happy(1); }
+function petHappy(){ if(pet) pet.happy(1); }          /* 写完整个字：蹦 + 7 颗爱心 + 猫叫 */
+function petPraise(){ if(pet) pet.praise(); }         /* 写好一格：歪头 + 2 颗爱心，无声 */
+/* 一格「写得好」的线。用 位置/大小/间架 三项的【平均】，不是 r.total：
+   total 会被 mistakes>=4 扣一星，那是笔顺问题，不该连坐把爱心也扣掉。
+   2.5 意味着至少两项满星（3+3+2=2.67 过，3+2+2=2.33 不过）。
+   这条线是唯一的旋钮 —— 看孩子实际拿到的频率再调，改这一个数就行。 */
+const PRAISE_AT=2.5;
 
 function btn(label,cls,fn){
   const b=document.createElement("button"); b.className="btn "+(cls||"");
@@ -1134,6 +1140,7 @@ function cellDone(){
       .map(([k,v,st])=>'<div class="metric"><span class="metric-k">'+k+'</span>'+
         '<span class="metric-v">'+v+'</span><span class="metric-s" style="color:var(--amber)">'+
         starStr(st)+'</span></div>').join("")+'</div>';
+  if((r.pos+r.size+r.str)/3>=PRAISE_AT) petPraise();
   /* 格与格之间【完全不出声】—— 孩子反馈「不错，继续」这类也太频繁了（2026-09-17）。
      评价只在整个字写完时说一次（finishAll）。这里的内容照常显示在屏幕上给家长看，
      想听单格点评就点分卡上的 🔊。 */
