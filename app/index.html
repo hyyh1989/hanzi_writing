@@ -1109,7 +1109,6 @@ function cellDone(){
     beep(st===3?"good":"tap"); renderRow();
     const msg = mistakes===0 ? "笔顺全对，描得很好。" : "笔顺提示了 "+mistakes+" 次，再描一格试试。";
     $("#hintbar").innerHTML=msg;
-    say(mistakes===0 ? "很好，继续。" : "没关系，继续。", true);   /* 每格只给一句短的 */
     setControls(btn("这格重描","quiet",()=>runCell(cellIdx)), nextBtn());
     return;
   }
@@ -1135,9 +1134,10 @@ function cellDone(){
       .map(([k,v,st])=>'<div class="metric"><span class="metric-k">'+k+'</span>'+
         '<span class="metric-v">'+v+'</span><span class="metric-s" style="color:var(--amber)">'+
         starStr(st)+'</span></div>').join("")+'</div>';
-  /* 每格只说一句鼓励；具体怎么改留到整行写完再说，免得一个字被念六遍 */
-  say(r.total===3 ? "写得真好！" : r.total===2 ? "不错，继续。" : "没关系，再来一格。", true);
-  const rp=$("#replay"); if(rp) rp.onclick=()=>say(line,true);   /* 想听详细的自己点 🔊 */
+  /* 格与格之间【完全不出声】—— 孩子反馈「不错，继续」这类也太频繁了（2026-09-17）。
+     评价只在整个字写完时说一次（finishAll）。这里的内容照常显示在屏幕上给家长看，
+     想听单格点评就点分卡上的 🔊。 */
+  const rp=$("#replay"); if(rp) rp.onclick=()=>say(line,true);
   setControls(btn("这格重写","quiet",()=>runCell(cellIdx)), nextBtn());
   $("#scorebox").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
