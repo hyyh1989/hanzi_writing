@@ -7,7 +7,7 @@
 | | |
 |---|---|
 | **线上地址（正式）** | https://hanzi-writing.pages.dev |
-| 预览地址（Claude 里改完先看） | https://claude.ai/code/artifact/2243a2cf-b820-49d3-949d-a2460996ecdc |
+| 预览地址（Claude 里改完先看） | https://claude.ai/artifact/5EQPQamRk8mMnu7dMJtdhu |
 | 代码 | `~/MyProjects/hanzi_writing/` |
 
 ---

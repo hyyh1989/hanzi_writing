@@ -7,7 +7,7 @@
 
 - 正式地址（用户日常用）：https://hanzi-writing.pages.dev
 - 预览地址（Artifact，改完先发这里给用户看）：
-  https://claude.ai/code/artifact/2243a2cf-b820-49d3-949d-a2460996ecdc
+  https://claude.ai/artifact/5EQPQamRk8mMnu7dMJtdhu
 
 ## 使用者背景
 
@@ -35,8 +35,11 @@ head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字�
 | `build/make_icons.py` | 它自己 | `icon-*.png` |
 
 发布两条路：`build/deploy.sh`（Cloudflare Pages，正式）和 Artifact 工具（预览）。
-Artifact 发布时 `files` 要带上改动过的生成物；源文件必须在工作目录或 scratchpad 下，
-本项目不在 quant_system 里，**所以发布前先把 `app/` 镜像到 scratchpad 再推**。
+Artifact 发布时 `files` 要带上改动过的生成物。
+
+> 2026-09-17 起会话工作目录就是本仓库，`app/` 在工作目录下，**可以直接发布**。
+> 在此之前工作目录是 `quant_system`，`app/` 不在其下，每次发布都得先镜像到 scratchpad——
+> 那个绕路已经不需要了。
 
 ---
 

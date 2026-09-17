@@ -7,5 +7,6 @@ build/pinyin-pro.js
 
 # 工具的本地状态
 .wrangler/
+.claude/
 .DS_Store
 __pycache__/
