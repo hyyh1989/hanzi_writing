@@ -1,6 +1,9 @@
+> 文件位置：`app/cat.js` + `app/meow.wav`（放在部署目录里，练字页直接引用）。
+> `pet/` 下只剩这份说明和 `preview.html` 评审页。
+
 # 素材出处
 
-## 小猫形象 `cat.js`
+## 小猫形象 `app/cat.js`
 
 **自己画的**（SVG，2026-09-17）。没有用任何第三方素材，无授权限制。
 
@@ -17,7 +20,7 @@
 结论：游戏素材包做的是「在世界里走动的贴图」，我们要的是「正面朝着孩子做反应的角色」，
 是两个品类。而且 SVG 分部件才能各动各的（眨眼、摇尾巴、飘爱心），PNG 做不到。
 
-## 猫叫 `meow.wav`
+## 猫叫 `app/meow.wav`
 
 来源：[**Sweet kitty meow**](https://mixkit.co/free-sound-effects/cat/) — Mixkit（Envato 旗下）。
 

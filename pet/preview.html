@@ -121,9 +121,12 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
     觉得不行 → 退回用 Kenney 的兔子／熊猫（CC0 最稳），或者从 ONWA 挑一只精致的静态猫。</p>
 </div>
 
-<script src="cat.js"></script>
+<script src="../app/cat.js"></script>
 <script>
 (function(){
+  /* cat.js 和 meow.wav 已经搬进 app/（那是部署目录）。
+     soundURL 是相对【页面】解析的，这个页面在 pet/，所以要自己指回去。 */
+  Cat.soundURL = "../app/meow.wav";
   var big  = Cat.attach(document.getElementById("big"),  {mood:"calm"});
   var side = Cat.attach(document.getElementById("side"), {mood:"calm"});
   var t1   = Cat.attach(document.getElementById("t1"),   {mood:"calm"});

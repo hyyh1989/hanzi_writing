@@ -24,8 +24,8 @@
 单文件 app，无框架、无构建步骤。`app/index.html` 按顺序是：
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
-**`app/` 下除 `index.html`、`hanzi-writer.min.js`、`_headers`、`manifest.webmanifest`
-以外都是生成物，不要手改。** 源文件在 `build/`：
+**`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`meow.wav`、`_headers`、
+`manifest.webmanifest` 以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
 |---|---|---|
@@ -42,6 +42,35 @@ Artifact 发布时 `files` 要带上改动过的生成物。
 > 那个绕路已经不需要了。
 
 ---
+
+---
+
+## 陪伴小猫（2026-09-17 上线）
+
+`app/cat.js` —— 手画的 SVG 猫 + 情绪动画，独立模块，`window.Cat.attach(host,{mood})`
+返回 `{setMood, idle, happy(vol), cheer, destroy}`。素材出处和授权在 `pet/CREDITS.md`，
+`pet/preview.html` 是评审页（它在 app/ 外面，所以要自己设 `Cat.soundURL="../app/meow.wav"`）。
+
+**和用户定过的设计约定，别自作主张改：**
+
+1. **只陪伴，不评分。** 写三星和写一星，猫的反应**完全一样**。
+   成长只和**来练字的天数**挂钩（还没做）。绝不能变成「写得好猫才开心」——
+   那等于把压力又加回来，正是这个功能要避开的东西。
+2. **只在写完一整个字时开心一次**（`finishAll` → `petHappy()`），冒爱心 + 叫一声。
+   每一格写完、每一笔对错，猫都**不出声不动**。
+3. **性格是「安静陪着」**（`mood:"calm"`）。`lively` 那套参数留着给以后的独立小游戏用。
+4. 猫是装饰：`pointer-events:none`，永远不能挡住写字区或按钮。
+
+**布局**：`placePet()` 算米字格两边剩多少地方——够宽（≥54px）就绝对定位蹲在格子右边，
+**米字格必须保持居中，不能被猫挤偏**；窄屏没地方就整个挪进 `.pr-head` 标题行缩到 44px。
+`buildGrid()` 只重写 `#gridwrap` 的内容，`#petbox` 在 `.stage` 里活得好好的，
+但转屏后要调 `placePet()` 重算位置。
+
+**音量 `VOL=0.35`**（cat.js 顶部）。0.75 太响，用户真机听过后要求调小的。
+这是陪伴音不是提示音，宁可小。放不出来会退回合成音 `chirp()`，两者同比例。
+
+⚠️ **`meow.wav` 是 Mixkit 授权，不能和源码一起再分发。** 部署成网页没问题，
+但这个仓库**要公开到 GitHub 之前必须把它拿掉**。详见 `pet/CREDITS.md`。
 
 ## 踩过的坑（别再踩一遍）
 

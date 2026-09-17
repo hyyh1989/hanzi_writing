@@ -215,8 +215,11 @@
     document.head.appendChild(s);
   }
 
-  /* 叫声：优先放真猫叫（CC0 录音，见 meow.wav 旁注），放不出来再退回合成音。
-     iOS 要求音频由用户操作触发——这里的调用链都始于孩子的一次落笔，没问题。 */
+  /* 叫声：优先放真猫叫（见 pet/CREDITS.md），放不出来再退回合成音。
+     iOS 要求音频由用户操作触发——这里的调用链都始于孩子的一次点击，没问题。
+     VOL = 音量上限。这是只陪着的猫，不是提示音，宁可小一点：
+     0.75 → 0.35 是用户听过真机后要求调的（2026-09-17）。 */
+  var VOL = 0.35;
   var meowEl = null, meowBad = false;
   function meow(vol) {
     if (!vol) return;
@@ -227,7 +230,7 @@
         meowEl.preload = "auto";
         meowEl.addEventListener("error", function () { meowBad = true; });
       }
-      meowEl.volume = Math.max(0, Math.min(1, vol * 0.75));
+      meowEl.volume = Math.max(0, Math.min(1, vol * VOL));
       meowEl.currentTime = 0;
       var p = meowEl.play();
       if (p && p.catch) p.catch(function () { meowBad = true; chirp(vol); });
@@ -249,7 +252,7 @@
       o.frequency.exponentialRampToValueAtTime(560, t + 0.30);
       f.type = "lowpass"; f.frequency.value = 2400;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.09 * vol, t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.042 * vol, t + 0.04);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
       o.connect(f); f.connect(g); g.connect(ac.destination);
       o.start(t); o.stop(t + 0.36);
@@ -319,7 +322,8 @@
 
   root.Cat = {
     svg: svg, attach: attach, MOODS: MOODS, colors: C,
-    /* 猫叫文件位置。放到别的目录用时改这个（例如 "pet/meow.wav"） */
+    /* 猫叫文件位置，相对【页面】而不是本脚本。app/ 下的页面用默认值即可；
+       pet/preview.html 这种别处的页面要自己覆盖成 "../app/meow.wav"。 */
     soundURL: "meow.wav"
   };
 })(window);
