@@ -64,6 +64,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 .iconbtn{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;
          justify-content:center;text-align:center;font-size:18px;color:var(--ink-2);flex:none}
 .iconbtn:hover{background:var(--sunk)}
+/* 「要多练」标记按钮。用青色不用朱红——朱红在这个 app 里=错，而"要多练"不是错，别让孩子看见红色就紧张。 */
+.markbtn{flex:none;font-size:12.5px;font-weight:800;padding:0 11px;min-height:40px;
+         border-radius:11px;background:var(--sunk);color:var(--ink-2);white-space:nowrap}
+.markbtn.on{background:var(--teal);color:#fff}
 .starcount{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--amber);
            background:var(--amber-soft);padding:5px 11px;border-radius:999px;white-space:nowrap;
            font-variant-numeric:tabular-nums}
@@ -103,11 +107,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
       color:#fff;background:var(--paper);line-height:1}
 .ubox.all{background:var(--teal);border-color:var(--teal)}
 .ubox.some{background:var(--amber);border-color:var(--amber)}
-.wrongbank{border-color:var(--zhu);background:var(--zhu-bg)}
-.wrongbank h3{color:var(--zhu)}
-.wrongbank .lesson-k{color:var(--zhu);background:var(--card)}
+/* 这张卡以前叫「错字库」用朱红，现在叫「要多练的字」——来源不只是写错，
+   还有家长主动标的。改成青色：这不是一张"错题红榜"，别让她一打开就紧张。 */
+.wrongbank{border-color:var(--teal);background:var(--teal-soft)}
+.wrongbank h3{color:var(--teal-2)}
+.wrongbank .lesson-k{color:var(--teal-2);background:var(--card)}
 .wrongbank .chip{background:var(--card)}
-.chip .dot.wn{font-size:10px;font-weight:800;color:var(--zhu);letter-spacing:0;
+.chip .dot.wn{font-size:10px;font-weight:800;color:var(--teal-2);letter-spacing:0;
               right:4px;bottom:2px}
 .chip.pick.del{border-color:var(--bad)}
 .chip.pick.del .dot.wn{color:var(--bad)}
@@ -340,6 +346,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
         <div class="pr-sub" id="pr-sub">共 6 画</div>
       </div>
       <button class="iconbtn" id="btn-say" aria-label="朗读这个字">🔊</button>
+      <button class="markbtn" id="btn-mark">＋多练</button>
     </div>
     <div class="rowstrip" id="rowstrip"></div>
     <h2 class="strip-h">笔顺表　<small>照着这个写</small></h2>
@@ -592,12 +599,28 @@ function chipsHTML(chars){
 function lessonSets(){ return TEXTBOOK.length?TEXTBOOK:LESSONS; }
 function groups(){ return cfg.lessonMode==="stroke" ? LESSONS : lessonSets(); }
 
-/* ── 错字库：任何一次听写写错就攒进来，不自动删 ── */
+/* ── 「要多练的字」：听写写错自动进；也可以在练字页手动标记。都不自动删。
+      ⚠️ 存储键仍是 mzg.wrong —— 改键名会把用户已攒的字全丢了。 ── */
 function wrongAdd(ch){
   const e=wrong[ch]||{n:0,t:""};
   e.n=(e.n||0)+1;
   e.t=new Date().toISOString().slice(0,10);
   wrong[ch]=e;
+}
+/* 手动标记：在描红/默写页把当前这个字加进「要多练的字」。
+   和听写自动加进来的是同一个库（存储键仍是 mzg.wrong，改名会丢历史数据）。 */
+function markToggle(){
+  if(!cur) return;
+  if(wrong[cur]){ delete wrong[cur]; beep("tap"); }
+  else { wrongAdd(cur); beep("good"); }
+  save(K.wrong,wrong); markBtn();
+}
+function markBtn(){
+  const b=$("#btn-mark"); if(!b) return;
+  const on=!!wrong[cur];
+  b.className="markbtn"+(on?" on":"");
+  b.textContent=on?"✓ 要多练":"＋多练";
+  b.setAttribute("aria-label", on?"已加入要多练的字，点一下移出":"把这个字加进要多练的字");
 }
 function wrongList(){
   return Object.keys(wrong).filter(has).sort(function(a,b){
@@ -616,7 +639,7 @@ function selOrdered(){
   lessonSets().forEach(function(l){
     l.chars.forEach(function(c){ if(set.has(c) && out.indexOf(c)<0) out.push(c); });
   });
-  /* 错字库里可能有不在当前教材里的字（换册之后），别漏掉 */
+  /* 库里可能有不在当前教材里的字（换版本之后），别漏掉 */
   wrongList().forEach(function(c){ if(set.has(c) && out.indexOf(c)<0) out.push(c); });
   return out;
 }
@@ -637,7 +660,7 @@ function renderSelBar(){
   $("#go-dict").disabled = (n===0);
   $("#go-print").disabled = (n===0);
 }
-let tidy=false;   /* 错字库的「整理」模式：点字=删掉，不是勾选 */
+let tidy=false;   /* 「要多练的字」的「整理」模式：点字=删掉，不是勾选 */
 function wrongCard(set){
   const ws=wrongList();
   if(!ws.length) return "";
@@ -645,11 +668,11 @@ function wrongCard(set){
   return '<div class="lesson wrongbank"><div class="lesson-h">'+
     (tidy?'<span class="ubox" style="visibility:hidden"></span>'
          :'<button class="ubox'+(on===0?"":(on===ws.length?" all":" some"))+'" data-wu="1"'+
-          ' aria-label="勾选整个错字库">'+(on===ws.length?"✓":(on?"–":""))+'</button>')+
-    '<h3>错字库</h3><span class="lesson-k">'+(tidy?"点字删掉":on+"/"+ws.length)+'</span>'+
+          ' aria-label="勾选整个要多练的字">'+(on===ws.length?"✓":(on?"–":""))+'</button>')+
+    '<h3>要多练的字</h3><span class="lesson-k">'+(tidy?"点字删掉":on+"/"+ws.length)+'</span>'+
     '<button class="linkbtn" id="tidy-btn" style="flex:none">'+(tidy?"完成":"整理")+'</button>'+
-    '</div><p class="lesson-tip">听写错过的字都攒在这里，<b>不会自己消失</b>。'+
-    '右上角数字是错过几次，错得多的排前面。'+
+    '</div><p class="lesson-tip">听写写错的、还有你在练字页点「＋多练」加进来的，都攒在这里，'+
+    '<b>不会自己消失</b>。右上角数字是被记下的次数，次数多的排前面。'+
     (tidy?'　·　<b class="bad">现在点字就是从库里删掉</b>':'')+'</p>'+
     '<div class="chips">'+ws.map(function(c){
       const n=(wrong[c]&&wrong[c].n)||1;
@@ -664,9 +687,9 @@ function renderPractice(){
     '<div class="panel" style="margin-bottom:12px">'+
     '<p class="note" style="margin:0 0 10px">勾选今天要听写的字。<b>可以跨单元一起选</b>——'+
     '把前面学过的单元也带上，顺便复习旧字。点单元名前面的方块可以整组勾选／取消。'+
-    (wrongCount()?'<br>听写错过的字会自动攒进下面的<b>错字库</b>，随时可以多考几次。':'')+'</p>'+
+    (wrongCount()?'<br>写错的、和你标了「多练」的字都在下面的<b>要多练的字</b>里，随时可以多考几次。':'')+'</p>'+
     '<div class="row"><button class="btn quiet" id="sel-write">只选要求会写的</button>'+
-    (wrongCount()?'<button class="btn quiet" id="sel-wrong">只选错字库</button>':'')+
+    (wrongCount()?'<button class="btn quiet" id="sel-wrong">只选要多练的</button>':'')+
     '<button class="btn quiet" id="sel-none">全部清空</button></div></div>'+
     wrongCard(set)+
     gs.map(function(l,i){
@@ -941,6 +964,7 @@ function openChar(ch,list){
   $("#strip").innerHTML=D[ch].s.map((_,i)=>
     '<div class="strip-cell">'+charSVG(ch,i,{hi:true,fill:"var(--ink-3)",grid:MZG})+
     '<span>'+(i+1)+'</span></div>').join("");
+  markBtn();
   buildPlan(); buildGrid(); petOn(); goWatch(); speak(ch);
 }
 function goWatch(){
@@ -1449,11 +1473,12 @@ function dResult(){
 }
 
 /* ── 导航 / 设置 ── */
-function goHome(){show("#view-home");renderHome();renderSelBar();   /* 听写完错字库变了，要重画 */
+function goHome(){show("#view-home");renderHome();renderSelBar();   /* 听写完这个库变了，要重画 */
   $("#title").textContent="米字格练字本";if(writer)writer.cancelQuiz();petOff();
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}}
 $("#btn-back").onclick=goHome;
 $("#btn-say").onclick=()=>speak(cur);
+$("#btn-mark").onclick=markToggle;
 const dlg=$("#dlg");
 $("#btn-close").onclick=()=>dlg.close();
 [["#sw-speak","speak"],["#sw-sound","sound"],["#sw-easy","easy"],
