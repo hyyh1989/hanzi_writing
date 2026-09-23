@@ -101,3 +101,16 @@ https://dash.cloudflare.com → Workers & Pages → hanzi-writing
 
 平时不用进去。能看到历次部署记录、访问量，也能一键回滚到上一个版本
 （部署出问题时有用：点某次历史部署 → Rollback）。
+
+
+---
+
+## 镜像地址
+
+https://hyyh1989.github.io/hanzi_writing/ ——同一份内容，部署在 GitHub Pages。
+
+**为什么要两个**：`pages.dev` / `workers.dev` 这类域名在某些网络下会被整域名屏蔽
+（朋友在韩国打不开另一个项目的主站，挂 VPN 才行）。镜像是完全不同的域名。
+
+主站仍然用 `build/deploy.sh` 手动发；镜像是**推代码到 main 就自动发**
+（见 `.github/workflows/pages.yml`），不需要手动操作。
