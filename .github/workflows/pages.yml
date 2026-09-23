@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+# 为什么有两个部署目标：
+# 主站在 Cloudflare Pages（hanzi-writing.pages.dev），但 pages.dev / workers.dev
+# 这类域名在某些网络下会被整域名屏蔽。GitHub Pages 是完全不同的域名，作为镜像，
+# 哪个能开用哪个。
+#
+# 主站仍然用本地 `build/deploy.sh` 手动发；这里是推到 main 就自动发镜像。
+#
+# app/ 里的资源全是相对路径，所以挂在 /hanzi_writing/ 子路径下不用改任何东西。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 和 build/deploy.sh 一样，把版本时间戳打进页面，方便在 iPad 上核对是不是新版
+      - name: 打版本戳
+        run: |
+          STAMP="$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')"
+          echo "版本：$STAMP"
+          perl -pi -e "s/__BUILD__/$STAMP/g" app/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
