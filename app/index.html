@@ -319,6 +319,59 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   .rc,.rc svg{width:48px}
   .rc svg{height:48px}
 }
+/* ── 认字小游戏：看字选图 ── */
+.mg{padding:4px 0 24px}
+.mg-dots{display:flex;gap:7px;justify-content:center;margin:2px 0 18px}
+.mg-dots i{width:9px;height:9px;border-radius:50%;background:var(--line);transition:all .2s}
+.mg-dots i.on{background:var(--teal);transform:scale(1.25)}
+.mg-prompt{display:flex;flex-direction:column;align-items:center;gap:6px;
+  min-height:132px;justify-content:center;margin-bottom:22px}
+.mg-ch{font-family:var(--han);font-size:clamp(76px,22vw,120px);line-height:1;color:var(--ink);
+  font-weight:500;letter-spacing:.04em}
+/* 拼音只在答对之后出现 —— 形、音、义三者同时在场的那一刻 */
+.mg-py{font-size:19px;color:var(--teal);letter-spacing:.06em;opacity:0;transition:opacity .2s}
+.mg-py.show{opacity:1}
+.mg-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:420px;margin:0 auto}
+.mg-opt{display:grid;place-items:center;aspect-ratio:1;background:var(--card);
+  border:2px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);
+  transition:background .16s,border-color .16s,opacity .16s;
+  /* ⚠️ 用 scale: 独立属性做按压，不能写 transform —— 裸 transform 会覆盖掉
+     元素自己的定位/变换，按下时元素跳走、mouseup 落到别处，click 就不触发了。
+     这个坑在 play_with_friends 项目里实测栽过，鼠标必现、触屏看不出来。 */
+  transition:scale .08s ease-out,background .16s,border-color .16s,opacity .16s}
+.mg-opt:active{scale:.95}
+.mg-opt span{font-size:clamp(46px,13vw,72px);line-height:1;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.mg-opt.good{background:var(--teal-soft);border-color:var(--teal)}
+.mg-opt.bad{opacity:.3}
+.mg-empty{padding:40px 16px;text-align:center;color:var(--ink-3)}
+/* 结算：两条横条对比，短的那条快。不认字也看得懂 */
+.mg-done{padding:28px 4px;text-align:center}
+.mg-done-h{font-family:var(--disp);font-size:24px;color:var(--ink);margin-bottom:22px}
+.mg-bar{display:flex;align-items:center;gap:10px;max-width:420px;margin:0 auto 12px}
+.mg-bar-l{flex:0 0 40px;text-align:right;font-size:14px;color:var(--ink-3)}
+.mg-bar-t{flex:1;height:18px;background:var(--sunk);border-radius:9px;overflow:hidden}
+.mg-bar-t i{display:block;height:100%;border-radius:9px;background:var(--line);
+  transition:width .5s ease-out}
+.mg-bar.new .mg-bar-t i{background:var(--teal)}
+.mg-bar-n{flex:0 0 62px;text-align:left;font-size:13px;color:var(--ink-3)}
+.mg-pet{display:grid;place-items:center;min-height:0}
+.mg-done .mg-pet{min-height:120px;margin:14px 0 18px}
+/* 首页的入口卡 */
+.mg-entry{display:flex;align-items:center;gap:14px;padding:14px 16px;margin:0 0 16px;
+  background:var(--teal-soft);border:1px solid var(--teal);border-radius:var(--r);
+  width:100%;text-align:left}
+.mg-entry-t{flex:1}
+.mg-entry-t b{display:block;font-family:var(--disp);font-size:17px;color:var(--ink)}
+.mg-entry-t small{color:var(--ink-2);font-size:13px}
+.mg-entry-d{display:flex;gap:6px;flex:none}
+.mg-entry-d i{width:11px;height:11px;border-radius:50%;background:var(--teal);opacity:.25}
+.mg-entry-d i.left{opacity:1}
+.mg-entry[disabled]{opacity:.5}
+@media (prefers-reduced-motion:reduce){
+  .mg-opt,.mg-dots i,.mg-bar-t i{transition:none}
+}
+
 </style>
 
 <div class="app">
@@ -359,6 +412,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 
   <section id="view-dict" hidden></section>
   <section id="view-print" hidden></section>
+  <section id="view-game" hidden></section>
 </div>
 
 <div class="selbar" id="selbar" hidden>
@@ -392,6 +446,8 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
     <p class="note" id="voice-msg" style="margin:9px 0 0;display:none"></p>
     <p class="note" id="voice-tip" style="margin:9px 0 0"></p>
   </div>
+  <div class="setrow"><span>学到第几课<br><small style="color:var(--ink-3);font-size:12px">认字游戏只用这一课之前的字</small></span>
+    <select id="sel-lesson" class="sel"></select></div>
   <div class="setrow"><span>版本<br><small style="color:var(--ink-3);font-size:12px" id="build-n"></small></span><button class="linkbtn" id="btn-update">检查更新</button></div>
   <div class="setrow"><span>备份 / 恢复<br><small style="color:var(--ink-3);font-size:12px" id="bak-when">从未备份</small></span><button class="linkbtn" id="btn-bak">打开</button></div>
   <div class="row" style="margin-top:16px">
@@ -424,6 +480,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <script src="chardata.js"></script>
 <script src="words.js"></script>
 <script src="cat.js"></script>
+<script src="game.js"></script>
 <script>
 (function(){
 "use strict";
@@ -466,12 +523,22 @@ function ensureChars(list,cb){
 const $=s=>document.querySelector(s);
 
 /* ── 存档 ── */
-const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong"};
+const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
+         gstat:"mzg.gstat",   /* 认字游戏：每个字的成绩 {ch:{n,ok,rt,last}} */
+         gday:"mzg.gday",     /* 认字游戏：今天玩了几局 {d,n} */
+         gbest:"mzg.gbest"};  /* 认字游戏：上一次用了多久（毫秒） */
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let stars=load(K.stars,{}), wrong=load(K.wrong,{});
+let gstat=load(K.gstat,{});
 let cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,lessonMode:"text",
-                       voiceURI:"",rate:1}, load(K.cfg,{}));
+                       voiceURI:"",rate:1,
+                       /* 学到第几课（识字表的下标）。认字游戏只用这一课之前的字 ——
+                          游戏不教新字，新字归洪恩和课本。她往前学，这里往后调一格，
+                          游戏的字库自动跟着长，不用手工维护。 */
+                       lesson:(function(){const i=TEXTBOOK.findIndex(function(l){return l.name==="拼音 4"});
+                                          return i<0?Math.max(0,TEXTBOOK.length-1):i})()},
+                      load(K.cfg,{}));
 
 /* ── 声音 ── */
 let ac=null;
@@ -722,7 +789,18 @@ function renderHome(){
     const tab1=function(id,label,on){
       return '<button id="'+id+'" aria-selected="'+(on?"true":"false")+'">'+label+'</button>';
     };
-    b.innerHTML=(TEXTBOOK.length?
+    /* 认字游戏的入口。放在「学习」页顶上 —— 她来这里就是为了学字。
+       三个点 = 今天还剩几局，不认字也看得懂。 */
+    const gleft=gameLeft();
+    const gentry=(window.MatchGame&&TEXTBOOK.length)?
+      ('<button class="mg-entry" id="mg-go"'+(gleft?'':' disabled')+'>'+
+       '<span class="mg-entry-t"><b>认字小游戏</b><small>'+
+       (gleft?('看字选图，'+MatchGame.PER_ROUND+' 个字看用多久'):'今天的玩完啦，明天再来')+
+       '</small></span><span class="mg-entry-d">'+
+       Array.from({length:GAME_PER_DAY},function(_,i){
+         return '<i class="'+(i<gleft?'left':'')+'"></i>'}).join("")+
+       '</span></button>'):"";
+    b.innerHTML=gentry+(TEXTBOOK.length?
       '<div class="tabs" style="margin:0 0 14px">'+tab1("lm-text","教材",!stroke)+
       tab1("lm-stroke","按笔画难度",stroke)+'</div>':'')+
       (stroke
@@ -749,6 +827,7 @@ function renderHome(){
           chipsHTML(l.chars)+
           '<div class="lrow"><button class="linkbtn" data-pr="'+i+'">打印字帖</button></div></div>';
       }).join("");
+    const gbtn=$("#mg-go"); if(gbtn) gbtn.onclick=openGame;
     [["#lm-text","text"],["#lm-stroke","stroke"]].forEach(function(x){
       const el=$(x[0]);
       if(el) el.onclick=function(){cfg.lessonMode=x[1];save(K.cfg,cfg);renderHome();beep("tap")};
@@ -815,7 +894,7 @@ function gridSize(){
   return Math.round(Math.max(230,Math.min(w,h,430)));
 }
 function show(view){
-  ["#view-home","#view-practice","#view-dict","#view-print"].forEach(x=>$(x).hidden=(x!==view));
+  ["#view-home","#view-practice","#view-dict","#view-print","#view-game"].forEach(x=>$(x).hidden=(x!==view));
   $("#btn-back").hidden=(view==="#view-home");
   const bar=$("#selbar");
   if(bar){ bar.hidden = !(view==="#view-home" && tab==="practice");
@@ -1473,8 +1552,51 @@ function dResult(){
 }
 
 /* ── 导航 / 设置 ── */
+/* ── 认字小游戏 ──────────────────────────────────────────
+   一天 3 局。这是**限量**不是**门票** —— 和写不写字无关。
+   千万别做成"写完字才能玩"：那样写字就变成了代价、游戏变成了报酬，
+   孩子学到的是"写字是讨厌的部分"。限量的意义在别处：只有几次机会，
+   她才会认真对待每一次，而不是乱点刷过去。 */
+const GAME_PER_DAY=3;
+function todayStr(){ return new Date().toISOString().slice(0,10) }
+function gameLeft(){ return window.MatchGame
+  ? MatchGame.leftToday(load(K.gday,null), GAME_PER_DAY, todayStr()) : 0 }
+/** 她学过的字 = 第 1 课到「当前课次」的全部生字 */
+function learnedChars(){
+  const upto=Math.min(cfg.lesson|0, TEXTBOOK.length-1), out=[];
+  for(let i=0;i<=upto;i++) if(TEXTBOOK[i]) out.push.apply(out, TEXTBOOK[i].chars);
+  return out;
+}
+let gameCtl=null;
+function openGame(){
+  if(!window.MatchGame || gameLeft()<=0) return;
+  if(gameCtl&&gameCtl.destroy) gameCtl.destroy();
+  show("#view-game"); $("#title").textContent="认字";
+  beep("tap");
+  gameCtl=MatchGame.attach($("#view-game"),{
+    learned:learnedChars,
+    pinyinOf:function(ch){ return (D[ch]&&D[ch].p)||"" },
+    stats:function(){ return gstat },
+    saveStat:function(ch,ok,ms){
+      const e=gstat[ch]||{n:0,ok:0,rt:0,last:0};
+      e.n++; if(ok){ e.ok++; e.rt+=ms }   /* rt 只累计答对的，错的那次没有意义 */
+      e.last=Date.now(); gstat[ch]=e; save(K.gstat,gstat);
+    },
+    best:function(){ return load(K.gbest,0) },
+    saveBest:function(ms){ save(K.gbest,ms) },
+    useRound:function(){
+      const t=todayStr(), r=load(K.gday,null);
+      save(K.gday,(r&&r.d===t)?{d:t,n:(r.n||0)+1}:{d:t,n:1});
+    },
+    speak:speak, say:say, beep:beep,
+    cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
+    onExit:goHome
+  });
+}
+
 function goHome(){show("#view-home");renderHome();renderSelBar();   /* 听写完这个库变了，要重画 */
   $("#title").textContent="米字格练字本";if(writer)writer.cancelQuiz();petOff();
+  if(gameCtl&&gameCtl.destroy){gameCtl.destroy();gameCtl=null}
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}}
 $("#btn-back").onclick=goHome;
 $("#btn-say").onclick=()=>speak(cur);
@@ -1547,7 +1669,18 @@ $("#btn-try").onclick=function(){
        speechSynthesis.speak(utter("今天的天",.82));
        speechSynthesis.speak(utter("天空的天",.82)); }catch(e){}
 };
-$("#btn-set").onclick=function(){ loadVoices(); fillVoiceSel();
+/* 「学到第几课」：认字游戏的字库上限。她往前学一课，这里往后调一格。 */
+function fillLessonSel(){
+  const el=$("#sel-lesson"); if(!el||!TEXTBOOK.length) return;
+  el.innerHTML=TEXTBOOK.map(function(l,i){
+    return '<option value="'+i+'">'+l.name+'</option>'}).join("");
+  el.value=String(Math.min(cfg.lesson|0,TEXTBOOK.length-1));
+}
+$("#sel-lesson").onchange=function(){
+  cfg.lesson=parseInt(this.value,10)||0; save(K.cfg,cfg);
+  renderHome();   /* 可玩的字变了，入口卡的说明也跟着变 */
+};
+$("#btn-set").onclick=function(){ loadVoices(); fillVoiceSel(); fillLessonSel();
   const rs=$("#sel-rate");
   rs.value=String(cfg.rate||1);
   if(!rs.value){ rs.value="1"; cfg.rate=1; save(K.cfg,cfg); }  /* 存的档位没了就回正常 */
