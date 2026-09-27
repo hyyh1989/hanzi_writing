@@ -1,7 +1,7 @@
 {
-  "name": "米字格练字本",
-  "short_name": "练字本",
-  "description": "汉字书写练习：笔顺、起笔点、听写、描红字帖",
+  "name": "练习本",
+  "short_name": "练习本",
+  "description": "中文、数学、英文的书写和练习：笔顺、描红、默写、听写",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

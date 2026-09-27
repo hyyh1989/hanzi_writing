@@ -1,11 +1,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>米字格练字本</title>
+<title>练习本</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="练字本">
+<meta name="apple-mobile-web-app-title" content="练习本">
 <meta name="theme-color" content="#FAFAF7">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;800&display=swap">
@@ -73,6 +73,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
            font-variant-numeric:tabular-nums}
 
 /* ── 首页 ── */
+/* 科目导航：比中文里面的「学习/字库/练习」大一号，一眼分得出是两层 */
+.subj{display:flex;gap:8px;margin:16px 0 4px}
+.subj button{flex:1;padding:11px 4px;border-radius:12px;font-weight:800;font-size:15.5px;
+             color:var(--ink-2);background:var(--sunk)}
+.subj button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.soon{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:26px 18px;
+      text-align:center;color:var(--ink-3);margin-top:16px}
 .tabs{display:flex;gap:6px;background:var(--sunk);padding:4px;border-radius:12px;margin:18px 0 16px}
 .tabs button{flex:1;padding:9px 4px;border-radius:9px;font-weight:700;font-size:14px;color:var(--ink-3)}
 .tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
@@ -377,18 +384,30 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <div class="app">
   <header class="top">
     <button class="iconbtn" id="btn-back" hidden aria-label="返回">‹</button>
-    <h1 id="title">米字格练字本</h1>
+    <h1 id="title">练习本</h1>
     <span class="starcount" id="starcount">★ 0</span>
     <button class="iconbtn" id="btn-set" aria-label="设置">⚙</button>
   </header>
 
   <section id="view-home">
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tab-lesson" aria-selected="true">学习</button>
-      <button role="tab" id="tab-theme" aria-selected="false">字库</button>
-      <button role="tab" id="tab-practice" aria-selected="false">练习</button>
+    <!-- 首页 = 今天 + 各科目。音乐做好之前不显示它的入口 -->
+    <nav class="subj" role="tablist" aria-label="科目">
+      <button role="tab" data-subj="today" aria-selected="true">今天</button>
+      <button role="tab" data-subj="zh" aria-selected="false">中文</button>
+      <button role="tab" data-subj="math" aria-selected="false">数学</button>
+      <button role="tab" data-subj="en" aria-selected="false">英文</button>
+    </nav>
+    <div id="pane-today"></div>
+    <div id="pane-zh" hidden>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-lesson" aria-selected="true">学习</button>
+        <button role="tab" id="tab-theme" aria-selected="false">字库</button>
+        <button role="tab" id="tab-practice" aria-selected="false">练习</button>
+      </div>
+      <div id="home-body"></div>
     </div>
-    <div id="home-body"></div>
+    <div id="pane-math" hidden></div>
+    <div id="pane-en" hidden></div>
   </section>
 
   <section id="view-practice" hidden>
@@ -481,6 +500,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <script src="words.js"></script>
 <script src="cat.js"></script>
 <script src="game.js"></script>
+<script src="today.js"></script>
 <script>
 (function(){
 "use strict";
@@ -526,7 +546,9 @@ const $=s=>document.querySelector(s);
 const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
          gstat:"mzg.gstat",   /* 认字游戏：每个字的成绩 {ch:{n,ok,rt,last}} */
          gday:"mzg.gday",     /* 认字游戏：今天玩了几局 {d,n} */
-         gbest:"mzg.gbest"};  /* 认字游戏：上一次用了多久（毫秒） */
+         gbest:"mzg.gbest",   /* 认字游戏：上一次用了多久（毫秒） */
+         week:"mzg.week",     /* 周计划：7 个数组，下标 0 = 周日（today.js 的 DEFAULT_PLAN 是默认值） */
+         days:"mzg.days"};    /* 打卡：{"2026-09-27":{v:1, done:{任务id:1}}}。只记来过，不记没来 */
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let stars=load(K.stars,{}), wrong=load(K.wrong,{});
@@ -780,7 +802,62 @@ function renderPractice(){
     saveSel(w); renderPractice(); beep("good");
   };
 }
+/* ── 首页：今天 + 各科目 ──────────────────────────────────── */
+let subj="today";
+const SUBJ_TITLE={today:"练习本",zh:"中文",math:"数学",en:"英文"};
+function setSubj(s){
+  subj=s;
+  document.querySelectorAll(".subj [data-subj]").forEach(function(b){
+    b.setAttribute("aria-selected",String(b.dataset.subj===s)); });
+  ["today","zh","math","en"].forEach(function(k){ $("#pane-"+k).hidden=(k!==s); });
+  if(s!=="today" && window.Today) Today.destroy();   /* 离开今天页就把那里的小猫收掉 */
+  renderHome(); renderSelBar(); show("#view-home");
+}
+document.querySelector(".subj").addEventListener("click",function(e){
+  const b=e.target.closest("[data-subj]"); if(!b||b.dataset.subj===subj) return;
+  beep("tap"); setSubj(b.dataset.subj);
+});
 function renderHome(){
+  if(subj==="today") return renderToday();
+  if(subj==="zh") return renderZh();
+  $("#pane-"+subj).innerHTML='<div class="soon">'+SUBJ_TITLE[subj]+'正在做，很快就好</div>';
+}
+/* 打卡：今天来过（写完一个字、做完一轮听写、玩完一局游戏都算） */
+function markDay(){
+  if(!window.Today) return;
+  const all=load(K.days,{}), k=Today.dateKey(new Date()), rec=all[k]||{};
+  if(rec.v) return;
+  rec.v=1; all[k]=rec; save(K.days,all);
+}
+function renderToday(){
+  if(!window.Today){ $("#pane-today").innerHTML=""; return; }
+  Today.render($("#pane-today"),{
+    plan:function(){ return load(K.week,null) },
+    days:function(){ return load(K.days,{}) },
+    saveDays:function(v){ save(K.days,v) },
+    ready:function(s){ return s==="zh" },     /* 第 2 步接上数学、英文后改这里 */
+    go:setSubj,
+    games:renderGameEntry,
+    cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
+    beep:beep
+  });
+}
+/* 小游戏入口：放在「今天」页的小游戏区，不属于任何科目（2026-09-27 用户定的）。
+   三个点 = 今天还剩几局，不认字也看得懂。 */
+function renderGameEntry(el){
+  if(!el) return;
+  if(!(window.MatchGame&&TEXTBOOK.length)){ el.innerHTML=""; return; }
+  const gleft=gameLeft();
+  el.innerHTML='<button class="mg-entry" id="mg-go"'+(gleft?'':' disabled')+'>'+
+     '<span class="mg-entry-t"><b>认字小游戏</b><small>'+
+     (gleft?('看字选图，'+MatchGame.PER_ROUND+' 个字看用多久'):'今天的玩完啦，明天再来')+
+     '</small></span><span class="mg-entry-d">'+
+     Array.from({length:GAME_PER_DAY},function(_,i){
+       return '<i class="'+(i<gleft?'left':'')+'"></i>'}).join("")+
+     '</span></button>';
+  const gbtn=el.querySelector("#mg-go"); if(gbtn) gbtn.onclick=openGame;
+}
+function renderZh(){
   const b=$("#home-body");
   if(tab==="practice"){ renderPractice(); return; }
   renderSelBar();
@@ -789,18 +866,7 @@ function renderHome(){
     const tab1=function(id,label,on){
       return '<button id="'+id+'" aria-selected="'+(on?"true":"false")+'">'+label+'</button>';
     };
-    /* 认字游戏的入口。放在「学习」页顶上 —— 她来这里就是为了学字。
-       三个点 = 今天还剩几局，不认字也看得懂。 */
-    const gleft=gameLeft();
-    const gentry=(window.MatchGame&&TEXTBOOK.length)?
-      ('<button class="mg-entry" id="mg-go"'+(gleft?'':' disabled')+'>'+
-       '<span class="mg-entry-t"><b>认字小游戏</b><small>'+
-       (gleft?('看字选图，'+MatchGame.PER_ROUND+' 个字看用多久'):'今天的玩完啦，明天再来')+
-       '</small></span><span class="mg-entry-d">'+
-       Array.from({length:GAME_PER_DAY},function(_,i){
-         return '<i class="'+(i<gleft?'left':'')+'"></i>'}).join("")+
-       '</span></button>'):"";
-    b.innerHTML=gentry+(TEXTBOOK.length?
+    b.innerHTML=(TEXTBOOK.length?
       '<div class="tabs" style="margin:0 0 14px">'+tab1("lm-text","教材",!stroke)+
       tab1("lm-stroke","按笔画难度",stroke)+'</div>':'')+
       (stroke
@@ -827,7 +893,6 @@ function renderHome(){
           chipsHTML(l.chars)+
           '<div class="lrow"><button class="linkbtn" data-pr="'+i+'">打印字帖</button></div></div>';
       }).join("");
-    const gbtn=$("#mg-go"); if(gbtn) gbtn.onclick=openGame;
     [["#lm-text","text"],["#lm-stroke","stroke"]].forEach(function(x){
       const el=$(x[0]);
       if(el) el.onclick=function(){cfg.lessonMode=x[1];save(K.cfg,cfg);renderHome();beep("tap")};
@@ -897,7 +962,7 @@ function show(view){
   ["#view-home","#view-practice","#view-dict","#view-print","#view-game"].forEach(x=>$(x).hidden=(x!==view));
   $("#btn-back").hidden=(view==="#view-home");
   const bar=$("#selbar");
-  if(bar){ bar.hidden = !(view==="#view-home" && tab==="practice");
+  if(bar){ bar.hidden = !(view==="#view-home" && subj==="zh" && tab==="practice");
            document.body.classList.toggle("has-bar", !bar.hidden); }
   window.scrollTo(0,0);
 }
@@ -1289,6 +1354,7 @@ function finishAll(){
       '</span></div>').join("")+'</div>';
   say(line,true);
   petHappy();   /* 写完一整个字 —— 不看几颗星，写完就为她高兴一下 */
+  markDay();
   const rp=$("#replay2"); if(rp) rp.onclick=()=>say(line,true);
   const nx = curIdx<curList.length-1
     ? btn("下一个字 「"+curList[curIdx+1]+"」 →","",()=>openChar(curList[curIdx+1],curList)) : null;
@@ -1522,6 +1588,7 @@ function dResult(){
     bad.forEach(wrongAdd);
     save(K.wrong,wrong);
     dRecorded=true;
+    markDay();
   }
   const wrongArr=bad, n=dItems.length, ok=n-wrongArr.length;
   $("#title").textContent="听写结果";
@@ -1558,7 +1625,9 @@ function dResult(){
    孩子学到的是"写字是讨厌的部分"。限量的意义在别处：只有几次机会，
    她才会认真对待每一次，而不是乱点刷过去。 */
 const GAME_PER_DAY=3;
-function todayStr(){ return new Date().toISOString().slice(0,10) }
+/* 本地日期。以前用 toISOString（UTC），北京时间早上 8 点前会算成前一天，
+   游戏的「一天 3 局」要到早上 8 点才重置 */
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") }
 function gameLeft(){ return window.MatchGame
   ? MatchGame.leftToday(load(K.gday,null), GAME_PER_DAY, todayStr()) : 0 }
 /** 她学过的字 = 第 1 课到「当前课次」的全部生字 */
@@ -1585,6 +1654,7 @@ function openGame(){
     best:function(){ return load(K.gbest,0) },
     saveBest:function(ms){ save(K.gbest,ms) },
     useRound:function(){
+      markDay();
       const t=todayStr(), r=load(K.gday,null);
       save(K.gday,(r&&r.d===t)?{d:t,n:(r.n||0)+1}:{d:t,n:1});
     },
@@ -1595,7 +1665,7 @@ function openGame(){
 }
 
 function goHome(){show("#view-home");renderHome();renderSelBar();   /* 听写完这个库变了，要重画 */
-  $("#title").textContent="米字格练字本";if(writer)writer.cancelQuiz();petOff();
+  $("#title").textContent="练习本";if(writer)writer.cancelQuiz();petOff();
   if(gameCtl&&gameCtl.destroy){gameCtl.destroy();gameCtl=null}
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}}
 $("#btn-back").onclick=goHome;

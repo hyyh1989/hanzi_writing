@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # 把 app/ 部署到 Cloudflare Pages，拿到一个永久网址（免费）。
-#   ./build/deploy.sh
+#   ./build/deploy.sh            正式：https://hanzi-writing.pages.dev（孩子每天用的）
+#   ./build/deploy.sh preview    预览：https://next.hanzi-writing.pages.dev（大改动先发这里试）
 #
+# 预览网址和正式网址是两个不同的站点，浏览器数据（星星、要多练的字、进度）不互通——
+# 在预览上随便试不会动到孩子的数据。要带着她的数据试，用「设置 → 备份/恢复」导过去。
+#
+# ⚠️ 正式发布只能在 git 的 main 分支上做。在开发分支上跑不带 preview 的命令会直接拒绝，
+#    免得把做到一半的改动发给孩子。
 # 需要先登录 Cloudflare，二选一：
 #   A) npx wrangler login                     （浏览器授权，一次就好）
 #   B) export CLOUDFLARE_API_TOKEN=xxx        （API Token，不走浏览器回调，更稳）
@@ -9,6 +15,27 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [ -f app/index.html ] || { echo "找不到 app/index.html"; exit 1; }
+
+MODE="${1:-prod}"
+GITBR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"
+if [ "$MODE" = "preview" ]; then
+  CF_BRANCH="next"
+  URL="https://next.hanzi-writing.pages.dev"
+elif [ "$MODE" = "prod" ]; then
+  if [ "$GITBR" != "main" ]; then
+    echo
+    echo "⚠️  现在在开发分支「$GITBR」上，不能发布到正式网址（孩子每天用的那个）。"
+    echo "    想先试试，用：./build/deploy.sh preview"
+    echo
+    exit 1
+  fi
+  CF_BRANCH="main"
+  URL="https://hanzi-writing.pages.dev"
+else
+  echo "用法：./build/deploy.sh          （正式）"
+  echo "      ./build/deploy.sh preview  （预览）"
+  exit 1
+fi
 
 # ── 先查登录，别等准备完 30M 文件才发现没登录 ──
 if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
@@ -40,6 +67,7 @@ TIP
 fi
 
 STAMP="$(date '+%Y-%m-%d %H:%M')"
+[ "$MODE" = "preview" ] && STAMP="$STAMP 预览"
 OUT="$(mktemp -d)/app"
 mkdir -p "$OUT"
 cp -R app/. "$OUT/"
@@ -52,7 +80,8 @@ PY
 
 echo "版本：$STAMP"
 echo "文件：$(find "$OUT" -type f | wc -l | tr -d ' ') 个，$(du -sh "$OUT" | cut -f1)"
-npx --yes wrangler pages deploy "$OUT" --project-name hanzi-writing
+npx --yes wrangler pages deploy "$OUT" --project-name hanzi-writing --branch "$CF_BRANCH"
 echo
-echo "部署完成。iPad 上打开网址 → 设置 ⚙ → 看「版本」是不是 $STAMP"
+echo "部署完成：$URL"
+echo "iPad 上打开这个网址 → 设置 ⚙ → 看「版本」是不是 $STAMP"
 echo "如果还是旧的，点设置里的「检查更新」。"
