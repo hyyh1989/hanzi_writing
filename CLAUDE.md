@@ -101,6 +101,7 @@ head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字�
 | `build/charset.py` | `make_chardata.py` | 同上 |
 | `build/words_core.py` | `make_words.py` | `words.js` |
 | `build/make_icons.py` | 它自己 | `icon-*.png` |
+| `build/latin_glyphs.py` | `make_latin.py` | `latin.js`（数字/字母笔画，还没接进主程序） |
 
 发布两条路：`build/deploy.sh`（Cloudflare Pages，正式）和 Artifact 工具（预览）。
 Artifact 发布时 `files` 要带上改动过的生成物。
@@ -112,6 +113,19 @@ Artifact 发布时 `files` 要带上改动过的生成物。
 ---
 
 ---
+
+## 数字 / 字母笔画（2026-09-27 起，进行中）
+
+**复用汉字的写字引擎**：`build/latin_glyphs.py` 手画中心线（100×130 四线格坐标），
+`build/make_latin.py` 加粗成轮廓、换算到引擎的 1024 坐标，输出 `app/latin.js`，
+结构和 `window.CHARS[字]` 一样（`{s,m,n}`），`charDataLoader` 不用区分汉字和字母。
+
+- **写法以孩子确认的为准**（英式预备连笔，23 项，见 `ENGLISH.md`），不要换成字体里的字形。
+- 实测（引擎真实加载 + 模拟笔迹）：正写 4/0/8/3/9 都判对；**倒着写 7、2 会被判错** ——
+  镜像写法就是靠路径方向抓出来的，所以 `latin_glyphs.py` 里**路径方向 = 运笔方向，不能画反**。
+- ⚠️ **一个字母算一笔还是几笔，取决于她写时笔会不会中途离开纸**（英国常教 n、a、b 这类
+  一笔连写、原路折返）。引擎按笔判定，数据和她的习惯对不上就会一直判错。**确认之前别加字母。**
+- 还没接进主程序：四线格背景、「位置/大小」评分的措辞（米字格方位词不适用）都要另做。
 
 ## 陪伴小猫（2026-09-17 上线）
 
@@ -162,8 +176,8 @@ Artifact 发布时 `files` 要带上改动过的生成物。
 - 主站：`deploy.sh` 从**磁盘**拷 `app/`，照常有猫叫
 - GitHub 镜像：没有这个文件，`cat.js` 的 `play()` 失败会退回合成音 `chirp()`，不会报错
 - **重新 clone 后要自己把文件放回 `app/`**（出处和处理方法见 `pet/CREDITS.md`）
-- 🔲 **待办（需用户授权）**：git 历史里还有 3 个老提交带着它。清除要 `filter-branch`
-  改写历史 + `git push --force`，自动模式下被权限系统拦了，留给用户决定。
+- ✅ git 历史也已清干净（2026-09-27 用户自己跑的 `filter-branch` + `git push --force`，
+  自动模式下这类改写历史的操作会被权限系统拦，只能交给用户执行）。
   **别再往 git 里加任何第三方授权受限的素材**——仓库是公开的。
 
 ## 踩过的坑（别再踩一遍）

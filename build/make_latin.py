@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+latin_glyphs.py 的中心线 → app/latin.js（写字引擎能直接吃的格式）。
+
+    /usr/local/bin/python3 build/make_latin.py
+
+输出 `window.LATIN = {字: {s: [轮廓路径...], m: [[[x,y]...]...], n: 笔数}}`，
+和汉字的 `window.CHARS[字]` 同一个结构，所以主程序的 charDataLoader 不用区分汉字和字母。
+
+三步：
+1. 解析路径（M/L/C/A），沿中心线密集采点、按弧长均匀重采样
+2. 换算坐标：100×130 的四线格 → 引擎的 1024 方框，保持宽高比、水平居中；
+   引擎内部 y 轴朝上，屏幕 y → 900 - y（和 CLAUDE.md「踩过的坑 1」同一套）
+3. 生成轮廓：中心线两侧各偏移半个笔宽；拐角外侧补圆弧、内侧取偏移线交点，
+   两头补半圆笔帽——引擎用这个轮廓画字、做描红底字
+   中位线（medians）= 稀疏采样的中心线，引擎用它判定笔顺和运笔方向
+"""
+import io, json, math, os, re, sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+from latin_glyphs import ALL  # noqa: E402
+
+APP = os.path.join(HERE, os.pardir, 'app')
+
+BOX_H = 130.0
+S = 1024.0 / BOX_H                 # 7.877：四线格的 130 高刚好撑满 1024
+OX = (1024.0 - 100.0 * S) / 2.0    # 水平居中
+WIDTH = 64.0                       # 笔宽（引擎坐标）。汉字笔画大约 60~100
+DOT_R = WIDTH * 0.62               # i / j 的点
+
+
+# ── 1. 路径解析与采样 ─────────────────────────────────────────────
+def _arc_points(x1, y1, rx, ry, phi, fa, fs, x2, y2, n=48):
+    """SVG 端点参数化圆弧 → 点列（W3C 附录 F.6）。"""
+    phi = math.radians(phi)
+    c, s = math.cos(phi), math.sin(phi)
+    dx, dy = (x1 - x2) / 2, (y1 - y2) / 2
+    x1p, y1p = c * dx + s * dy, -s * dx + c * dy
+    lam = (x1p ** 2) / (rx ** 2) + (y1p ** 2) / (ry ** 2)
+    if lam > 1:
+        rx, ry = rx * math.sqrt(lam), ry * math.sqrt(lam)
+    num = rx * rx * ry * ry - rx * rx * y1p * y1p - ry * ry * x1p * x1p
+    den = rx * rx * y1p * y1p + ry * ry * x1p * x1p
+    co = math.sqrt(max(0.0, num / den)) if den else 0.0
+    if fa == fs:
+        co = -co
+    cxp, cyp = co * rx * y1p / ry, -co * ry * x1p / rx
+    cx = c * cxp - s * cyp + (x1 + x2) / 2
+    cy = s * cxp + c * cyp + (y1 + y2) / 2
+
+    def ang(ux, uy, vx, vy):
+        a = math.atan2(ux * vy - uy * vx, ux * vx + uy * vy)
+        return a
+    t1 = ang(1, 0, (x1p - cxp) / rx, (y1p - cyp) / ry)
+    dt = ang((x1p - cxp) / rx, (y1p - cyp) / ry, (-x1p - cxp) / rx, (-y1p - cyp) / ry)
+    if not fs and dt > 0:
+        dt -= 2 * math.pi
+    elif fs and dt < 0:
+        dt += 2 * math.pi
+    pts = []
+    for i in range(1, n + 1):
+        t = t1 + dt * i / n
+        px, py = rx * math.cos(t), ry * math.sin(t)
+        pts.append((c * px - s * py + cx, s * px + c * py + cy))
+    return pts
+
+
+def parse(d):
+    """路径字符串 → 密集点列（100×130 坐标）。只支持绝对坐标 M L C A。"""
+    tok = re.findall(r'[MLCA]|-?\d*\.?\d+', d)
+    pts, i, cur = [], 0, None
+    cmd = None
+    while i < len(tok):
+        if tok[i] in 'MLCA':
+            cmd = tok[i]; i += 1
+        if cmd == 'M':
+            cur = (float(tok[i]), float(tok[i + 1])); i += 2
+            pts.append(cur); cmd = 'L'          # M 后面跟的坐标按 L 处理
+        elif cmd == 'L':
+            nxt = (float(tok[i]), float(tok[i + 1])); i += 2
+            pts.append(nxt); cur = nxt
+        elif cmd == 'C':
+            x1, y1, x2, y2, x, y = map(float, tok[i:i + 6]); i += 6
+            x0, y0 = cur
+            for k in range(1, 33):
+                t = k / 32; u = 1 - t
+                pts.append((u ** 3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t ** 3 * x,
+                            u ** 3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t ** 3 * y))
+            cur = (x, y)
+        elif cmd == 'A':
+            rx, ry, phi, fa, fs, x, y = map(float, tok[i:i + 7]); i += 7
+            pts += _arc_points(cur[0], cur[1], rx, ry, phi, int(fa), int(fs), x, y)
+            cur = (x, y)
+        else:
+            raise ValueError('不支持的路径命令：%r' % tok[i])
+    return pts
+
+
+def resample(pts, step):
+    """按弧长均匀重采样，首尾保留。"""
+    out = [pts[0]]
+    acc = 0.0
+    for a, b in zip(pts, pts[1:]):
+        seg = math.dist(a, b)
+        if seg == 0:
+            continue
+        while acc + seg >= step:
+            t = (step - acc) / seg
+            a = (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+            out.append(a)
+            seg = math.dist(a, b)
+            acc = 0.0
+        acc += seg
+    if math.dist(out[-1], pts[-1]) > step * 0.3:
+        out.append(pts[-1])
+    else:
+        out[-1] = pts[-1]
+    return out
+
+
+def length(pts):
+    return sum(math.dist(a, b) for a, b in zip(pts, pts[1:]))
+
+
+# ── 2. 坐标换算 ──────────────────────────────────────────────────
+def to_screen(p):          # 100×130 → 1024 方框的屏幕坐标（y 朝下）
+    return (OX + p[0] * S, p[1] * S)
+
+
+def to_engine(p):          # 屏幕坐标 → 引擎内部坐标（y 朝上）
+    return (p[0], 900.0 - p[1])
+
+
+# ── 3. 轮廓 ─────────────────────────────────────────────────────
+def _norm(v):
+    L = math.hypot(*v) or 1.0
+    return (v[0] / L, v[1] / L)
+
+
+def _arc(c, r, a0, a1, ccw, n=10):
+    """以 c 为圆心从角 a0 转到 a1。ccw=True 取角度增大的方向。"""
+    d = a1 - a0
+    if ccw and d < 0:
+        d += 2 * math.pi
+    if not ccw and d > 0:
+        d -= 2 * math.pi
+    return [(c[0] + r * math.cos(a0 + d * k / n), c[1] + r * math.sin(a0 + d * k / n))
+            for k in range(1, n)]
+
+
+def outline(pts, r):
+    """中心线（屏幕坐标）→ 闭合轮廓点列。"""
+    n = len(pts)
+    dirs = [_norm((b[0] - a[0], b[1] - a[1])) for a, b in zip(pts, pts[1:])]
+    left, right = [], []
+    for i in range(n):
+        p = pts[i]
+        din = dirs[i - 1] if i > 0 else dirs[0]
+        dout = dirs[i] if i < n - 1 else dirs[-1]
+        nin, nout = (-din[1], din[0]), (-dout[1], dout[0])
+        turn = math.acos(max(-1.0, min(1.0, din[0] * dout[0] + din[1] * dout[1])))
+        if turn < math.radians(25):
+            m = _norm((nin[0] + nout[0], nin[1] + nout[1]))
+            left.append((p[0] + m[0] * r, p[1] + m[1] * r))
+            right.append((p[0] - m[0] * r, p[1] - m[1] * r))
+            continue
+        # 拐角：外侧补圆弧，内侧取两条偏移线的交点（限长，免得尖角戳出去）
+        cross = din[0] * dout[1] - din[1] * dout[0]
+        bis = _norm((nin[0] + nout[0], nin[1] + nout[1]))
+        inner = min(r / max(math.cos(turn / 2), 0.2), 2.5 * r)
+        if cross > 0:   # 往 +n 一侧拐：外侧在 −n（right）
+            left.append((p[0] + bis[0] * inner, p[1] + bis[1] * inner))
+            a0 = math.atan2(-nin[1], -nin[0]); a1 = math.atan2(-nout[1], -nout[0])
+            right.append((p[0] - nin[0] * r, p[1] - nin[1] * r))
+            right += _arc(p, r, a0, a1, ccw=True)
+            right.append((p[0] - nout[0] * r, p[1] - nout[1] * r))
+        else:           # 外侧在 +n（left）
+            right.append((p[0] - bis[0] * inner, p[1] - bis[1] * inner))
+            a0 = math.atan2(nin[1], nin[0]); a1 = math.atan2(nout[1], nout[0])
+            left.append((p[0] + nin[0] * r, p[1] + nin[1] * r))
+            left += _arc(p, r, a0, a1, ccw=False)
+            left.append((p[0] + nout[0] * r, p[1] + nout[1] * r))
+    # 笔帽：终点从 left 绕到 right（经过前方），起点从 right 绕回 left（经过后方）
+    d0, d1 = dirs[0], dirs[-1]
+    e = pts[-1]; s0 = pts[0]
+    end_cap = _arc(e, r, math.atan2(d1[0], -d1[1]), math.atan2(-d1[0], d1[1]), ccw=False, n=12)
+    start_cap = _arc(s0, r, math.atan2(-d0[0], d0[1]), math.atan2(d0[0], -d0[1]), ccw=False, n=12)
+    return left + end_cap + right[::-1] + start_cap
+
+
+def circle(c, r, n=24):
+    return [(c[0] + r * math.cos(2 * math.pi * k / n), c[1] + r * math.sin(2 * math.pi * k / n))
+            for k in range(n)]
+
+
+def path_str(poly):
+    pts = [to_engine(p) for p in poly]
+    return 'M ' + ' L '.join('%d %d' % (round(x), round(y)) for x, y in pts) + ' Z'
+
+
+# ── 组装 ────────────────────────────────────────────────────────
+def build_char(strokes):
+    outs, meds = [], []
+    for d in strokes:
+        if d.startswith('dot:'):
+            x, y = map(float, d[4:].split(','))
+            c = to_screen((x, y))
+            outs.append(path_str(circle(c, DOT_R)))
+            # 点也要有一条能判定的短中线：从上往下点一下
+            meds.append([[round(v) for v in to_engine((c[0], c[1] - 18))],
+                         [round(v) for v in to_engine((c[0], c[1] + 18))]])
+            continue
+        raw = [to_screen(p) for p in parse(d)]
+        dense = resample(raw, 6.0)
+        outs.append(path_str(outline(dense, WIDTH / 2)))
+        L = length(dense)
+        k = max(2, int(round(L / 45.0)) + 1)
+        sparse = resample(raw, L / (k - 1))
+        meds.append([[round(v) for v in to_engine(p)] for p in sparse])
+    return {'s': outs, 'm': meds, 'n': len(strokes)}
+
+
+def main():
+    data = {ch: build_char(st) for ch, st in ALL.items()}
+    # 自检：所有点都落在引擎坐标范围内
+    for ch, g in data.items():
+        for med in g['m']:
+            for x, y in med:
+                assert -10 <= x <= 1034 and -140 <= y <= 910, (ch, x, y)
+    js = ('/* 由 build/make_latin.py 生成，别手改。源数据在 build/latin_glyphs.py */\n'
+          'window.LATIN=' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n')
+    out = os.path.join(APP, 'latin.js')
+    io.open(out, 'w', encoding='utf-8').write(js)
+    print('生成 %d 个字 → app/latin.js（%.1f KB）' % (len(data), len(js) / 1024))
+    for ch, g in data.items():
+        print('  %s  %d 笔  中线点数 %s' % (ch, g['n'], [len(m) for m in g['m']]))
+
+
+if __name__ == '__main__':
+    main()
