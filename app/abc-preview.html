@@ -81,6 +81,7 @@ function card(c,i){
   return '<article class="card" id="k'+i+'"><div class="chead"><span class="big">'+c+'</span>'+
     '<span class="meta">'+LATIN[c].n+' 笔</span></div>'+
     '<div class="box">'+BG+'<div class="w" id="w'+i+'"></div>'+
+      '<svg class="ov" id="ki'+i+'" viewBox="0 0 1024 1024" aria-hidden="true"></svg>'+
       '<svg class="ov" id="o'+i+'" viewBox="0 0 1024 1024" aria-hidden="true"></svg></div>'+
     '<div class="btns"><button data-a="play" data-i="'+i+'">▶ 播放</button>'+
     '<button data-a="trace" data-i="'+i+'">描红</button>'+
@@ -109,7 +110,9 @@ function mode(i,a){
 document.addEventListener("click",function(e){
   var b=e.target.closest("[data-a]"); if(!b) return;
   var i=+b.dataset.i, a=b.dataset.a, w=W[i], miss=0, ov=document.getElementById("o"+i), ch=chars[i];
-  w.cancelQuiz(); LatinPlay.clear(ov); mode(i,a);
+  var ink=document.getElementById("ki"+i);
+  w.cancelQuiz(); LatinPlay.clear(ov); ink.innerHTML=""; clearTimeout(w.__done);
+  w.updateColor("strokeColor","#232A36",{duration:0}); mode(i,a);
   /* 播放不用引擎自带的 animateCharacter：一笔里圆和竖贴在一起时，引擎的粗线会让圆提前冒出来
      （见 latin-play.js）。改为沿中心线一笔笔画出来 */
   if(a==="play"){ msg(i,"");
@@ -120,12 +123,25 @@ document.addEventListener("click",function(e){
   w.hideCharacter(); if(a==="trace") w.showOutline(); else w.hideOutline();
   msg(i,a==="trace"?"顺着浅色的字写":"自己写，看不到底字");
   var hintAt=a==="trace"?1:3, onStroke=0;
+  /* 写的过程中只显示她自己的笔迹：标准笔画设成透明，每写对一笔就把她写的那一笔留在 ink 层上；
+     整个字写完再换成标准字形（和练字本写汉字的做法一致）。引擎默认是写对一笔就把这一笔换成
+     标准样子，多笔的字（5、4、E）写到一半就变了（2026-09-27 用户反馈） */
+  w.updateColor("strokeColor","rgba(0,0,0,0)",{duration:0});
   /* 提示也不用引擎的 highlightStroke（同样会冒出多余部分），自己示范这一笔 */
-  w.quiz({showOutline:a==="trace",leniency:a==="trace"?1.25:1,showHintAfterMisses:false,highlightOnComplete:false,
+  /* 每个字母各自的放宽系数（LATIN[字].k，见 make_latin.py 的 leniency_factor） */
+  var len=(a==="trace"?1.25:1)*(LATIN[ch].k||1);
+  w.quiz({showOutline:a==="trace",leniency:len,showHintAfterMisses:false,highlightOnComplete:false,
     onMistake:function(d){ miss++; msg(i,"这一笔起笔或方向不对，再试一次");
       if(d.mistakesOnStroke>=hintAt) LatinPlay.hint(ov,ch,d.strokeNum,{ink:"#1E9A62"}); },
-    onCorrectStroke:function(d){ msg(i,"对了，第 "+(d.strokeNum+1)+" 笔"); },
-    onComplete:function(){ msg(i,miss?"写完了（提示 "+miss+" 次）":"写对了 ✓",!miss); document.getElementById("k"+i).classList.add("ok"); mode(i,""); }
+    onCorrectStroke:function(d){ msg(i,"对了，第 "+(d.strokeNum+1)+" 笔");
+      var pts=(d.drawnPath&&d.drawnPath.points)||[];
+      if(pts.length){ var pl=document.createElementNS("http://www.w3.org/2000/svg","polyline");
+        pl.setAttribute("points",pts.map(function(p){return p.x+","+(900-p.y)}).join(" "));
+        pl.setAttribute("fill","none"); pl.setAttribute("stroke","#232A36"); pl.setAttribute("stroke-width","70");
+        pl.setAttribute("stroke-linecap","round"); pl.setAttribute("stroke-linejoin","round"); ink.appendChild(pl); } },
+    onComplete:function(){ msg(i,miss?"写完了（提示 "+miss+" 次）":"写对了 ✓",!miss); document.getElementById("k"+i).classList.add("ok"); mode(i,"");
+      /* 整个字写完：停一下让她看清自己写的，再换成标准字形 */
+      w.__done=setTimeout(function(){ ink.innerHTML=""; w.updateColor("strokeColor","#232A36",{duration:0}); w.showCharacter(); },700); }
   });
 });
 })();

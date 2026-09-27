@@ -5,7 +5,7 @@ latin_glyphs.py 的中心线 → app/latin.js（写字引擎能直接吃的格�
 
     /usr/local/bin/python3 build/make_latin.py
 
-输出 `window.LATIN = {字: {s: [轮廓路径...], m: [[[x,y]...]...], n: 笔数, c: [中心线...]}}`，
+输出 `window.LATIN = {字: {s: [轮廓路径...], m: [[[x,y]...]...], n: 笔数, c: [中心线...], k: 判定放宽系数}}`，
 和汉字的 `window.CHARS[字]` 同一个结构，所以主程序的 charDataLoader 不用区分汉字和字母。
 
 三步：
@@ -270,8 +270,43 @@ def build_char(strokes):
     return {'s': outs, 'm': meds, 'n': len(strokes), 'c': list(strokes)}
 
 
+def leniency_factor(meds):
+    """这个字的判定要放宽多少（写进 latin.js 的 k，页面上 quiz 的 leniency 乘以它）。
+
+    引擎比较形状前会把两条线缩放到同样大小，缩放尺度只看【起笔点和收笔点离字中心多远】。
+    d、a、o、P、G 这类起止点都离中心很近的字母，尺度被算得很小，一点偏差被放大好几倍，
+    同样的写法偏差，b 轻松过、d 就不过。这里按「形状大小 ÷ 引擎用的尺度」算吃亏程度，
+    和全部字母的中位数（0.62）相比，吃亏多少就放宽多少，最多 1.5 倍。
+    2026-09-27 测过：放宽后倒着写、左右镜像、写成相近字母（b↔d、p↔q、6↔9、n↔u、a↔d）仍全部判错。"""
+    def outline30(c, n=30):
+        L = sum(math.dist(a, b) for a, b in zip(c, c[1:])); seg = L / (n - 1)
+        o, rem = [c[0]], list(c[1:])
+        for _ in range(n - 2):
+            lp, rd = o[-1], seg
+            while True:
+                nd = math.dist(lp, rem[0])
+                if nd < rd:
+                    rd -= nd; lp = rem.pop(0)
+                else:
+                    t = rd / nd
+                    o.append((lp[0] + (rem[0][0] - lp[0]) * t, lp[1] + (rem[0][1] - lp[1]) * t)); break
+        o.append(c[-1]); return o
+    worst = 0.0
+    for m in meds:
+        if len(m) < 3:
+            continue
+        o = outline30([tuple(p) for p in m])
+        mx = sum(p[0] for p in o) / len(o); my = sum(p[1] for p in o) / len(o)
+        s = math.sqrt(((o[0][0] - mx) ** 2 + (o[0][1] - my) ** 2 + (o[-1][0] - mx) ** 2 + (o[-1][1] - my) ** 2) / 2)
+        size = math.sqrt(sum((p[0] - mx) ** 2 + (p[1] - my) ** 2 for p in o) / len(o))
+        worst = max(worst, size / s)
+    return round(max(1.0, min(1.5, worst / 0.62)), 2)
+
+
 def main():
     data = {ch: build_char(st) for ch, st in ALL.items()}
+    for g in data.values():
+        g['k'] = leniency_factor(g['m'])
     # 自检：所有点都落在引擎坐标范围内，且中线里没有重合的相邻点
     for ch, g in data.items():
         for med in g['m']:
