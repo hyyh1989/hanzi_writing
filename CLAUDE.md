@@ -93,7 +93,7 @@
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
 **`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
-`manifest.webmanifest`、`abc-preview.html`（临时，字母接进主页面后删）以外都是生成物，不要手改。** 源文件在 `build/`：
+`manifest.webmanifest`、`latin-play.js`、`abc-preview.html`（临时，字母接进主页面后删）以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
 |---|---|---|
@@ -146,6 +146,15 @@ Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 C
      r 的 43% 都没画出来（用户在 iPad 上发现的，我自己的检查漏了）。判定用的是没过滤的中线，
      所以判对判错不受影响，只影响显示。修法：`keep_reversals()` 在折返点后插一个侧偏 8 单位的点，
      生成器断言中线里没有严格共线的折返。
+  5. **引擎的笔顺动画会让「贴在一起」的部分提前冒出来 → 字母数字的播放和提示不用引擎的。**
+     同一个原因（沿中线画 200 宽的粗线再裁）：b/q/a/d/g 是一笔里圆和竖紧挨着，写竖时粗线扫到圆，
+     圆的一截提前出现，看起来笔顺错了（用户在 iPad 播放时发现）。宽度写死改不了，也不能拆成两笔
+     （她一笔连写，拆了判定对不上）。所以 **`app/latin-play.js`** 自己沿中心线（`LATIN[字].c`）画
+     和笔画一样宽的线：`play()` 代替 `animateCharacter`，`hint()` 代替写错后的 `highlightStroke`
+     （quiz 里 `showHintAfterMisses:false`，在 `onMistake` 里自己调 `hint`）。
+     引擎只剩判定、描红底字、写对后整笔淡入（一次性显示，不会冒出多余部分）。
+     验证方法：播放中途暂停（`getAnimations()` + 二分 `currentTime`），栅格化覆盖层，
+     查「还没写到的部分」有没有墨。b 写竖到一半时圆的区域 0 墨；q/a/d 写圆时竖和尾巴 0 墨。
 - ⚠️ **检查显示效果要查「引擎实际画出来的」，不能只查轮廓。** 第 4 个坑之前，我用 canvas
   填充轮廓检查过 23,226 个点「全部完好」，但孩子看到的是引擎的渲染结果，两者不是一回事。
   正确做法：让引擎真的画出来 → SVG 转图片画到 canvas → 沿中线及两侧逐点看有没有墨。

@@ -5,7 +5,7 @@ latin_glyphs.py 的中心线 → app/latin.js（写字引擎能直接吃的格�
 
     /usr/local/bin/python3 build/make_latin.py
 
-输出 `window.LATIN = {字: {s: [轮廓路径...], m: [[[x,y]...]...], n: 笔数}}`，
+输出 `window.LATIN = {字: {s: [轮廓路径...], m: [[[x,y]...]...], n: 笔数, c: [中心线...]}}`，
 和汉字的 `window.CHARS[字]` 同一个结构，所以主程序的 charDataLoader 不用区分汉字和字母。
 
 三步：
@@ -265,7 +265,9 @@ def build_char(strokes):
             if not med or q != med[-1]:
                 med.append(q)
         meds.append(keep_reversals(med))
-    return {'s': outs, 'm': meds, 'n': len(strokes)}
+    # c = 原始中心线（100×130 坐标）。笔顺播放用它自己画（app/latin-play.js），
+    # 不用引擎的 animateCharacter —— 见 latin-play.js 文件头
+    return {'s': outs, 'm': meds, 'n': len(strokes), 'c': list(strokes)}
 
 
 def main():
