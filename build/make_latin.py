@@ -150,44 +150,45 @@ def _arc(c, r, a0, a1, ccw, n=10):
             for k in range(1, n)]
 
 
-def outline(pts, r):
-    """中心线（屏幕坐标）→ 闭合轮廓点列。"""
+def _sausage(pts, r):
+    """一段顺滑的中心线 → 带两个半圆笔帽的闭合轮廓（屏幕坐标）。"""
+    if len(pts) == 1:
+        return circle(pts[0], r)
     n = len(pts)
     dirs = [_norm((b[0] - a[0], b[1] - a[1])) for a, b in zip(pts, pts[1:])]
     left, right = [], []
     for i in range(n):
-        p = pts[i]
         din = dirs[i - 1] if i > 0 else dirs[0]
         dout = dirs[i] if i < n - 1 else dirs[-1]
-        nin, nout = (-din[1], din[0]), (-dout[1], dout[0])
-        turn = math.acos(max(-1.0, min(1.0, din[0] * dout[0] + din[1] * dout[1])))
-        if turn < math.radians(25):
-            m = _norm((nin[0] + nout[0], nin[1] + nout[1]))
-            left.append((p[0] + m[0] * r, p[1] + m[1] * r))
-            right.append((p[0] - m[0] * r, p[1] - m[1] * r))
-            continue
-        # 拐角：外侧补圆弧，内侧取两条偏移线的交点（限长，免得尖角戳出去）
-        cross = din[0] * dout[1] - din[1] * dout[0]
-        bis = _norm((nin[0] + nout[0], nin[1] + nout[1]))
-        inner = min(r / max(math.cos(turn / 2), 0.2), 2.5 * r)
-        if cross > 0:   # 往 +n 一侧拐：外侧在 −n（right）
-            left.append((p[0] + bis[0] * inner, p[1] + bis[1] * inner))
-            a0 = math.atan2(-nin[1], -nin[0]); a1 = math.atan2(-nout[1], -nout[0])
-            right.append((p[0] - nin[0] * r, p[1] - nin[1] * r))
-            right += _arc(p, r, a0, a1, ccw=True)
-            right.append((p[0] - nout[0] * r, p[1] - nout[1] * r))
-        else:           # 外侧在 +n（left）
-            right.append((p[0] - bis[0] * inner, p[1] - bis[1] * inner))
-            a0 = math.atan2(nin[1], nin[0]); a1 = math.atan2(nout[1], nout[0])
-            left.append((p[0] + nin[0] * r, p[1] + nin[1] * r))
-            left += _arc(p, r, a0, a1, ccw=False)
-            left.append((p[0] + nout[0] * r, p[1] + nout[1] * r))
-    # 笔帽：终点从 left 绕到 right（经过前方），起点从 right 绕回 left（经过后方）
+        m = _norm((-din[1] - dout[1], din[0] + dout[0]))
+        p = pts[i]
+        left.append((p[0] + m[0] * r, p[1] + m[1] * r))
+        right.append((p[0] - m[0] * r, p[1] - m[1] * r))
     d0, d1 = dirs[0], dirs[-1]
-    e = pts[-1]; s0 = pts[0]
-    end_cap = _arc(e, r, math.atan2(d1[0], -d1[1]), math.atan2(-d1[0], d1[1]), ccw=False, n=12)
-    start_cap = _arc(s0, r, math.atan2(-d0[0], d0[1]), math.atan2(d0[0], -d0[1]), ccw=False, n=12)
+    end_cap = _arc(pts[-1], r, math.atan2(d1[0], -d1[1]), math.atan2(-d1[0], d1[1]), ccw=False, n=12)
+    start_cap = _arc(pts[0], r, math.atan2(-d0[0], d0[1]), math.atan2(d0[0], -d0[1]), ccw=False, n=12)
     return left + end_cap + right[::-1] + start_cap
+
+
+def outline(pts, r, corner_deg=40):
+    """中心线 → 若干个互相叠着的轮廓（屏幕坐标）。
+
+    在拐角和掉头处把一笔拆成几段顺滑的小段，每段各自带圆头，叠起来就是完整的笔画、
+    拐角自然成了圆角。以前是在一整条轮廓上硬算拐角：遇到 b/d/n 那种「竖下去原路折返」
+    的 180° 掉头，一侧边线会被收到中心线上，字上就破了个口（2026-09-27 预览里 b 的竖上看得到）。
+    各段绕行方向一致，重叠处按 nonzero 规则照样填满，不会互相抵消成洞。"""
+    runs, cur = [], [pts[0]]
+    for i in range(1, len(pts) - 1):
+        cur.append(pts[i])
+        a = _norm((pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]))
+        b = _norm((pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]))
+        turn = math.degrees(math.acos(max(-1.0, min(1.0, a[0] * b[0] + a[1] * b[1]))))
+        if turn > corner_deg:
+            runs.append(cur)
+            cur = [pts[i]]
+    cur.append(pts[-1])
+    runs.append(cur)
+    return [_sausage(run, r) for run in runs]
 
 
 def circle(c, r, n=24):
@@ -214,21 +215,29 @@ def build_char(strokes):
             continue
         raw = [to_screen(p) for p in parse(d)]
         dense = resample(raw, 6.0)
-        outs.append(path_str(outline(dense, WIDTH / 2)))
+        outs.append(' '.join(path_str(poly) for poly in outline(dense, WIDTH / 2)))
         L = length(dense)
         k = max(2, int(round(L / 45.0)) + 1)
         sparse = resample(raw, L / (k - 1))
-        meds.append([[round(v) for v in to_engine(p)] for p in sparse])
+        med = []
+        for q in sparse:
+            q = [round(v) for v in to_engine(q)]
+            # ⚠️ 取整后相邻两点可能重合。引擎会给孩子的笔迹去重，却【不会】给字的中线去重：
+            # 长度为 0 的一段算方向夹角得 NaN，这一笔就永远判不过（2026-09-27 m 就是这么卡住的）
+            if not med or q != med[-1]:
+                med.append(q)
+        meds.append(med)
     return {'s': outs, 'm': meds, 'n': len(strokes)}
 
 
 def main():
     data = {ch: build_char(st) for ch, st in ALL.items()}
-    # 自检：所有点都落在引擎坐标范围内
+    # 自检：所有点都落在引擎坐标范围内，且中线里没有重合的相邻点
     for ch, g in data.items():
         for med in g['m']:
             for x, y in med:
                 assert -10 <= x <= 1034 and -140 <= y <= 910, (ch, x, y)
+            assert all(a != b for a, b in zip(med, med[1:])), ('中线有重合点', ch)
     js = ('/* 由 build/make_latin.py 生成，别手改。源数据在 build/latin_glyphs.py */\n'
           'window.LATIN=' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n')
     out = os.path.join(APP, 'latin.js')
