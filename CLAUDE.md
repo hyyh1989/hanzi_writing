@@ -62,7 +62,7 @@
 会算成前一天，游戏的「一天 3 局」要到早上 8 点才重置。已改。
 
 **升级分步做，全部在 `upgrade` 分支上，做完才合进 main 上线**：
-1 换外壳（已完成：今天页 + 底部科目 + 面包屑）→ 2 数学、英文接进写字页 → 3 今天任务（周计划编辑、自动出题、自动打勾）
+1 换外壳（已完成：今天页 + 底部科目 + 面包屑）→ 2 数学、英文接进写字页（已完成）→ 3 今天任务（周计划编辑、自动出题、自动打勾）
 → 4 英文单词 → 5 音乐。预览用 `./build/deploy.sh preview`（next.hanzi-writing.pages.dev，
 和正式站数据不互通）；在非 main 分支上跑正式发布会被脚本拒绝。
 
@@ -132,7 +132,7 @@
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
 **`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
-`manifest.webmanifest`、`latin-play.js`、`abc-preview.html`（临时，字母接进主页面后删）以外都是生成物，不要手改。** 源文件在 `build/`：
+`manifest.webmanifest`、`latin-play.js`、`today.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
 |---|---|---|
@@ -140,7 +140,7 @@ head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字�
 | `build/charset.py` | `make_chardata.py` | 同上 |
 | `build/words_core.py` | `make_words.py` | `words.js` |
 | `build/make_icons.py` | 它自己 | `icon-*.png` |
-| `build/latin_glyphs.py` | `make_latin.py` | `latin.js`（62 个数字/字母笔画，还没接进主程序） |
+| `build/latin_glyphs.py` | `make_latin.py` | `latin.js`（62 个数字/字母笔画） |
 
 发布两条路：`build/deploy.sh`（Cloudflare Pages，正式）和 Artifact 工具（预览）。
 Artifact 发布时 `files` 要带上改动过的生成物。
@@ -210,7 +210,19 @@ Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 C
   填充轮廓检查过 23,226 个点「全部完好」，但孩子看到的是引擎的渲染结果，两者不是一回事。
   正确做法：让引擎真的画出来 → SVG 转图片画到 canvas → 沿中线及两侧逐点看有没有墨。
   这个方法在线上旧版本上查出了 15 个缺笔画的字母，修完后 62 个字 30,132 个点全部有墨。
-- 还没接进主程序：四线格背景、「位置/大小」评分的措辞（米字格方位词不适用）都要另做。
+- **已接进练字页（2026-09-27，升级第 2 步）**：数学页（0–9）、英文页（容易写反的 / 小写 / 大写）
+  点字块进**同一个练字页**。只在 `isLatin(字)` 时换一套，汉字的每条路径保持原样：
+  - `glyph(字)` 取字形（汉字 `CHARS`、字母数字 `LATIN`）；`has()` 仍只认汉字——
+    中文页「要多练的字」靠它把字母数字挡在外面，数学/英文页各自挑自己的（同一个 `mzg.wrong`）
+  - `gridOf(字)`：米字格 `MZG` / 四线格 `FLG`（写字格、行首范字、每格底、笔顺表都跟着换）
+  - 看笔顺 / 写错示范用 `latin-play.js`（`#lpl` 层），不用引擎的（坑 5）；判定乘 `LATIN[字].k`（坑 6）
+  - 起笔提示用格线说法 `latinRegion()`：顶线 / 中线 / 红色基线 + 靠左 / 靠右（阈值 45/55，
+    让 a/d 念成「中线靠右」——写反 a、d 最常见的就是从左边起笔）
+  - 读音：**字母用英式英语**（`utterEn`，优先 en-GB，z 念 zed），小写念字母名、大写念「capital X」，
+    念大写形式是为了避开 TTS 把单独的 a 念成冠词；**数字用中文念**
+  - 字母字块和练字页头部用 Andika 字体——系统中文字体里的 a、g 是双层的，和她学的单层不一样
+  - 评分文案：字母没有「填满格子」「中心点」，改成「坐在红色基线上」「矮的写到中线，高的碰到顶线」
+  - 临时预览页 `abc-preview.html` 已删
 
 ## 陪伴小猫（2026-09-17 上线）
 

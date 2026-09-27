@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="练习本">
 <meta name="theme-color" content="#FAFAF7">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@700&family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;800&display=swap">
 <style>
 :root{
   --paper:#FAFAF7; --card:#FFFFFF; --sunk:#F1F2EE;
@@ -82,6 +82,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 .crumb svg{width:17px;height:17px;vertical-align:-3px;margin-right:5px}
 .crumbs .sep{flex:none;color:var(--ink-3);font-style:normal;font-weight:700}
 .crumbs h1{flex:1;min-width:0}
+.chip.latin .g{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700}
 .soon{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:26px 18px;
       text-align:center;color:var(--ink-3);margin-top:16px}
 .tabs{display:flex;gap:6px;background:var(--sunk);padding:4px;border-radius:12px;margin:18px 0 16px}
@@ -208,6 +209,7 @@ textarea,input[type=text]{width:100%;font-family:var(--han);font-size:19px;paddi
 /* ── 练习页 ── */
 .pr-head{display:flex;align-items:center;gap:12px;margin:16px 0 12px}
 .pr-char{font-family:var(--han);font-size:34px;line-height:1;font-weight:600}
+.pr-char.latin{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700}
 .pr-meta{flex:1;min-width:0}
 .pr-py{font-family:var(--han);font-size:17px;color:var(--teal);font-weight:600}
 .pr-sub{font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
@@ -236,6 +238,10 @@ textarea,input[type=text]{width:100%;font-family:var(--han);font-size:19px;paddi
 .gridwrap{position:relative;background:var(--card);border-radius:6px;touch-action:none}
 .gridwrap svg.deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .mzg rect{fill:none;stroke:var(--zhu);stroke-width:6}
+.flg rect{fill:none;stroke:var(--line);stroke-width:6}
+.flg line{stroke:var(--zhu-soft);stroke-width:4}
+.flg .fm{stroke-dasharray:24 18}
+.flg .fb{stroke:var(--zhu);stroke-width:6}
 .mzg line{stroke:var(--zhu-soft);stroke-width:4;stroke-dasharray:24 18}
 #writer{position:relative;z-index:2}
 .ovl{z-index:3}
@@ -499,6 +505,8 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <script src="hanzi-writer.min.js"></script>
 <script src="chardata.js"></script>
 <script src="words.js"></script>
+<script src="latin.js"></script>
+<script src="latin-play.js"></script>
 <script src="cat.js"></script>
 <script src="game.js"></script>
 <script src="today.js"></script>
@@ -512,6 +520,12 @@ const AVAIL=new Set(window.AVAIL||""), SHARDS=window.SHARDS||1;
 
 /* 字库一共 9574 个字。常用的 392 个随页面一起到，其余的用到哪片下哪片 */
 function has(c){return !!D[c]||AVAIL.has(c)}
+/* 数字 / 字母（2026-09-27 起）：数据在 latin.js，结构和 CHARS 一样（{s,m,n}），另有 c=中心线、k=判定放宽系数。
+   has() 仍只认汉字——「要多练的字」的中文卡片靠它把字母数字挡在外面 */
+const LATIN=window.LATIN||{};
+function isLatin(c){ return !!LATIN[c] }
+function glyph(c){ return D[c]||LATIN[c] }
+function isDigit(c){ return /^[0-9]$/.test(c) }
 const shardState={};
 function loadShard(n,cb){
   const st=shardState[n];
@@ -583,7 +597,22 @@ function beep(type){
 }
 function speak(ch){
   if(!cfg.speak||!window.speechSynthesis) return;
-  try{ speechSynthesis.cancel(); speechSynthesis.speak(utter(ch,.7)); }catch(e){}
+  try{ speechSynthesis.cancel();
+    speechSynthesis.speak(isLatin(ch)&&!isDigit(ch) ? utterEn(letterName(ch),.8) : utter(ch,.7)); }catch(e){}
+}
+/* 字母的念法：小写念字母名；大写前面加 capital（英国学校的说法）。
+   念大写形式是为了避开 TTS 把单独一个小写 a 念成冠词 /ə/ */
+function letterName(ch){ return /[A-Z]/.test(ch) ? "capital "+ch : ch.toUpperCase() }
+/* 英文语音：优先英式（en-GB），没有就用任意英文；iPad 自带 Daniel / Kate 等英式声音 */
+function utterEn(txt,base){
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang="en-GB"; u.pitch=1; u.rate=(base||.8)*(cfg.rate||1);
+  try{
+    const all=window.speechSynthesis.getVoices()||[];
+    const v=all.find(x=>/^en[-_]GB/i.test(x.lang||"")) || all.find(x=>/^en/i.test(x.lang||""));
+    if(v){ u.voice=v; u.lang=v.lang; }
+  }catch(e){}
+  return u;
 }
 
 let VOICES=[];
@@ -624,8 +653,20 @@ function regionName(pt){
   if(ny) return pt.x<C ? "横中线的左边" : "横中线的右边";
   return (pt.x<C?"左":"右")+(pt.y<C?"上":"下")+"格";
 }
+/* 四线格的说法（字母、数字）：顶线 / 中线 / 基线，再加靠左 / 靠右。
+   坐标是 1024 方框的屏幕坐标；换回 latin_glyphs.py 的 100×130 坐标来判断 */
+function latinRegion(pt){
+  const S=1024/130, OX=(1024-100*S)/2, y=pt.y/S, x=(pt.x-OX)/S, NEAR=7;
+  let v = Math.abs(y-15)<NEAR ? "顶线" : Math.abs(y-48)<NEAR ? "中线" : Math.abs(y-85)<NEAR ? "红色基线"
+        : y<48 ? "顶线和中线之间" : y<85 ? "中线和基线之间" : "基线下面";
+  /* 55 而不是更靠右：a/d/g/q 的圆从中线偏右起笔（x≈57），要念成「中线靠右」——
+     孩子写反 a、d 最常见的就是从左边起笔、顺时针绕，这句话正好对着这个错 */
+  const side = x<45 ? "靠左" : x>55 ? "靠右" : "";
+  return side ? v+side+"的地方" : v;
+}
+function regionOf(pt){ return isLatin(cur) ? latinRegion(pt) : regionName(pt) }
 function strokeStart(i){
-  const d=D[cur]; if(!d||!d.m[i]||!d.m[i].length) return null;
+  const d=glyph(cur); if(!d||!d.m[i]||!d.m[i].length) return null;
   const m=d.m[i];
   const a={x:m[0][0], y:900-m[0][1]};
   const j=Math.min(m.length-1, Math.max(1, Math.round(m.length*.3)));
@@ -634,7 +675,7 @@ function strokeStart(i){
 }
 function showStartDot(i,on){
   const el=$("#ovl"); if(!el) return;
-  if(!on||i==null||i<0||!D[cur]||i>=D[cur].n){ el.innerHTML=""; return; }
+  if(!on||i==null||i<0||!glyph(cur)||i>=glyph(cur).n){ el.innerHTML=""; return; }
   const s=strokeStart(i); if(!s){ el.innerHTML=""; return; }
   const dx=s.b.x-s.a.x, dy=s.b.y-s.a.y, L=Math.hypot(dx,dy)||1;
   const ux=dx/L, uy=dy/L, len=Math.min(140,L);
@@ -653,7 +694,7 @@ function showStartDot(i,on){
 /* ── 字形 SVG ── */
 const XF='scale(1,-1) translate(0,-900)';
 function charSVG(ch,upto,opt){
-  const d=D[ch]; if(!d) return "";
+  const d=glyph(ch); if(!d) return "";
   opt=opt||{};
   const n = upto==null ? d.s.length-1 : upto;
   let p="";
@@ -664,6 +705,14 @@ function charSVG(ch,upto,opt){
   return '<svg viewBox="0 0 1024 1024" aria-hidden="true">'+(opt.grid||"")+
          '<g transform="'+XF+'">'+p+'</g></svg>';
 }
+/* 四线格（字母、数字用）。线的位置和 latin_glyphs.py 的 100×130 坐标一一对应：
+   顶线 15、中线 48、基线 85、底线 118，×(1024/130) 换到 1024 方框里 */
+const FLG='<g class="flg"><rect x="8" y="8" width="1008" height="1008" rx="14"/>'+
+  '<line class="fl" x1="8" y1="118" x2="1016" y2="118"/>'+
+  '<line class="fm" x1="8" y1="378" x2="1016" y2="378"/>'+
+  '<line class="fb" x1="8" y1="670" x2="1016" y2="670"/>'+
+  '<line class="fl" x1="8" y1="929" x2="1016" y2="929"/></g>';
+function gridOf(c){ return isLatin(c)?FLG:MZG }
 const MZG='<g class="mzg"><rect x="8" y="8" width="1008" height="1008" rx="14"/>'+
   '<line x1="512" y1="8" x2="512" y2="1016"/><line x1="8" y1="512" x2="1016" y2="512"/>'+
   '<line x1="8" y1="8" x2="1016" y2="1016"/><line x1="1016" y1="8" x2="8" y2="1016"/></g>';
@@ -831,8 +880,45 @@ $("#crumbs-pre").addEventListener("click",function(e){
 function renderHome(){
   if(subj==="today") return renderToday();
   if(subj==="zh") return renderZh();
-  $("#pane-"+subj).innerHTML='<div class="soon">'+SUBJ_TITLE[subj]+'正在做，很快就好</div>';
+  if(subj==="math") return renderLatinPane("math");
+  if(subj==="en") return renderLatinPane("en");
 }
+/* 数学（数字）、英文（字母）的科目页：一组组字块，点了进练字页（和汉字同一个页面）。
+   「要多练」和汉字共用一个存储（mzg.wrong，按字存），这里只挑本科目的字 */
+const LATIN_GROUPS={
+  math:[["数字","0123456789".split(""),"每个都是一笔或两笔，注意起笔和朝哪边拐"]],
+  en:[["容易写反的","bdpqszjNSZJ".split(""),"b/d、p/q 最容易镜像，s z j 看起笔方向"],
+      ["小写字母","abcdefghijklmnopqrstuvwxyz".split(""),"都是一笔连写（i j 的点、t f 的横、x 除外）"],
+      ["大写字母","ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),"按学校教的笔顺：H 竖横竖，Y 是长斜线"]]
+};
+function latinChips(chars){
+  return '<div class="chips">'+chars.map(function(c){
+    if(!isLatin(c)) return "";
+    const st=starsOf(c);
+    return '<button class="chip latin" data-ch="'+esc(c)+'" data-done="'+(st?1:0)+'"><span class="g">'+esc(c)+
+           '</span>'+(st?'<span class="dot">'+"★".repeat(st)+'</span>':'')+'</button>';
+  }).join("")+'</div>';
+}
+function renderLatinPane(which){
+  const el=$("#pane-"+which);
+  const mine=Object.keys(wrong).filter(function(c){
+    return isLatin(c) && (which==="math" ? isDigit(c) : !isDigit(c)); });
+  let h="";
+  if(mine.length) h+='<div class="lesson wrongbank"><div class="lesson-h"><h3>要多练的</h3></div>'+
+    '<p class="lesson-tip">练字时点了「＋多练」的，都在这里。</p>'+latinChips(mine)+'</div>';
+  h+=LATIN_GROUPS[which].map(function(g){
+    return '<div class="lesson"><div class="lesson-h"><h3>'+g[0]+'</h3></div>'+
+      '<p class="lesson-tip">'+g[2]+'</p>'+latinChips(g[1])+'</div>';
+  }).join("");
+  el.innerHTML='<div style="height:14px"></div>'+h;
+}
+["#pane-math","#pane-en"].forEach(function(sel){
+  $(sel).addEventListener("click",function(e){
+    const chip=e.target.closest("[data-ch]"); if(!chip) return;
+    const list=[...chip.closest(".chips").querySelectorAll("[data-ch]")].map(x=>x.dataset.ch);
+    openChar(chip.dataset.ch,list);
+  });
+});
 /* 打卡：今天来过（写完一个字、做完一轮听写、玩完一局游戏都算） */
 function markDay(){
   if(!window.Today) return;
@@ -846,13 +932,13 @@ function renderToday(){
     plan:function(){ return load(K.week,null) },
     days:function(){ return load(K.days,{}) },
     saveDays:function(v){ save(K.days,v) },
-    ready:function(s){ return s==="zh" },     /* 第 2 步接上数学、英文后改这里 */
+    ready:function(s){ return s==="zh"||s==="math"||s==="en" },   /* 音乐做好前是线下任务 */
     go:setSubj,
     games:renderGameEntry,
     subjects:function(){ return [
       {id:"zh",   name:"中文", items:"写字 · 听写 · 字库"},
-      {id:"math", name:"数学", items:"写数字"},
-      {id:"en",   name:"英文", items:"写字母"} ] },
+      {id:"math", name:"数学", items:"写数字 0–9"},
+      {id:"en",   name:"英文", items:"写字母 a–z、A–Z"} ] },
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     beep:beep
   });
@@ -983,7 +1069,7 @@ function show(view){
 }
 function modelPaths(fill){
   return '<g transform="'+XF+'" fill="'+fill+'">'+
-    D[cur].s.map(d=>'<path d="'+d+'"/>').join("")+'</g>';
+    glyph(cur).s.map(d=>'<path d="'+d+'"/>').join("")+'</g>';
 }
 /* 把小朋友自己的笔迹画出来——不是字库里的标准笔画 */
 function inkPaths(strokes,color,w){
@@ -997,7 +1083,7 @@ function inkPaths(strokes,color,w){
   }).join("");
 }
 function dotMarkup(i,on){
-  if(!on||i==null||i<0||!D[cur]||i>=D[cur].n) return "";
+  if(!on||i==null||i<0||!glyph(cur)||i>=glyph(cur).n) return "";
   const s=strokeStart(i); if(!s) return "";
   const dx=s.b.x-s.a.x, dy=s.b.y-s.a.y, L=Math.hypot(dx,dy)||1;
   const ux=dx/L, uy=dy/L, len=Math.min(140,L);
@@ -1026,9 +1112,11 @@ function buildGrid(){
   gsize=gridSize();
   const w=$("#gridwrap");
   w.style.width=w.style.height=gsize+"px";
-  w.innerHTML='<svg class="deco" viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+'</svg>'+
+  w.innerHTML='<svg class="deco" viewBox="0 0 1024 1024" aria-hidden="true">'+gridOf(cur)+'</svg>'+
               '<div id="writer"></div>'+
-              '<svg class="deco ovl" id="ovl" viewBox="0 0 1024 1024" aria-hidden="true"></svg>';
+              '<svg class="deco ovl" id="ovl" viewBox="0 0 1024 1024" aria-hidden="true"></svg>'+
+              /* 字母数字的笔顺动画 / 写错提示画在这里（latin-play.js），不用引擎自带的，见 CLAUDE.md 坑 5 */
+              '<svg class="deco ovl" id="lpl" viewBox="0 0 1024 1024" aria-hidden="true"></svg>';
   const css=n=>getComputedStyle(document.body).getPropertyValue(n).trim();
   writer=HanziWriter.create($("#writer"),cur,{
     width:gsize,height:gsize,padding:0,
@@ -1038,7 +1126,7 @@ function buildGrid(){
     drawingWidth:Math.round(gsize/15),
     strokeAnimationSpeed:.85, delayBetweenStrokes:420,
     showCharacter:false, showOutline:true,
-    charDataLoader:(c,done)=>done(D[c]?{strokes:D[c].s,medians:D[c].m}:null)
+    charDataLoader:(c,done)=>{ const g=glyph(c); done(g?{strokes:g.s,medians:g.m}:null) }
   });
 }
 /* ───────── 陪伴小猫 ─────────
@@ -1096,14 +1184,14 @@ function buildPlan(){
   cells=[]; cellIdx=0;
 }
 function renderRow(){
-  const parts=['<div class="rc model"><svg viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+
+  const parts=['<div class="rc model"><svg viewBox="0 0 1024 1024" aria-hidden="true">'+gridOf(cur)+
     modelPaths("var(--ink)")+'</svg><span>范字</span></div>'];
   plan.forEach((kind,i)=>{
     const e=cells[i], now=(phase==="do"&&i===cellIdx);
     const g = e ? inkPaths(e.ink,"var(--ink)")
                 : (kind==="trace" ? modelPaths("var(--trace)") : "");
     parts.push('<div class="rc'+(now?" now":"")+'">'+
-      '<svg viewBox="0 0 1024 1024" aria-hidden="true">'+MZG+g+'</svg>'+
+      '<svg viewBox="0 0 1024 1024" aria-hidden="true">'+gridOf(cur)+g+'</svg>'+
       '<span>'+(e?"★".repeat(e.stars):(kind==="trace"?"描":"写"))+'</span></div>');
   });
   $("#rowstrip").innerHTML=
@@ -1114,26 +1202,42 @@ function renderRow(){
                         buildPlan(); goWatch(); beep("tap"); };
 }
 function openChar(ch,list){
-  if(!has(ch)) return;
-  if(!D[ch]) return ensureChars([ch],function(){ if(D[ch]) openChar(ch,list) });
+  if(!has(ch) && !isLatin(ch)) return;
+  if(!glyph(ch)) return ensureChars([ch],function(){ if(D[ch]) openChar(ch,list) });
+  const g=glyph(ch), lat=isLatin(ch);
   cur=ch; curList=list&&list.length?list:[ch]; curIdx=Math.max(0,curList.indexOf(ch));
   show("#view-practice"); $("#title").textContent="练 “"+ch+"”";
-  $("#pr-char").textContent=ch; $("#pr-py").textContent=D[ch].p;
-  $("#pr-sub").textContent="共 "+D[ch].n+" 画　·　第 "+(curIdx+1)+"/"+curList.length+" 个";
-  $("#strip").innerHTML=D[ch].s.map((_,i)=>
-    '<div class="strip-cell">'+charSVG(ch,i,{hi:true,fill:"var(--ink-3)",grid:MZG})+
+  $("#pr-char").textContent=ch; $("#pr-char").classList.toggle("latin",lat);
+  $("#pr-py").textContent= !lat ? g.p : isDigit(ch) ? "数字" : (/[a-z]/.test(ch)?"小写字母":"大写字母");
+  $("#pr-sub").textContent="共 "+g.n+(lat?" 笔":" 画")+"　·　第 "+(curIdx+1)+"/"+curList.length+" 个";
+  $("#strip").innerHTML=g.s.map((_,i)=>
+    '<div class="strip-cell">'+charSVG(ch,i,{hi:true,fill:"var(--ink-3)",grid:gridOf(ch)})+
     '<span>'+(i+1)+'</span></div>').join("");
   markBtn();
   buildPlan(); buildGrid(); petOn(); goWatch(); speak(ch);
 }
+/* 播放笔顺。字母数字不用引擎的 animateCharacter：她的 b/q/a/d 是一笔里圆和竖贴在一起，
+   引擎那条 200 宽的粗线写竖时会让圆提前冒出来（CLAUDE.md 坑 5），改用 latin-play.js 沿中心线画 */
+function playStrokes(){
+  if(!writer) return;
+  const lp=$("#lpl");
+  if(!isLatin(cur) || !window.LatinPlay || !lp){ writer.animateCharacter(); return; }
+  writer.hideCharacter({duration:0});
+  const ink0=getComputedStyle(document.body).getPropertyValue("--ink").trim()||"#1B2530";
+  LatinPlay.play(lp,cur,{ink:ink0}).then(function(done){
+    if(!done||phase!=="watch") return;
+    LatinPlay.clear(lp); writer.showCharacter({duration:0});
+  });
+}
+function clearLatinLayer(){ const lp=$("#lpl"); if(lp&&window.LatinPlay) LatinPlay.clear(lp); }
 function goWatch(){
   phase="watch"; awaiting=false; ink=[]; mistakes=0;
   $("#scorebox").innerHTML="";
   if(writer){ writer.cancelQuiz(); setModelVisible(true);
-              writer.showOutline(); writer.animateCharacter(); }
+              writer.showOutline(); playStrokes(); }
   paintOverlay(null,false); renderRow();
   $("#hintbar").innerHTML="看清楚<b>每一笔从哪里起笔</b>，再往下走。";
-  setControls(btn("再看一遍","quiet",()=>writer.animateCharacter()),
+  setControls(btn("再看一遍","quiet",playStrokes),
               btn("开始描红 →","",()=>runCell(0)));
 }
 function runCell(i){
@@ -1141,11 +1245,13 @@ function runCell(i){
   phase="do"; awaiting=false; cellIdx=i; ink=[]; mistakes=0;
   const trace=(plan[i]==="trace");
   $("#scorebox").innerHTML="";
-  writer.cancelQuiz(); setModelVisible(false);
+  writer.cancelQuiz(); clearLatinLayer(); setModelVisible(false);
   if(trace) writer.showOutline(); else writer.hideOutline();
   $("#hintbar").innerHTML= trace
     ? "第 <b>"+(i+1)+"</b> 格 · 描红　顺着浅色的字描"
-    : "第 <b>"+(i+1)+"</b> 格 · 默写　<b>写在正中间、填满格子</b>";
+    : "第 <b>"+(i+1)+"</b> 格 · 默写　"+(isLatin(cur)
+        ? "<b>坐在红线上，高矮对准格线</b>"
+        : "<b>写在正中间、填满格子</b>");
   renderRow();
   /* 起笔提示只在这个字的第一格念一次，后面每格都念太啰嗦 */
   startQuiz(trace, i===0, 0);
@@ -1160,15 +1266,20 @@ function startQuiz(trace,cue,from){
   writer.quiz({
     quizStartStrokeNum:start,
     showOutline:trace,
-    leniency:(cfg.easy?1.5:1.0)*(trace?1.25:1),
-    showHintAfterMisses:trace?1:3,
+    /* 字母数字另乘各自的放宽系数（latin.js 的 k）：d/a/o 这类字母被引擎的形状比较吃亏，
+       同样的偏差 b 能过 d 过不了，见 CLAUDE.md 坑 6 */
+    leniency:(cfg.easy?1.5:1.0)*(trace?1.25:1)*(isLatin(cur)?(LATIN[cur].k||1):1),
+    /* 写错几次后的示范：字母数字用 latin-play.js 自己画（引擎的会冒出多余部分，坑 5） */
+    showHintAfterMisses:isLatin(cur)?false:(trace?1:3),
     highlightOnComplete:false,      /* 别闪标准字形 */
     onMistake:d=>{
       mistakes++; beep("bad");
+      if(isLatin(cur) && window.LatinPlay && d.mistakesOnStroke>=(trace?1:3))
+        LatinPlay.hint($("#lpl"),cur,d.strokeNum,{ink:getComputedStyle(document.body).getPropertyValue("--teal").trim()||"#12796F"});
       /* 一格里最多提醒两次起笔，再多就只留红点不出声——越急躁越帮倒忙 */
       if(d.mistakesOnStroke===1 && mistakes<=2){
         const st=strokeStart(d.strokeNum);
-        if(st) say("这一笔从"+regionName(st.a)+"起笔。",true);
+        if(st) say("这一笔从"+regionOf(st.a)+"起笔。",true);
       }
       paintOverlay(d.strokeNum,true);
     },
@@ -1184,7 +1295,7 @@ function startQuiz(trace,cue,from){
   });
   paintOverlay(start,guide);
   const s0=strokeStart(start);
-  if(guide&&cue&&s0) say((start?"接着写，":"第一笔，")+"从"+regionName(s0.a)+"起笔。",true);
+  if(guide&&cue&&s0) say((start?"接着写，":"第一笔，")+"从"+regionOf(s0.a)+"起笔。",true);
 }
 /* 上一笔写得不满意，退回去重写这一笔 */
 function undoStroke(){
@@ -1222,7 +1333,7 @@ function dirName(dx,dy){
   return a.join("")||"中间";
 }
 function score(ch,user){
-  const d=D[ch];
+  const d=glyph(ch);
   const std=d.m.map(m=>m.map(p=>({x:p[0],y:900-p[1]}))).filter(m=>m.length);
   const uAll=[].concat.apply([],user.filter(s=>s.length));
   if(uAll.length<3||!std.length) return null;
@@ -1253,13 +1364,16 @@ function score(ch,user){
   if(mistakes>=4) total=Math.max(1,total-1);
   total=Math.max(1,Math.min(3,total));
   const dn=dirName(dx,dy), pct=Math.round(ratio*100);
-  const fix=fixDir(dx,dy), wfix=fixDir(wdx,wdy), wreg=wstart?regionName(wstart):"";
+  const fix=fixDir(dx,dy), wfix=fixDir(wdx,wdy), wreg=wstart?regionOf(wstart):"";
   return {pos,size,str,total,ub,sb,resid,ratio,worst,dn,fix,wfix,wreg,
     posMsg: pos===3 ? "正中间，很稳"
           : "整个字要"+(fix||"再对准一点")+"（现在偏"+dn+"）",
     sizeMsg: size===3 ? "大小刚刚好"
-          : (ratio<1 ? ("写小了，只有该有的 "+pct+"%，笔画伸展开、填满格子")
-                     : ("写大了，撑到了 "+pct+"%，往里收一收")),
+          : isLatin(ch)
+            ? (ratio<1 ? ("写小了，只有该有的 "+pct+"%，高度要对准格线")
+                       : ("写大了，撑到了 "+pct+"%，别超出格线"))
+            : (ratio<1 ? ("写小了，只有该有的 "+pct+"%，笔画伸展开、填满格子")
+                       : ("写大了，撑到了 "+pct+"%，往里收一收")),
     strMsg: str===3 ? "每一笔都落在该在的位置"
           : ("第 "+worst+" 笔要"+(wfix||"再准一点")+"；这一笔从"+wreg+"起笔"),
     ordMsg: mistakes===0?"一次就写对了" : ("笔顺提示了 "+mistakes+" 次")};
@@ -1277,9 +1391,13 @@ function advice(r){
   const w=[["pos",r.pos],["size",r.size],["str",r.str],
            ["ord",mistakes===0?3:mistakes<=2?2:1]].sort((a,b)=>a[1]-b[1])[0];
   if(w[1]>=3) return "每一笔都落在该在的位置，保持住。";
-  const fix = w[0]==="pos" ? ("这个字要"+(r.fix||"再对准一点")+"，落笔前先看准中心点。")
-            : w[0]==="size" ? (r.ratio<1 ? "字写小了。笔画伸展开，把格子填满。"
-                                         : "字写大了，撑出格子了，往里收一收。")
+  const lat=isLatin(cur);
+  const fix = w[0]==="pos" ? (lat ? ("要"+(r.fix||"再对准一点")+"，记得坐在红色的基线上。")
+                                  : ("这个字要"+(r.fix||"再对准一点")+"，落笔前先看准中心点。"))
+            : w[0]==="size" ? (lat
+                ? (r.ratio<1 ? "写小了。矮的写到中线，高的碰到顶线。" : "写大了，别超出格线。")
+                : (r.ratio<1 ? "字写小了。笔画伸展开，把格子填满。"
+                             : "字写大了，撑出格子了，往里收一收。"))
             : w[0]==="str"  ? ("第 "+r.worst+" 笔要"+(r.wfix||"再准一点")+"，这一笔应该从"+r.wreg+"起笔。")
             : "笔顺记错了。我们回去把笔顺动画再看一遍。";
   return r.total>=3 ? "再注意一点会更棒："+fix : fix;
