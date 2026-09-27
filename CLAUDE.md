@@ -92,8 +92,8 @@
 单文件 app，无框架、无构建步骤。`app/index.html` 按顺序是：
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
-**`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`meow.wav`、`_headers`、
-`manifest.webmanifest` 以外都是生成物，不要手改。** 源文件在 `build/`：
+**`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
+`manifest.webmanifest`、`abc-preview.html`（临时，字母接进主页面后删）以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
 |---|---|---|
@@ -105,6 +105,11 @@ head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字�
 
 发布两条路：`build/deploy.sh`（Cloudflare Pages，正式）和 Artifact 工具（预览）。
 Artifact 发布时 `files` 要带上改动过的生成物。
+
+⚠️ **claude.ai 的 Artifact 链接要登录 claude.ai 才能打开**（默认私有），孩子的 iPad 上通常没登录。
+所以：**要给孩子用、要在 iPad 上试的东西，放进 `app/` 走 `deploy.sh` 发到正式网址**（不用登录）；
+Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 Claude 读的页面（比如字母写法对照卡用了
+`db` 能力，只能放 Artifact）。2026-09-27 用户问过「为什么这次要登录」，就是因为预览放错了地方。
 
 > 2026-09-17 起会话工作目录就是本仓库，`app/` 在工作目录下，**可以直接发布**。
 > 在此之前工作目录是 `quant_system`，`app/` 不在其下，每次发布都得先镜像到 scratchpad——

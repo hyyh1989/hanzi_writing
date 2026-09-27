@@ -1,0 +1,120 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 字母/数字笔画的预览页：和练字本同一套实现（本地写字引擎 + latin.js），
+     部署在同一个网址，不用登录。接进练字本主页面之后就可以删掉这个文件。 -->
+<title>数字字母笔顺</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap">
+<style>
+:root{
+  --paper:#F5F8FC; --card:#FFFFFF; --ink:#232A36; --ink-2:#4E5767; --ink-3:#7B8494;
+  --line:#DCE4EF; --rule:#AFC3DE; --base:#D9695F; --go:#1E9A62; --trace:#E7D6D3; --focus:#2F6FD6;
+  --latin:"Andika","Comic Neue",system-ui,sans-serif;
+  --cn:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--cn);font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0}
+button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.wrap{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:28px 56px;display:grid;gap:22px}
+h1{margin:0;font-size:24px;line-height:1.3;text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--ink-2);max-width:64ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:0;list-style:none;font-size:13px;color:var(--ink-2)}
+section{display:grid;gap:12px}
+section h2{margin:0;font-size:18px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+section h2 small{font-size:13px;font-weight:400;color:var(--ink-3)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px;justify-items:center}
+.card.ok{border-color:var(--go);box-shadow:0 0 0 3px #E3F4EC}
+.chead{width:100%;display:flex;align-items:baseline;justify-content:space-between}
+.big{font-family:var(--latin);font-weight:700;font-size:26px;line-height:1}
+.meta{font-size:12.5px;color:var(--ink-3)}
+.box{position:relative;width:160px;height:160px;touch-action:none}
+.box svg.bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.box .w{position:relative;z-index:1}
+.rl{stroke:var(--rule);stroke-width:5}
+.rm{stroke:var(--rule);stroke-width:5;stroke-dasharray:22 18}
+.rb{stroke:var(--base);stroke-width:7}
+.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.btns button{font-size:13px;font-weight:700;border-radius:99px;padding:6px 11px;background:var(--paper);border:1px solid var(--line);color:var(--ink-2)}
+.btns button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.msg{font-size:12.5px;min-height:1.4em;color:var(--ink-3);text-align:center}
+.msg.good{color:var(--go);font-weight:700}
+.note{font-size:13px;color:var(--ink-3);margin:0;max-width:66ch}
+</style>
+
+<div class="wrap" style="gap:28px">
+  <header>
+    <h1>数字字母笔顺 · 预览</h1>
+    <p class="lede" style="margin-top:4px"><a href="./" style="color:var(--ink-2)">← 回练字本</a></p>
+    <p class="lede">给练字本做的字母和数字笔画，全部按她确认的写法画：英式预备连笔（单层 a/g、末尾带小尾巴），
+      小写字母都是<b>一笔连写</b>（b、d、n 竖下去原路折返再拱过去），大写只有 M 是两笔。
+      用的是和汉字<b>同一个写字引擎</b>——能播放、能描红，写对了会判对，写反方向会被抓出来。</p>
+    <ul class="legend">
+      <li>▶ 播放：看一遍怎么写</li>
+      <li>描红：顺着浅色的字写</li>
+      <li>默写：不看底字自己写</li>
+    </ul>
+  </header>
+  <div id="groups"></div>
+  <p class="note">A E F H K Q T X Y 和小写 x 本来就得抬笔，笔顺没有逐个确认，按英国常见写法做的。
+    她写的顺序如果不一样，描红或默写时会被判错，告诉 Claude 改一下就行。</p>
+</div>
+
+<script src="hanzi-writer.min.js"></script>
+<script src="latin.js"></script>
+<script>
+(function(){
+"use strict";
+var S=1024/130;
+var BG='<svg class="bg" viewBox="0 0 1024 1024" aria-hidden="true">'+
+  '<line class="rl" x1="0" y1="'+15*S+'" x2="1024" y2="'+15*S+'"/>'+
+  '<line class="rm" x1="0" y1="'+48*S+'" x2="1024" y2="'+48*S+'"/>'+
+  '<line class="rb" x1="0" y1="'+85*S+'" x2="1024" y2="'+85*S+'"/>'+
+  '<line class="rl" x1="0" y1="'+118*S+'" x2="1024" y2="'+118*S+'"/></svg>';
+var chars=Object.keys(window.LATIN||{});
+var GROUPS=[["小写字母","26 个",/^[a-z]$/],["大写字母","26 个",/^[A-Z]$/],["数字","0–9",/^[0-9]$/]];
+function card(c,i){
+  return '<article class="card" id="k'+i+'"><div class="chead"><span class="big">'+c+'</span>'+
+    '<span class="meta">'+LATIN[c].n+' 笔</span></div>'+
+    '<div class="box">'+BG+'<div class="w" id="w'+i+'"></div></div>'+
+    '<div class="btns"><button data-a="play" data-i="'+i+'">▶ 播放</button>'+
+    '<button data-a="trace" data-i="'+i+'">描红</button>'+
+    '<button data-a="write" data-i="'+i+'">默写</button></div>'+
+    '<div class="msg" id="m'+i+'"></div></article>';
+}
+document.getElementById("groups").innerHTML=GROUPS.map(function(g){
+  return '<section><h2>'+g[0]+'<small>'+g[1]+'</small></h2><div class="grid">'+
+    chars.map(function(c,i){ return g[2].test(c)?card(c,i):""; }).join("")+'</div></section>';
+}).join("");
+var W=[];
+chars.forEach(function(c,i){
+  W[i]=HanziWriter.create("w"+i,c,{
+    width:160,height:160,padding:0,
+    strokeColor:"#232A36",outlineColor:"#E7D6D3",drawingColor:"#232A36",
+    drawingWidth:11,showCharacter:true,showOutline:true,
+    strokeAnimationSpeed:.9,delayBetweenStrokes:350,
+    charDataLoader:function(ch,done){ var d=LATIN[ch]; done({strokes:d.s,medians:d.m}); }
+  });
+});
+function msg(i,t,good){ var m=document.getElementById("m"+i); m.textContent=t; m.className="msg"+(good?" good":""); }
+function mode(i,a){
+  document.querySelectorAll('#k'+i+' .btns button').forEach(function(b){ b.classList.toggle("on",b.dataset.a===a); });
+  document.getElementById("k"+i).classList.remove("ok");
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-a]"); if(!b) return;
+  var i=+b.dataset.i, a=b.dataset.a, w=W[i], miss=0;
+  w.cancelQuiz(); mode(i,a);
+  if(a==="play"){ msg(i,""); w.showCharacter(); w.animateCharacter({onComplete:function(){ mode(i,""); }}); return; }
+  w.hideCharacter(); if(a==="trace") w.showOutline(); else w.hideOutline();
+  msg(i,a==="trace"?"顺着浅色的字写":"自己写，看不到底字");
+  w.quiz({showOutline:a==="trace",leniency:a==="trace"?1.25:1,showHintAfterMisses:a==="trace"?1:3,highlightOnComplete:false,
+    onMistake:function(){ miss++; msg(i,"这一笔起笔或方向不对，再试一次"); },
+    onCorrectStroke:function(d){ msg(i,"对了，第 "+(d.strokeNum+1)+" 笔"); },
+    onComplete:function(){ msg(i,miss?"写完了（提示 "+miss+" 次）":"写对了 ✓",!miss); document.getElementById("k"+i).classList.add("ok"); mode(i,""); }
+  });
+});
+})();
+</script>
