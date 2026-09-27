@@ -10,6 +10,8 @@
        ready(subj)     → 这个科目做好了没有（没做好的任务显示成「线下」）
        go(subj)        → 切到某个科目
        games(el)       → 把小游戏入口画进 el
+       subjects()      → 科目列表 [{id, name, items}]，画在页面最下面（2026-09-27 用户要的：
+                         「今天」和科目不是一个层级，科目放底下，进科目页后用面包屑回来）
        cat(el)         → 在 el 里放一只小猫，返回它的控制器
        beep(kind)
 
@@ -85,7 +87,17 @@
   '.td-rest{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:26px 18px;' +
     'text-align:center;margin-bottom:22px;box-shadow:var(--shadow)}' +
   '.td-rest b{display:block;font-size:20px;font-family:var(--disp)}' +
-  '.td-games h3{font-size:14px;color:var(--ink-2);margin:0 0 9px}';
+  '.td-sec{font-size:14px;color:var(--ink-2);margin:0 0 9px}' +
+  '.td-games{margin-bottom:24px}' +
+  '.td-subjs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}' +
+  /* 按钮里不用 flex（iPad Safari 上 <button> 当 flex 容器内容会偏），里面用块级 span */
+  '.td-subj{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);' +
+    'border-radius:var(--r);padding:14px 15px;box-shadow:var(--shadow)}' +
+  '.td-subj b{display:block;font-size:17px;font-family:var(--disp)}' +
+  '.td-subj small{display:block;font-size:12.5px;color:var(--ink-3);margin-top:3px;line-height:1.45}' +
+  '.td-subj i{display:block;width:26px;height:4px;border-radius:2px;margin-bottom:9px}' +
+  '.td-subj.zh i{background:var(--zhu)}.td-subj.math i{background:var(--amber)}' +
+  '.td-subj.en i{background:#2F5FA8}.td-subj.music i{background:var(--teal)}';
 
   function injectCSS() {
     if (document.getElementById("today-css")) return;
@@ -139,7 +151,14 @@
           '<button class="btn" data-td-go="' + t.subj + '">去练 →</button></div>';
       }).join("") + '</div>';
     }
-    html += '<div class="td-games"><h3>小游戏</h3><div id="td-games"></div></div>';
+    html += '<div class="td-games"><h3 class="td-sec">小游戏</h3><div id="td-games"></div></div>';
+    var subs = (api.subjects && api.subjects()) || [];
+    if (subs.length) {
+      html += '<h3 class="td-sec">科目</h3><div class="td-subjs">' + subs.map(function (x) {
+        return '<button class="td-subj ' + x.id + '" data-td-go="' + x.id + '"><i></i><b>' + x.name + '</b>' +
+               '<small>' + x.items + '</small></button>';
+      }).join("") + '</div>';
+    }
 
     if (catCtl && catCtl.destroy) catCtl.destroy();
     host.innerHTML = html;

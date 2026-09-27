@@ -73,11 +73,15 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
            font-variant-numeric:tabular-nums}
 
 /* ── 首页 ── */
-/* 科目导航：比中文里面的「学习/字库/练习」大一号，一眼分得出是两层 */
-.subj{display:flex;gap:8px;margin:16px 0 4px}
-.subj button{flex:1;padding:11px 4px;border-radius:12px;font-weight:800;font-size:15.5px;
-             color:var(--ink-2);background:var(--sunk)}
-.subj button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+/* 面包屑。每一格都是能点的大按钮；第一格是小房子 + 「首页」——她认字不多，看小房子就知道是回家。
+   按钮本身不用 flex（iPad Safari 上 <button> 当 flex 容器内容会偏），图标靠 vertical-align 对齐 */
+.crumbs{flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden}
+.crumbs #crumbs-pre{display:contents}
+.crumb{flex:none;display:inline-block;padding:8px 12px;border-radius:10px;background:var(--sunk);
+       font-weight:800;font-size:14.5px;color:var(--ink-2);white-space:nowrap;line-height:1.2}
+.crumb svg{width:17px;height:17px;vertical-align:-3px;margin-right:5px}
+.crumbs .sep{flex:none;color:var(--ink-3);font-style:normal;font-weight:700}
+.crumbs h1{flex:1;min-width:0}
 .soon{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:26px 18px;
       text-align:center;color:var(--ink-3);margin-top:16px}
 .tabs{display:flex;gap:6px;background:var(--sunk);padding:4px;border-radius:12px;margin:18px 0 16px}
@@ -383,20 +387,17 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 
 <div class="app">
   <header class="top">
-    <button class="iconbtn" id="btn-back" hidden aria-label="返回">‹</button>
-    <h1 id="title">练习本</h1>
+    <!-- 面包屑：🏠首页 › 科目 › 当前页。最后一格就是 #title（各页照旧改它的文字），
+         前面几格由 renderCrumbs() 按所在层级生成。取代原来的「‹」返回键（2026-09-27 用户要的） -->
+    <nav class="crumbs" aria-label="位置"><span id="crumbs-pre"></span><h1 id="title">练习本</h1></nav>
     <span class="starcount" id="starcount">★ 0</span>
     <button class="iconbtn" id="btn-set" aria-label="设置">⚙</button>
   </header>
 
   <section id="view-home">
-    <!-- 首页 = 今天 + 各科目。音乐做好之前不显示它的入口 -->
-    <nav class="subj" role="tablist" aria-label="科目">
-      <button role="tab" data-subj="today" aria-selected="true">今天</button>
-      <button role="tab" data-subj="zh" aria-selected="false">中文</button>
-      <button role="tab" data-subj="math" aria-selected="false">数学</button>
-      <button role="tab" data-subj="en" aria-selected="false">英文</button>
-    </nav>
+    <!-- 首页 = 「今天」页，科目入口在它最下面；进了科目页用面包屑回来。
+         「今天」和科目不是同一层级，所以不做成并排的页签（2026-09-27 用户试过觉得不合理）。
+         音乐做好之前不显示它的入口 -->
     <div id="pane-today"></div>
     <div id="pane-zh" hidden>
       <div class="tabs" role="tablist">
@@ -807,15 +808,25 @@ let subj="today";
 const SUBJ_TITLE={today:"练习本",zh:"中文",math:"数学",en:"英文"};
 function setSubj(s){
   subj=s;
-  document.querySelectorAll(".subj [data-subj]").forEach(function(b){
-    b.setAttribute("aria-selected",String(b.dataset.subj===s)); });
   ["today","zh","math","en"].forEach(function(k){ $("#pane-"+k).hidden=(k!==s); });
   if(s!=="today" && window.Today) Today.destroy();   /* 离开今天页就把那里的小猫收掉 */
+  $("#title").textContent=SUBJ_TITLE[s];
   renderHome(); renderSelBar(); show("#view-home");
 }
-document.querySelector(".subj").addEventListener("click",function(e){
-  const b=e.target.closest("[data-subj]"); if(!b||b.dataset.subj===subj) return;
-  beep("tap"); setSubj(b.dataset.subj);
+/* 面包屑前面几格：在首页（今天）时没有；在科目页时是「首页」；
+   在练字/听写/打印这些更深的页时是「首页 › 科目」；小游戏是「首页」 */
+const HOUSE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+function renderCrumbs(view){
+  let h="";
+  if(!(view==="#view-home" && subj==="today"))
+    h+='<button class="crumb" data-crumb="today">'+HOUSE+'首页</button><i class="sep">›</i>';
+  if(view!=="#view-home" && view!=="#view-game" && subj!=="today")
+    h+='<button class="crumb" data-crumb="'+subj+'">'+SUBJ_TITLE[subj]+'</button><i class="sep">›</i>';
+  $("#crumbs-pre").innerHTML=h;
+}
+$("#crumbs-pre").addEventListener("click",function(e){
+  const b=e.target.closest("[data-crumb]"); if(!b) return;
+  beep("tap"); goHome(b.dataset.crumb);
 });
 function renderHome(){
   if(subj==="today") return renderToday();
@@ -838,6 +849,10 @@ function renderToday(){
     ready:function(s){ return s==="zh" },     /* 第 2 步接上数学、英文后改这里 */
     go:setSubj,
     games:renderGameEntry,
+    subjects:function(){ return [
+      {id:"zh",   name:"中文", items:"写字 · 听写 · 字库"},
+      {id:"math", name:"数学", items:"写数字"},
+      {id:"en",   name:"英文", items:"写字母"} ] },
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     beep:beep
   });
@@ -960,7 +975,7 @@ function gridSize(){
 }
 function show(view){
   ["#view-home","#view-practice","#view-dict","#view-print","#view-game"].forEach(x=>$(x).hidden=(x!==view));
-  $("#btn-back").hidden=(view==="#view-home");
+  renderCrumbs(view);
   const bar=$("#selbar");
   if(bar){ bar.hidden = !(view==="#view-home" && subj==="zh" && tab==="practice");
            document.body.classList.toggle("has-bar", !bar.hidden); }
@@ -1660,15 +1675,19 @@ function openGame(){
     },
     speak:speak, say:say, beep:beep,
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
-    onExit:goHome
+    onExit:function(){ goHome("today") }
   });
 }
 
-function goHome(){show("#view-home");renderHome();renderSelBar();   /* 听写完这个库变了，要重画 */
-  $("#title").textContent="练习本";if(writer)writer.cancelQuiz();petOff();
+/* 回到某一层：不传就回到当前科目页（小游戏退出时用）。
+   先收拾当前页（停写字、收小猫、关游戏、停语音），再切过去；
+   setSubj 里会重画——听写完「要多练的字」变了，不重画的话练习页还是旧的 */
+function goHome(target){
+  if(writer)writer.cancelQuiz(); petOff();
   if(gameCtl&&gameCtl.destroy){gameCtl.destroy();gameCtl=null}
-  if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}}
-$("#btn-back").onclick=goHome;
+  if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}
+  setSubj(typeof target==="string"?target:subj);
+}
 $("#btn-say").onclick=()=>speak(cur);
 $("#btn-mark").onclick=markToggle;
 const dlg=$("#dlg");
