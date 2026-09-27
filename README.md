@@ -13,6 +13,7 @@
 | 预览地址（Claude 里改完先看） | https://claude.ai/artifact/5EQPQamRk8mMnu7dMJtdhu |
 | 代码 | `~/MyProjects/hanzi_writing/` |
 | 怎么下课本 PDF | [TEXTBOOKS.md](TEXTBOOKS.md) |
+| 英语词表与设计约定 | [ENGLISH.md](ENGLISH.md) |
 
 ---
 
