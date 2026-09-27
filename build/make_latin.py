@@ -201,6 +201,44 @@ def path_str(poly):
     return 'M ' + ' L '.join('%d %d' % (round(x), round(y)) for x, y in pts) + ' Z'
 
 
+def keep_reversals(med, side=8):
+    """在「原路折返」的点后面插一个往旁边偏 side 个单位的小点。
+
+    引擎画字时会先过滤「共线」的中线点（hanzi-writer `_filterParallelPoints`），判据是
+    两段方向的叉积 == 0 —— 这把**原路折返**（反向共线）也算进去了，折返点被删，
+    n/h/m 竖的下半截、B/D/P 的整条竖就画不出来（2026-09-27 用户在 iPad 上看到的缺笔画）。
+    汉字从不折返，引擎作者没考虑过。判定用的是没过滤的原始中线，所以只影响显示。
+    插一个侧偏点，让折返不再严格共线，就不会被过滤。8 个单位在 1024 坐标里看不出来。"""
+    out = [med[0]]
+    for i in range(1, len(med)):
+        out.append(med[i])
+        if i >= len(med) - 1:
+            continue
+        v1 = (med[i][0] - med[i - 1][0], med[i][1] - med[i - 1][1])
+        v2 = (med[i + 1][0] - med[i][0], med[i + 1][1] - med[i][1])
+        cross = v1[0] * v2[1] - v1[1] * v2[0]
+        dot = v1[0] * v2[0] + v1[1] * v2[1]
+        if cross != 0 or dot >= 0:
+            continue
+        L = math.hypot(*v1) or 1.0
+        perp = (-v1[1] / L, v1[0] / L)
+        # 偏向折返之后笔要去的那一侧（比如 n 折返后往右拱），看不出来就随便取一侧
+        sign = 1
+        for j in range(i + 2, len(med)):
+            w = (med[j][0] - med[i][0], med[j][1] - med[i][1])
+            c = v1[0] * w[1] - v1[1] * w[0]
+            if c != 0:
+                sign = 1 if (perp[0] * w[0] + perp[1] * w[1]) > 0 else -1
+                break
+        out.append([med[i][0] + round(perp[0] * side * sign), med[i][1] + round(perp[1] * side * sign)])
+    return out
+
+
+def _is_reversal(a, b, c):
+    v1 = (b[0] - a[0], b[1] - a[1]); v2 = (c[0] - b[0], c[1] - b[1])
+    return v1[0] * v2[1] - v1[1] * v2[0] == 0 and v1[0] * v2[0] + v1[1] * v2[1] < 0
+
+
 # ── 组装 ────────────────────────────────────────────────────────
 def build_char(strokes):
     outs, meds = [], []
@@ -226,7 +264,7 @@ def build_char(strokes):
             # 长度为 0 的一段算方向夹角得 NaN，这一笔就永远判不过（2026-09-27 m 就是这么卡住的）
             if not med or q != med[-1]:
                 med.append(q)
-        meds.append(med)
+        meds.append(keep_reversals(med))
     return {'s': outs, 'm': meds, 'n': len(strokes)}
 
 
@@ -238,6 +276,7 @@ def main():
             for x, y in med:
                 assert -10 <= x <= 1034 and -140 <= y <= 910, (ch, x, y)
             assert all(a != b for a, b in zip(med, med[1:])), ('中线有重合点', ch)
+            assert not any(_is_reversal(*med[k:k + 3]) for k in range(len(med) - 2)), ('中线有严格共线的折返，引擎会删点', ch)
     js = ('/* 由 build/make_latin.py 生成，别手改。源数据在 build/latin_glyphs.py */\n'
           'window.LATIN=' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n')
     out = os.path.join(APP, 'latin.js')
