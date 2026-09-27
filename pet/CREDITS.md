@@ -29,11 +29,16 @@
 
 > ⚠️ **唯一的限制，和我们有关**：原文 "You can't redistribute the Item on its own,
 > as stock, in a tool or template, **or with source files**."
-> 即**不能把音效文件本身单独再分发**。
+> 即**不能把音效文件本身和源码一起再分发**。
 > - 部署到 hanzi-writing.pages.dev **没问题**——那是「成品网页」，条款明确允许。
-> - 但**这个 git 仓库如果哪天公开到 GitHub，就踩线了**（音频文件和源码摆在一起 =
->   "with source files"）。真要开源，就把 `meow.wav` 从仓库里拿掉、换成 CC0 的，
->   或者让使用者自己去 Mixkit 下载。目前仓库只在本机、从没推过远程，所以现在是安全的。
+> - **2026-09-23 仓库为了做 GitHub Pages 镜像改成了公开**，而它当时还在 git 里——踩线了。
+>   **2026-09-27 已改为不进 git**（`.gitignore` 里有 `app/meow.wav`）：
+>   文件只留在本机 `app/` 下，`build/deploy.sh` 从磁盘拷贝上传，主站照常有猫叫；
+>   GitHub 镜像站没有这个文件，`cat.js` 播放失败会自动退回合成音 `chirp()`。
+> - ⚠️ **git 历史里仍有旧版本**（3 个老提交），清掉需要改写历史 + 强制推送，
+>   见 `CLAUDE.md`「陪伴小猫」一节的待办。
+> - ⚠️ **换电脑 / 重新 clone 之后 `app/meow.wav` 不会跟过来**，要自己从 Mixkit 重新下载
+>   「Sweet kitty meow」按下面的方法处理后放回去；不放也能用，只是主站也会变成合成音。
 
 处理：原文件 44.1kHz 立体声 151KB / 0.88 秒，剪出发声段（0.12–0.82 秒，起音前留 40ms、
 尾音后留 60ms），降采样到 22.05kHz 单声道，12ms 淡入 / 50ms 淡出去掉咔哒声，峰值归一化到 0.85。
