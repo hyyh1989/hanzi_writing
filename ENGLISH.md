@@ -107,6 +107,12 @@ Monster Phonics 的核心是**每种颜色代表一个发音**，每个发音配
 - 例外词表的 ask put push pull full 在特殊读音的字母下画直线（a、u）。
 - 高频词表上 a 有黑、红两个，例外词表把 a 分在红怪兽组，取红的。
 
+**look 的 oo 是金色不是蓝色**（2026-09-29 用户问过）：学校高频词表上 look、looked 的 oo 印的就是金色，
+蓝色只给长音 oo（too、school、do、to）。look 是短音，官方颜色表上的蓝色 oo 指的是长音那一组。
+
+**为什么很多词全黑**：Monster Phonics 只给「不是字母本来读音」的部分上色。and、big、mum 这类词每个字母
+都按字母本来的音读（黑猫 Black Cats），学校表上就是全黑的。
+
 ⚠️ **待家长确认的 13 个词**：today says school our friend love once where has ask push pull full。
 它们只在例外词表上，那张表按怪兽分组、字母全黑，颜色是参照同组的词补的：
 today（o 蓝、ay 红）· says（ay 红）· school（h 空心、oo 蓝）· our（ou 棕）· friend（i 空心）·

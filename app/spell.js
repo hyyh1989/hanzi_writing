@@ -31,9 +31,9 @@
   var MARGIN = 70;              /* 字母左右各留多少（1024 坐标），决定字母间距 */
 
   /* Monster Phonics 颜色 → 描红底色。描红用浅一点的同色，空心字母（不发音）用灰 */
-  var TRACE = { red: "rgba(206,62,51,.30)", green: "rgba(46,155,69,.30)", yellow: "rgba(222,176,0,.38)",
-                pink: "rgba(226,69,123,.30)", blue: "rgba(26,143,216,.30)", brown: "rgba(139,58,30,.30)",
-                gold: "rgba(200,146,42,.36)", silent: "rgba(124,136,145,.22)" };
+  var TRACE = { red: "rgba(255,59,48,.30)", green: "rgba(34,197,94,.32)", yellow: "rgba(255,200,0,.45)",
+                pink: "rgba(255,92,200,.32)", blue: "rgba(30,167,255,.32)", brown: "rgba(184,112,63,.32)",
+                gold: "rgba(255,149,0,.36)", silent: "rgba(160,170,178,.25)" };
 
   function css(n, f) {
     var v = getComputedStyle(document.body).getPropertyValue(n).trim();
@@ -241,7 +241,7 @@
       var pic = api.pic && api.pic(word);
       result.innerHTML = '<div class="sp-check">' +
         (pic ? '<span class="sp-pic" aria-hidden="true">' + pic + '</span>' : "") +
-        '<span class="sp-check-w">' + api.html(word) + '</span>' +
+        '<span class="sp-check-w">' + api.html(word, 44) + '</span>' +
         '<span class="sp-check-t">' + (ok ? (misses ? "拼对了！" : "拼对了，一次都没错！") : "有几个字母看了提示，下次再试试") + '</span></div>';
       if (pet && pet.happy) pet.happy(1);      /* 写完就为她高兴一下，不看对错（和写字页同一条规矩） */
       api.speak(word);

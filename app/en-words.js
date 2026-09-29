@@ -97,9 +97,102 @@
     return out;
   }
 
+  /* ── 按发音分组（学校例外词表就是这样按怪兽分组的）──
+     一个词归到它【第一个】有颜色的部分：today → 蓝（o）、people → 绿（e）、school → 蓝（oo）。
+     没有颜色、只有不发音字母的（have your could when）归「不发音」；全黑的归「黑猫」。
+     顺序照例外词表：粉 红 绿 蓝 黄 棕，再 Tricky、不发音、黑猫 */
+  var GROUPS = [
+    { c: "pink",   mark: "o",   name: "Long O",     zh: "长 o" },
+    { c: "red",    mark: "ay",  name: "Long A",     zh: "长 a" },
+    { c: "green",  mark: "ee",  name: "Long E",     zh: "长 e" },
+    { c: "blue",   mark: "oo",  name: "Long OO",    zh: "长 oo" },
+    { c: "yellow", mark: "y",   name: "Long I",     zh: "长 i" },
+    { c: "brown",  mark: "ow",  name: "Brown Owl",  zh: "ow / ou" },
+    { c: "gold",   mark: "?",   name: "Tricky",     zh: "不按规则读的部分" },
+    { c: "silent", mark: "e",   name: "Silent",     zh: "有不发音的字母" },
+    { c: null,     mark: "abc", name: "Black Cats", zh: "字母本来的音" }
+  ];
+  function groupOf(word) {
+    var p = parse(word) || [], sil = false;
+    for (var i = 0; i < p.length; i++) {
+      if (p[i].c === "silent") sil = true;
+      else if (p[i].c) return p[i].c;
+    }
+    return sil ? "silent" : null;
+  }
+  /* 把一串词按上面的组分好：[{g:组, words:[…]}]，空组不要 */
+  function grouped(words) {
+    return GROUPS.map(function (g) {
+      return { g: g, words: words.filter(function (w) { return groupOf(w) === g.c; }) };
+    }).filter(function (x) { return x.words.length; });
+  }
+
+  /* ── 用她学的字母字形画单词（SVG）──
+     不用字体：Google 字体在国内经常加载不出来，退回系统字体后 a、g 是双层的，和她学的不一样。
+     这里直接用写字母页那套笔画（latin.js），和她自己写的一模一样。
+     每个字母只在页面里定义一次（<symbol> 式的 <g id>），单词里用 <use> 引用，113 个词也很轻 */
+  var XF = "scale(1,-1) translate(0,-900)";   /* 引擎坐标（y 朝上）→ 屏幕 */
+  var sprite = null;
+  function gid(ch) { return "lg-" + (/[A-Z]/.test(ch) ? "U" + ch : ch); }
+  function ensureSprite() {
+    if (sprite || !root.LATIN || !document.body) return;
+    var h = "";
+    Object.keys(root.LATIN).forEach(function (ch) {
+      h += '<g id="' + gid(ch) + '" transform="' + XF + '">' +
+           root.LATIN[ch].s.map(function (d) { return '<path d="' + d + '"/>'; }).join("") + "</g>";
+    });
+    sprite = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    sprite.setAttribute("aria-hidden", "true");
+    sprite.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+    sprite.innerHTML = "<defs>" + h + "</defs>";
+    document.body.appendChild(sprite);
+  }
+  var ext = {};
+  function extentOf(ch) {
+    if (ext[ch]) return ext[ch];
+    var x0 = 1e9, x1 = -1e9;
+    root.LATIN[ch].m.forEach(function (st) { st.forEach(function (p) { if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; }); });
+    x0 -= 62; x1 += 62;
+    if (x1 - x0 < 230) { var c = (x0 + x1) / 2; x0 = c - 115; x1 = c + 115; }
+    return (ext[ch] = { x0: x0, w: x1 - x0 });
+  }
+  /* opt.h = 显示高度（像素，默认 44）；opt.plain = 不上色（全用墨色） */
+  function svg(word, opt) {
+    opt = opt || {};
+    ensureSprite();
+    var p = parse(word) || [{ t: word, c: null, u: null }], x = 0, body = "", runs = [];
+    p.forEach(function (seg) {
+      var x0 = x;
+      for (var i = 0; i < seg.t.length; i++) {
+        var ch = seg.t[i], cls = "wl " + (!opt.plain && seg.c ? "mp-" + seg.c : "mp-ink");
+        if (root.LATIN && root.LATIN[ch]) {
+          var e = extentOf(ch);
+          body += '<use href="#' + gid(ch) + '" x="' + Math.round(x - e.x0) + '" class="' + cls + '"/>';
+          x += e.w;
+        } else {                                   /* 撇号 */
+          body += '<path d="M' + (x + 95) + ' 150 L' + (x + 80) + ' 300" class="wap ' + cls + '"/>';
+          x += 170;
+        }
+      }
+      if (seg.u && !opt.plain) runs.push({ u: seg.u, a: x0 + 50, b: x - 50 });
+    });
+    runs.forEach(function (r) {
+      var d;
+      if (r.u === "wavy") {
+        d = "M" + r.a + " 770";
+        for (var q = r.a, k = 0; q < r.b; q += 60, k++) d += " Q" + (q + 30) + " " + (k % 2 ? 810 : 730) + " " + (q + 60) + " 770";
+      } else d = "M" + r.a + " 760 L" + r.b + " 760";
+      body += '<path d="' + d + '" class="wul"/>';
+    });
+    var H = opt.h || 44, VH = 880, w = Math.round(x / VH * H);
+    return '<svg class="wsvg" viewBox="0 80 ' + Math.round(x) + " " + VH + '" width="' + w + '" height="' + H +
+           '" role="img" aria-label="' + esc(word) + '">' + body + "</svg>";
+  }
+
   var all = [];
   CEW.concat(HFW).forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
 
   root.EN_WORDS = { W: W, CEW: CEW, HFW: HFW, CEW_ONLY: CEW_ONLY, ALL: all, PIC: PIC,
-                    parse: parse, html: html, letterColors: letterColors };
+                    parse: parse, html: html, letterColors: letterColors,
+                    svg: svg, GROUPS: GROUPS, groupOf: groupOf, grouped: grouped };
 })(window);

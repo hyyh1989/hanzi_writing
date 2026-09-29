@@ -25,8 +25,8 @@
   --body:"Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --han:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   /* Monster Phonics 的颜色（英文单词用，照学校词表） */
-  --mp-red:#CC2F2A; --mp-green:#23914A; --mp-yellow:#E3B400; --mp-pink:#DE4A7F;
-  --mp-blue:#1C8ED6; --mp-brown:#8A3B1E; --mp-gold:#C28A1E;
+  --mp-red:#FF3B30; --mp-green:#22C55E; --mp-yellow:#F7BE00; --mp-pink:#FF5CC8;
+  --mp-blue:#1EA7FF; --mp-brown:#B8703F; --mp-gold:#FF9500; --mp-silent:#C9D1D8;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
@@ -38,7 +38,7 @@
   --good:#5BC07C; --bad:#E8756A;
   --trace:#4A3B39;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
-  --mp-red:#F0625B; --mp-green:#4CC274; --mp-pink:#F07AA6; --mp-blue:#4FB3F0; --mp-brown:#D07A52; --mp-gold:#E3AE45;
+  --mp-red:#FF5A50; --mp-green:#3DDC75; --mp-yellow:#FFD426; --mp-pink:#FF74D4; --mp-blue:#4DBBFF; --mp-brown:#D08A57; --mp-gold:#FFA630; --mp-silent:#4E5961;
 }}
 :root[data-theme="dark"]{
   --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
@@ -50,7 +50,7 @@
   --good:#5BC07C; --bad:#E8756A;
   --trace:#4A3B39;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
-  --mp-red:#F0625B; --mp-green:#4CC274; --mp-pink:#F07AA6; --mp-blue:#4FB3F0; --mp-brown:#D07A52; --mp-gold:#E3AE45;
+  --mp-red:#FF5A50; --mp-green:#3DDC75; --mp-yellow:#FFD426; --mp-pink:#FF74D4; --mp-blue:#4DBBFF; --mp-brown:#D08A57; --mp-gold:#FFA630; --mp-silent:#4E5961;
 }
 *{box-sizing:border-box}
 [hidden]{display:none !important}
@@ -375,9 +375,8 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 .lg-pic.show{opacity:1}
 .lg-opts .lg-opt{aspect-ratio:auto;min-height:96px}
-.lg-opts .lg-opt>span{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700;
-  font-size:clamp(30px,8.5vw,44px);color:var(--ink)}
-.lg-opts .lg-opt>span span{font:inherit}   /* 别让 .mg-opt span 的 emoji 字体、黑色盖掉颜色 */
+.lg-opts .lg-opt>span{display:block;padding:0 8px}
+.lg-opts .lg-opt .wsvg{max-width:100%;height:auto;margin:0 auto}
 /* 结算：两条横条对比，短的那条快。不认字也看得懂 */
 .mg-done{padding:28px 4px;text-align:center}
 .mg-done-h{font-family:var(--disp);font-size:24px;color:var(--ink);margin-bottom:22px}
@@ -405,21 +404,41 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   .mg-opt,.mg-dots i,.mg-bar-t i{transition:none}
 }
 /* ── 英文单词：Monster Phonics 颜色（照学校词表，en-words.js）── */
-.mp-red{color:var(--mp-red)} .mp-green{color:var(--mp-green)} .mp-pink{color:var(--mp-pink)}
-.mp-blue{color:var(--mp-blue)} .mp-brown{color:var(--mp-brown)} .mp-gold{color:var(--mp-gold)}
-/* 黄色在白底上太淡，学校的表上也描了深色边 */
-.mp-yellow{color:var(--mp-yellow);-webkit-text-stroke:.04em #6B5200;paint-order:stroke fill}
-/* 不发音的字母：空心（学校表上印成只有轮廓） */
-.mp-silent{color:transparent;-webkit-text-stroke:.045em var(--ink)}
-.mp-u-wavy{text-decoration:underline wavy;text-decoration-thickness:.06em;text-underline-offset:.18em}
-.mp-u-line{text-decoration:underline;text-decoration-thickness:.07em;text-underline-offset:.16em}
-.eng{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700}
-.chip.word{width:auto;min-width:64px;padding:0 12px}
-.chip.word .g{position:static;display:block;font-size:24px;line-height:56px}
+/* 单词用她学的字母字形画（SVG，en-words.js 的 svg()），这里只管颜色。
+   2026-09-29 用户：颜色要亮一点、浅一点，红和粉要分得开；空心字母看着怪 → 不发音的改成浅灰 */
+.wsvg{display:block;overflow:visible}
+/* 描一圈同色的边把笔画加粗一点（原字形是写字格用的，缩小到 40px 显得太细） */
+.wsvg .wl{fill:currentColor;stroke:currentColor;stroke-width:24;stroke-linejoin:round}
+.wsvg .mp-ink{color:var(--ink)} .wsvg .mp-red{color:var(--mp-red)} .wsvg .mp-green{color:var(--mp-green)}
+.wsvg .mp-pink{color:var(--mp-pink)} .wsvg .mp-blue{color:var(--mp-blue)} .wsvg .mp-brown{color:var(--mp-brown)}
+.wsvg .mp-gold{color:var(--mp-gold)} .wsvg .mp-silent{color:var(--mp-silent)} .wsvg .mp-yellow{color:var(--mp-yellow)}
+.wsvg .wap{fill:none;stroke-width:80;stroke-linecap:round}
+.wsvg .wul{fill:none;stroke:var(--ink);stroke-width:26;stroke-linecap:round;stroke-linejoin:round}
+/* 词表：不用方框，按发音一组一行，行首是这个音的颜色标记（照 Monster Phonics 的分组） */
+.wgrp{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-top:1px solid var(--line-2)}
+.wgrp:first-of-type{border-top:0}
+.wmark{flex:none;width:86px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding-top:4px}
+.wmark b{display:inline-block;min-width:44px;padding:3px 10px;border-radius:999px;text-align:center;
+  font-family:var(--disp);font-size:18px;line-height:1.25;color:#fff}
+.wmark small{font-size:11.5px;line-height:1.3;color:var(--ink-2)}
+.wmark .mk-red{background:var(--mp-red)} .wmark .mk-green{background:var(--mp-green)}
+.wmark .mk-pink{background:var(--mp-pink)} .wmark .mk-blue{background:var(--mp-blue)}
+.wmark .mk-brown{background:var(--mp-brown)} .wmark .mk-gold{background:var(--mp-gold)}
+.wmark .mk-yellow{background:var(--mp-yellow);color:#5A4500}
+.wmark .mk-silent{background:var(--mp-silent);color:var(--ink-2)}
+.wmark .mk-black{background:var(--ink);color:var(--paper)}
+.wlist{flex:1;display:flex;flex-wrap:wrap;gap:10px 26px;align-items:flex-end;min-width:0}
+.wbtn{position:relative;background:none;border:0;border-radius:10px;padding:4px 4px 10px;cursor:pointer}
+.wbtn:hover,.wbtn:focus-visible{background:var(--sunk)}
+.wbtn .wst{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:9px;line-height:1;
+  color:var(--amber);letter-spacing:-1px}
+.wtoggle{font-size:13px;color:var(--teal-2);background:none;border:0;padding:4px 0;text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer}
+@media (max-width:520px){ .wmark{width:64px} .wlist{gap:8px 18px} }
 /* 拼写页 */
 .sp-head{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
-.sp-word{flex:1;font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700;font-size:clamp(30px,9vw,46px);
-  line-height:1.1;color:var(--ink);transition:filter .25s,opacity .25s;min-width:0;white-space:nowrap}
+.sp-word{flex:1;transition:filter .25s,opacity .25s;min-width:0}
+.sp-word .wsvg{max-width:100%;height:auto}
 .sp-word.covered{filter:blur(14px);opacity:.35;user-select:none}
 .sp-sub{padding:2px 16px 0;color:var(--ink-2);font-size:13px}
 .sp-hint{margin-top:8px}
@@ -437,7 +456,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .sp-pet{position:absolute;right:0;top:-54px;width:52px;height:52px;pointer-events:none}
 .sp-check{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 16px 0;padding:12px 14px;
   background:var(--card);border-radius:12px}
-.sp-check-w{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700;font-size:34px}
+.sp-check-w .wsvg{max-width:100%;height:auto}
 .sp-check-t{color:var(--ink-2);font-size:15px}
 .sp-pic{font-size:40px}
 
@@ -963,12 +982,23 @@ function latinChips(chars){
 }
 /* 英文单词：存星星、要多练、练习记录时键名前面加 w:，免得单词 a、I 和字母 a、I 撞在一起 */
 function WK(w){ return "w:"+w }
-function wordChips(list){
-  return '<div class="chips">'+list.map(function(w){
+/* 词表里的每个词都上色，还是只在分组前标颜色（设置存 cfg.wordColor，默认上色）。
+   2026-09-29 用户：先试上色的，觉得乱就改成只分组、词本身不上色，颜色只在拼写页出现 */
+function wordColorOn(){ return cfg.wordColor!==false }
+function wordBtns(list){
+  const plain=!wordColorOn();
+  return '<div class="wlist">'+list.map(function(w){
     const st=starsOf(WK(w));
-    return '<button class="chip word" data-word="'+esc(w)+'" data-done="'+(st?1:0)+'"><span class="g eng">'+
-           EN_WORDS.html(w)+'</span>'+(st?'<span class="dot">'+"★".repeat(st)+'</span>':'')+'</button>';
+    return '<button class="wbtn" data-word="'+esc(w)+'">'+EN_WORDS.svg(w,{h:40,plain:plain})+
+           (st?'<span class="wst">'+"★".repeat(st)+'</span>':'')+'</button>';
   }).join("")+'</div>';
+}
+function wordGroups(list){
+  return EN_WORDS.grouped(list).map(function(x){
+    const g=x.g, cls=g.c?"mk-"+g.c:"mk-black";
+    return '<div class="wgrp"><div class="wmark"><b class="'+cls+'">'+esc(g.mark)+'</b>'+
+      '<small>'+esc(g.name)+'<br>'+esc(g.zh)+'</small></div>'+wordBtns(x.words)+'</div>';
+  }).join("");
 }
 function renderWordGroups(){
   if(!window.EN_WORDS||!window.Spell) return "";
@@ -976,13 +1006,14 @@ function renderWordGroups(){
   const mine=Object.keys(wrong).filter(k=>k.slice(0,2)==="w:").map(k=>k.slice(2)).filter(w=>E.W[w]);
   let h="";
   if(mine.length) h+='<div class="lesson wrongbank"><div class="lesson-h"><h3>要多练的单词</h3></div>'+
-    '<p class="lesson-tip">默写时看了提示的、点了「＋多练」的，都在这里。</p>'+wordChips(mine)+'</div>';
+    '<p class="lesson-tip">默写时看了提示的、点了「＋多练」的，都在这里。</p>'+wordBtns(mine)+'</div>';
   h+='<div class="lesson"><div class="lesson-h"><h3>例外词 <small>Common Exception Words</small></h3></div>'+
-    '<p class="lesson-tip">学校要求会拼写。颜色和学校发的词表一样：同一种颜色是同一个音，空心的字母不发音。</p>'+
-    wordChips(E.CEW)+'</div>';
+    '<p class="lesson-tip">学校要求会拼写。按发音分组，和学校的例外词表一样。'+
+    '<button class="wtoggle" id="w-color">'+(wordColorOn()?"词表里不上色":"词表里也上色")+'</button></p>'+
+    wordGroups(E.CEW)+'</div>';
   h+='<div class="lesson"><div class="lesson-h"><h3>高频词 <small>High Frequency Words</small></h3></div>'+
     '<p class="lesson-tip">学校要求读得快（和上面重复的没再列）。</p>'+
-    wordChips(E.HFW.filter(w=>E.CEW.indexOf(w)<0))+'</div>';
+    wordGroups(E.HFW.filter(w=>E.CEW.indexOf(w)<0))+'</div>';
   return h;
 }
 function renderLatinPane(which){
@@ -997,12 +1028,15 @@ function renderLatinPane(which){
       '<p class="lesson-tip">'+g[2]+'</p>'+latinChips(g[1])+'</div>';
   }).join("");
   el.innerHTML='<div style="height:14px"></div>'+h;
+  const wc=$("#w-color");
+  if(wc) wc.onclick=function(){ cfg.wordColor=!wordColorOn(); save(K.cfg,cfg); beep("tap"); renderLatinPane("en"); };
 }
 ["#pane-math","#pane-en"].forEach(function(sel){
   $(sel).addEventListener("click",function(e){
     const wc=e.target.closest("[data-word]");
     if(wc){
-      const wl=[...wc.closest(".chips").querySelectorAll("[data-word]")].map(x=>x.dataset.word);
+      /* 「下一个」沿整张表走，不是只在这一组里 */
+      const wl=[...wc.closest(".lesson").querySelectorAll("[data-word]")].map(x=>x.dataset.word);
       return openWord(wc.dataset.word,wl);
     }
     const chip=e.target.closest("[data-ch]"); if(!chip) return;
@@ -1993,7 +2027,7 @@ function openListen(){
   const st=load(K.lgstat,{});
   gameCtl=ListenGame.attach($("#view-game"),{
     words:function(){ return EN_WORDS.ALL.slice() },
-    html:EN_WORDS.html,
+    html:function(x){ return EN_WORDS.svg(x,{h:46}) },
     pic:function(w){ return EN_WORDS.PIC[w]||"" },
     stats:function(){ return st },
     saveStat:function(w,ok,ms){
@@ -2058,7 +2092,7 @@ function openWord(w,list){
   show("#view-word"); $("#title").textContent="拼 “"+w+"”";
   spellCtl=Spell.attach($("#view-word"),{
     word:w, pos:"第 "+(i+1)+"/"+list.length+" 个",
-    html:EN_WORDS.html, colors:EN_WORDS.letterColors,
+    html:function(x,h){ return EN_WORDS.svg(x,{h:h||56}) }, colors:EN_WORDS.letterColors,
     pic:function(x){ return EN_WORDS.PIC[x]||"" },
     speak:speakWord, beep:beep,
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
