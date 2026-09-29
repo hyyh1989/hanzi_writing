@@ -14,6 +14,8 @@
        start(taskId)         → 直接开始这个任务（进练字页 / 听写页）
        reroll(taskId)        → 换一批
        go(subj)              → 去某个科目页
+       enabled(subj)         → 这个科目上线了没有。没上线的（现在是音乐）首页和计划编辑页都不出现，
+                               就算存下来的周计划里有它也隐藏（2026-09-29 用户：音乐做好再一起上）
        games(el) / subjects() / cat(el) / beep(kind)
 
    设计约定（和用户定过，别自作主张改，理由见 CLAUDE.md「今天页」一节）：
@@ -37,17 +39,20 @@
   };
   var ORDER = ["zh-write", "zh-dict", "math-digits", "en-letters", "music-write", "music-read"];
 
-  /* 默认周计划（2026-09-27 和用户定的）：钢琴课周日上，
-     课后第一天（周一）复习、课前一天（周六）热身；周日休息 */
+  /* 默认周计划（2026-09-29 用户定：音乐做好再上，先去掉音乐）。周日休息 */
   var DEFAULT_PLAN = [
     [],                              /* 周日：休息 */
-    ["music-write", "zh-write"],     /* 周一 */
-    ["zh-write", "en-letters"],      /* 周二 */
-    ["music-read", "zh-write"],      /* 周三 */
+    ["zh-write", "en-letters"],      /* 周一 */
+    ["zh-write", "math-digits"],     /* 周二 */
+    ["zh-write", "en-letters"],      /* 周三 */
     ["zh-write", "math-digits"],     /* 周四 */
-    ["music-write", "en-letters"],   /* 周五 */
-    ["zh-dict", "music-read"]        /* 周六 */
+    ["zh-write", "en-letters"],      /* 周五 */
+    ["zh-dict"],                     /* 周六 */
   ];
+  /* 音乐上线时换回这一版（2026-09-27 定的）：钢琴课周日上，课后第一天（周一）复习、
+     课前一天（周六）热身。音乐任务「认音符」是练习形式；「音符拼单词」做成游戏放小游戏区，不当任务
+       周一 music-write + zh-write · 周二 zh-write + en-letters · 周三 music-read + zh-write
+       周四 zh-write + math-digits · 周五 music-write + en-letters · 周六 zh-dict + music-read */
   var WEEK = ["日", "一", "二", "三", "四", "五", "六"];
   var MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
 
@@ -157,8 +162,9 @@
     injectCSS();
     var now = new Date(), wd = now.getDay(), key = dateKey(now);
     var plan = normPlan(api.plan && api.plan());
+    var on = function (id) { var t = kind(id, plan); return t && (t.custom || !api.enabled || api.enabled(t.subj)); };
     var ids = ORDER.concat(Object.keys(plan.custom)).filter(function (id) {
-      return (plan.days[wd] || []).indexOf(id) >= 0 && kind(id, plan);
+      return (plan.days[wd] || []).indexOf(id) >= 0 && on(id);
     });
     var days = (api.days && api.days()) || {};
     var rec = days[key] || {};
@@ -281,12 +287,13 @@
   function renderPlan(host, api) {
     injectCSS();
     var plan = normPlan(api.plan && api.plan());
-    var ids = ORDER.concat(Object.keys(plan.custom));
-    var html = '<p class="pl-note">点一下选上，再点一下取消。每天一两件、15 分钟左右比较合适。' +
-      '钢琴课在周日，所以默认周一复习、周六热身，周日休息。<br>' +
-      '音乐部分还没做好，先显示成线下任务（钢琴上练），做完在首页打勾。</p>';
+    var ids = ORDER.concat(Object.keys(plan.custom)).filter(function (id) {
+      var t = kind(id, plan); return t && (t.custom || !api.enabled || api.enabled(t.subj));
+    });
+    var html = '<p class="pl-note">点一下选上，再点一下取消。每天一两件、15 分钟左右比较合适，周日默认休息。<br>' +
+      '钢琴练习、一起读绘本这类不在 iPad 上做的事，可以在最下面加成「线下任务」。</p>';
     html += MON_FIRST.map(function (wd) {
-      var on = plan.days[wd] || [];
+      var on = (plan.days[wd] || []).filter(function (x) { return ids.indexOf(x) >= 0; });
       return '<div class="pl-day"><h3>周' + WEEK[wd] + (on.length ? '' : '<small>休息</small>') + '</h3>' +
         '<div class="pl-chips">' + ids.map(function (id) {
           var t = kind(id, plan);

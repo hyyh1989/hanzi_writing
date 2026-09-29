@@ -922,6 +922,10 @@ function renderLatinPane(which){
     openChar(chip.dataset.ch,list);
   });
 });
+/* 哪些科目上线了。音乐做好之前是 false：首页、周计划编辑页都不出现音乐
+   （2026-09-29 用户：音乐之后再一起上）。上线时改成 true，并把 today.js 的默认计划换回带音乐的那版 */
+const MUSIC_READY=false;
+function subjEnabled(s){ return s!=="music" || MUSIC_READY }
 /* 打卡：今天来过（写完一个字、做完一轮听写、玩完一局游戏都算） */
 function markDay(){
   if(!window.Today) return;
@@ -937,7 +941,8 @@ function renderToday(){
     days:function(){ return load(K.days,{}) },
     saveDays:function(v){ save(K.days,v) },
     info:taskInfo, start:startTask, reroll:rerollTask,
-    ready:function(s){ return s==="zh"||s==="math"||s==="en" },   /* 音乐做好前是线下任务 */
+    ready:function(s){ return s==="zh"||s==="math"||s==="en" },
+    enabled:subjEnabled,
     go:setSubj,
     games:renderGameEntry,
     subjects:function(){ return [
@@ -1910,11 +1915,13 @@ $("#btn-mark").onclick=markToggle;
 const dlg=$("#dlg");
 function openPlan(){
   if(!window.Today) return;
+  /* 注意：计划页也要知道哪些科目上线了，否则会让家长排进还没做的音乐 */
   if(writer)writer.cancelQuiz(); petOff();
   show("#view-plan"); $("#title").textContent="每周计划";
   Today.renderPlan($("#view-plan"),{
     plan:function(){ return load(K.week,null) },
     savePlan:function(p){ save(K.week,p) },
+    enabled:subjEnabled,
     beep:beep
   });
 }
