@@ -5,7 +5,7 @@
    不是按规则推的——同一个音在不同词里学校可能涂得不一样，推出来的会和她在学校看到的对不上。
 
    每个词写成「片段|片段|…」，片段 = 字母[:颜色][记号]
-     颜色  r 红（长 a）  g 绿（长 e）  y 黄（长 i）  p 粉（长 o）  b 蓝（oo）
+     颜色  r 红（长 a）  g 绿（长 e）  y 黄（长 i）  p 粉（长 o）  v 紫（长 u，U-Hoo）  b 蓝（oo）
            n 棕（ow/ou） o 金（Tricky，不按规则读的部分）  s 空心（Silent，不发音）
            不写 = 黑色（Black Cats，按规则读）
      记号  ~ 波浪下划线（th）   _ 直下划线（ck，以及例外词表里 ask put push pull full 的特殊读音）
@@ -65,7 +65,7 @@
   var PIC = { mum:"👩", dad:"👨", house:"🏠", school:"🏫", children:"🧒", people:"👥",
               friend:"🤝", love:"❤️", one:"1️⃣" };
 
-  var COLOR = { r:"red", g:"green", y:"yellow", p:"pink", b:"blue", n:"brown", o:"gold", s:"silent" };
+  var COLOR = { r:"red", g:"green", y:"yellow", p:"pink", v:"purple", b:"blue", n:"brown", o:"gold", s:"silent" };
 
   /* "p|e:g" → [{t:"p"}, {t:"e", c:"green"}]；~ / _ 变成 u:"wavy" / u:"line" */
   function parse(word) {
@@ -97,20 +97,47 @@
     return out;
   }
 
-  /* ── 按发音分组（学校例外词表就是这样按怪兽分组的）──
+  /* ── 按发音分组 ──
+     名字、顺序、每组的字母组合照 Monster Phonics 官网「Meet the monsters」抄（2026-09-29 用户要求照抄）：
+     Angry Red A → Green Froggy → Yellow I → Miss Oh No → U-Hoo → Cool Blue → Brown Owl →
+     Silent Monsters → Tricky → The Black Cats。
+     例句（Try reading it out）是我们自己写的，风格照官网：只把这一组的字母上色，尽量用她词表里的词。
+     没照抄官网的例句——仓库是公开的，那是他们的内容。
+     例句里 {…} = 这一组的颜色。
+
      一个词归到它【第一个】有颜色的部分：today → 蓝（o）、people → 绿（e）、school → 蓝（oo）。
-     没有颜色、只有不发音字母的（have your could when）归「不发音」；全黑的归「黑猫」。
-     顺序照例外词表：粉 红 绿 蓝 黄 棕，再 Tricky、不发音、黑猫 */
+     没有颜色、只有不发音字母的（have your could when）归 Silent；全黑的归 Black Cats。 */
   var GROUPS = [
-    { c: "pink",   mark: "o",   name: "Long O",     zh: "长 o" },
-    { c: "red",    mark: "ay",  name: "Long A",     zh: "长 a" },
-    { c: "green",  mark: "ee",  name: "Long E",     zh: "长 e" },
-    { c: "blue",   mark: "oo",  name: "Long OO",    zh: "长 oo" },
-    { c: "yellow", mark: "y",   name: "Long I",     zh: "长 i" },
-    { c: "brown",  mark: "ow",  name: "Brown Owl",  zh: "ow / ou" },
-    { c: "gold",   mark: "?",   name: "Tricky",     zh: "不按规则读的部分" },
-    { c: "silent", mark: "e",   name: "Silent",     zh: "有不发音的字母" },
-    { c: null,     mark: "abc", name: "Black Cats", zh: "字母本来的音" }
+    { c: "red",    name: "Angry Red A",     sound: "long A sound",
+      gr: "a, a-e, ay, ai, ei, eigh, ea, ey",
+      ex: ["Th{ey} pl{ay} in the r{ai}n.", "We m{a}d{e} a c{a}k{e} tod{ay}.", "It is gr{ea}t!"] },
+    { c: "green",  name: "Green Froggy",    sound: "long E sound",
+      gr: "e, y, ee, ea, ie, ey, ei, i, e-e, i-e",
+      ex: ["W{e} can s{ee} thr{ee} b{ee}s.", "Sh{e} is happ{y}.", "H{e} can r{ea}d to m{e}."] },
+    { c: "yellow", name: "Yellow I",        sound: "long I sound",
+      gr: "i, i-e, y, igh, ie, y-e",
+      ex: ["{I} l{i}k{e} the n{igh}t.", "M{y} k{i}t{e} is h{igh} in the sk{y}."] },
+    { c: "pink",   name: "Miss Oh No",      sound: "long O sound",
+      gr: "o, o-e, oa, ow, oe",
+      ex: ["{O}h n{o}! The g{oa}t is in the b{oa}t.", "G{o} sl{ow} in the sn{ow}."] },
+    { c: "purple", name: "U-Hoo",           sound: "long U sound",
+      gr: "u, u-e, ew, ue, eu",
+      ex: ["A f{ew} c{u}t{e} cats.", "We {u}s{e} a h{u}g{e} box."] },
+    { c: "blue",   name: "Cool Blue",       sound: "long oo sound",
+      gr: "u, o, u-e, oo, ew, ue, ou, ui, o-e, eu",
+      ex: ["We went t{o} the z{oo}.", "The gl{ue} is bl{ue}.", "I dr{ew} the m{oo}n."] },
+    { c: "brown",  name: "Brown Owl",       sound: "ow sound",
+      gr: "ow, ou",
+      ex: ["N{ow} sit d{ow}n.", "The br{ow}n c{ow} is {ou}t."] },
+    { c: "silent", name: "Silent Monsters", sound: "silent letters",
+      gr: "",
+      ex: ["{K}nock! {K}nock!", "I hav{e} a fr{i}end.", "W{h}en can we go?"] },
+    { c: "gold",   name: "Tricky",          sound: "tricky spellings",
+      gr: "",
+      ex: ["The dog w{as} big.", "S{o}me cats {ar}e black.", "Mum s{ai}d yes."] },
+    { c: null,     name: "The Black Cats",  sound: "letters of the alphabet",
+      gr: "",
+      ex: ["A cat sat on a mat.", "Mum and Dad got up.", "It had a big red hat."] }
   ];
   function groupOf(word) {
     var p = parse(word) || [], sil = false;
@@ -126,6 +153,13 @@
       return { g: g, words: words.filter(function (w) { return groupOf(w) === g.c; }) };
     }).filter(function (x) { return x.words.length; });
   }
+  /* 例句 "Th{ey} pl{ay}" → 片段，{…} 里的用这一组的颜色 */
+  function parseLine(line, color) {
+    var out = [], re = /\{([^}]*)\}|([^{]+)/g, m;
+    while ((m = re.exec(line))) out.push(m[1] != null ? { t: m[1], c: color } : { t: m[2], c: null });
+    return out;
+  }
+  function plainLine(line) { return line.replace(/[{}]/g, ""); }
 
   /* ── 用她学的字母字形画单词（SVG）──
      不用字体：Google 字体在国内经常加载不出来，退回系统字体后 a、g 是双层的，和她学的不一样。
@@ -156,11 +190,23 @@
     if (x1 - x0 < 230) { var c = (x0 + x1) / 2; x0 = c - 115; x1 = c + 115; }
     return (ext[ch] = { x0: x0, w: x1 - x0 });
   }
-  /* opt.h = 显示高度（像素，默认 44）；opt.plain = 不上色（全用墨色） */
-  function svg(word, opt) {
+  /* 标点（例句用）。坐标是屏幕方向：顶线 118、中线 378、基线 670 */
+  function punct(ch, x, cls) {
+    var dot = function (cx) { return '<circle cx="' + cx + '" cy="630" r="40" class="' + cls + '"/>'; };
+    var line = function (d) { return '<path d="' + d + '" class="wap ' + cls + '"/>'; };
+    if (ch === " ") return { w: 250, b: "" };
+    if (ch === ".") return { w: 150, b: dot(x + 70) };
+    if (ch === ",") return { w: 150, b: line("M" + (x + 80) + " 630 L" + (x + 55) + " 740") };
+    if (ch === "!") return { w: 170, b: line("M" + (x + 85) + " 150 L" + (x + 85) + " 500") + dot(x + 85) };
+    if (ch === "?") return { w: 300, b: line("M" + (x + 45) + " 230 C" + (x + 45) + " 90 " + (x + 255) + " 90 " + (x + 255) + " 240 C" +
+                                              (x + 255) + " 350 " + (x + 150) + " 360 " + (x + 150) + " 480") + dot(x + 150) };
+    return { w: 170, b: line("M" + (x + 95) + " 150 L" + (x + 80) + " 300") };      /* 撇号 */
+  }
+  /* 片段 → SVG。opt.h = 显示高度（像素，默认 44）；opt.plain = 不上色（全用墨色） */
+  function segsSvg(p, label, opt) {
     opt = opt || {};
     ensureSprite();
-    var p = parse(word) || [{ t: word, c: null, u: null }], x = 0, body = "", runs = [];
+    var x = 0, body = "", runs = [];
     p.forEach(function (seg) {
       var x0 = x;
       for (var i = 0; i < seg.t.length; i++) {
@@ -169,10 +215,7 @@
           var e = extentOf(ch);
           body += '<use href="#' + gid(ch) + '" x="' + Math.round(x - e.x0) + '" class="' + cls + '"/>';
           x += e.w;
-        } else {                                   /* 撇号 */
-          body += '<path d="M' + (x + 95) + ' 150 L' + (x + 80) + ' 300" class="wap ' + cls + '"/>';
-          x += 170;
-        }
+        } else { var q = punct(ch, x, cls); body += q.b; x += q.w; }
       }
       if (seg.u && !opt.plain) runs.push({ u: seg.u, a: x0 + 50, b: x - 50 });
     });
@@ -186,13 +229,16 @@
     });
     var H = opt.h || 44, VH = 880, w = Math.round(x / VH * H);
     return '<svg class="wsvg" viewBox="0 80 ' + Math.round(x) + " " + VH + '" width="' + w + '" height="' + H +
-           '" role="img" aria-label="' + esc(word) + '">' + body + "</svg>";
+           '" role="img" aria-label="' + esc(label) + '">' + body + "</svg>";
   }
+  function svg(word, opt) { return segsSvg(parse(word) || [{ t: word, c: null, u: null }], word, opt); }
+  function lineSvg(line, color, opt) { return segsSvg(parseLine(line, color), plainLine(line), opt); }
 
   var all = [];
   CEW.concat(HFW).forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
 
   root.EN_WORDS = { W: W, CEW: CEW, HFW: HFW, CEW_ONLY: CEW_ONLY, ALL: all, PIC: PIC,
                     parse: parse, html: html, letterColors: letterColors,
-                    svg: svg, GROUPS: GROUPS, groupOf: groupOf, grouped: grouped };
+                    svg: svg, lineSvg: lineSvg, plainLine: plainLine,
+                    GROUPS: GROUPS, groupOf: groupOf, grouped: grouped };
 })(window);

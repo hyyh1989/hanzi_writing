@@ -26,7 +26,8 @@
   --han:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   /* Monster Phonics 的颜色（英文单词用，照学校词表） */
   --mp-red:#FF3B30; --mp-green:#22C55E; --mp-yellow:#F7BE00; --mp-pink:#FF5CC8;
-  --mp-blue:#1EA7FF; --mp-brown:#B8703F; --mp-gold:#FF9500; --mp-silent:#C9D1D8;
+  --mp-blue:#1EA7FF; --mp-brown:#B8703F; --mp-gold:#FF9500; --mp-silent:#C9D1D8; --mp-purple:#B455E8;
+  --mp-yellow-t:#D9A400;  /* 黄色当文字（组名）用时深一点，不然白底上看不清 */
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
@@ -38,7 +39,7 @@
   --good:#5BC07C; --bad:#E8756A;
   --trace:#4A3B39;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
-  --mp-red:#FF5A50; --mp-green:#3DDC75; --mp-yellow:#FFD426; --mp-pink:#FF74D4; --mp-blue:#4DBBFF; --mp-brown:#D08A57; --mp-gold:#FFA630; --mp-silent:#4E5961;
+  --mp-red:#FF5A50; --mp-green:#3DDC75; --mp-yellow:#FFD426; --mp-pink:#FF74D4; --mp-blue:#4DBBFF; --mp-brown:#D08A57; --mp-gold:#FFA630; --mp-silent:#4E5961; --mp-purple:#C98AF5; --mp-yellow-t:#FFD426;
 }}
 :root[data-theme="dark"]{
   --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
@@ -50,7 +51,7 @@
   --good:#5BC07C; --bad:#E8756A;
   --trace:#4A3B39;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
-  --mp-red:#FF5A50; --mp-green:#3DDC75; --mp-yellow:#FFD426; --mp-pink:#FF74D4; --mp-blue:#4DBBFF; --mp-brown:#D08A57; --mp-gold:#FFA630; --mp-silent:#4E5961;
+  --mp-red:#FF5A50; --mp-green:#3DDC75; --mp-yellow:#FFD426; --mp-pink:#FF74D4; --mp-blue:#4DBBFF; --mp-brown:#D08A57; --mp-gold:#FFA630; --mp-silent:#4E5961; --mp-purple:#C98AF5; --mp-yellow-t:#FFD426;
 }
 *{box-sizing:border-box}
 [hidden]{display:none !important}
@@ -412,29 +413,34 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .wsvg .mp-ink{color:var(--ink)} .wsvg .mp-red{color:var(--mp-red)} .wsvg .mp-green{color:var(--mp-green)}
 .wsvg .mp-pink{color:var(--mp-pink)} .wsvg .mp-blue{color:var(--mp-blue)} .wsvg .mp-brown{color:var(--mp-brown)}
 .wsvg .mp-gold{color:var(--mp-gold)} .wsvg .mp-silent{color:var(--mp-silent)} .wsvg .mp-yellow{color:var(--mp-yellow)}
+.wsvg .mp-purple{color:var(--mp-purple)}
 .wsvg .wap{fill:none;stroke-width:80;stroke-linecap:round}
 .wsvg .wul{fill:none;stroke:var(--ink);stroke-width:26;stroke-linecap:round;stroke-linejoin:round}
-/* 词表：不用方框，按发音一组一行，行首是这个音的颜色标记（照 Monster Phonics 的分组） */
-.wgrp{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-top:1px solid var(--line-2)}
-.wgrp:first-of-type{border-top:0}
-.wmark{flex:none;width:86px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding-top:4px}
-.wmark b{display:inline-block;min-width:44px;padding:3px 10px;border-radius:999px;text-align:center;
-  font-family:var(--disp);font-size:18px;line-height:1.25;color:#fff}
-.wmark small{font-size:11.5px;line-height:1.3;color:var(--ink-2)}
-.wmark .mk-red{background:var(--mp-red)} .wmark .mk-green{background:var(--mp-green)}
-.wmark .mk-pink{background:var(--mp-pink)} .wmark .mk-blue{background:var(--mp-blue)}
-.wmark .mk-brown{background:var(--mp-brown)} .wmark .mk-gold{background:var(--mp-gold)}
-.wmark .mk-yellow{background:var(--mp-yellow);color:#5A4500}
-.wmark .mk-silent{background:var(--mp-silent);color:var(--ink-2)}
-.wmark .mk-black{background:var(--ink);color:var(--paper)}
-.wlist{flex:1;display:flex;flex-wrap:wrap;gap:10px 26px;align-items:flex-end;min-width:0}
+/* 词表：不用方框，按发音一组一块。组头照 Monster Phonics 官网：怪兽名（组的颜色）+ 这个音的字母组合，
+   「Try reading it out」点开是这一组的例句。左边一条组的颜色，把一组框在一起 */
+.wgrp{padding:12px 0 14px 14px;margin:0 0 6px;border-left:5px solid var(--gc,var(--ink));border-radius:2px}
+.wg-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin-bottom:8px}
+.wg-name{font-family:var(--disp);font-size:20px;line-height:1.2;color:var(--gc,var(--ink))}
+.wg-gr{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--gc,var(--ink));letter-spacing:.01em}
+.wg-gr.snd{font-weight:500;color:var(--ink-2)}
+.wg-ex{margin-left:auto;font-size:13px;color:var(--teal-2);background:none;border:0;padding:4px 0;cursor:pointer;
+  font-style:italic}
+.wg-sent{display:flex;gap:12px;align-items:flex-start;margin:0 0 12px;padding:10px 12px;background:var(--sunk);border-radius:10px}
+.wg-sent[hidden]{display:none}
+.wg-sent .lines{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.wg-sent .wsvg{max-width:100%;height:auto}
+.wg-say{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px}
+.g-red{--gc:var(--mp-red)} .g-green{--gc:var(--mp-green)} .g-yellow{--gc:var(--mp-yellow-t)} .g-pink{--gc:var(--mp-pink)}
+.g-purple{--gc:var(--mp-purple)} .g-blue{--gc:var(--mp-blue)} .g-brown{--gc:var(--mp-brown)} .g-gold{--gc:var(--mp-gold)}
+.g-silent{--gc:var(--mp-silent)} .g-silent .wg-name{color:var(--ink-2)}
+.wlist{display:flex;flex-wrap:wrap;gap:10px 26px;align-items:flex-end;min-width:0}
 .wbtn{position:relative;background:none;border:0;border-radius:10px;padding:4px 4px 10px;cursor:pointer}
 .wbtn:hover,.wbtn:focus-visible{background:var(--sunk)}
 .wbtn .wst{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:9px;line-height:1;
   color:var(--amber);letter-spacing:-1px}
 .wtoggle{font-size:13px;color:var(--teal-2);background:none;border:0;padding:4px 0;text-decoration:underline;
   text-underline-offset:3px;cursor:pointer}
-@media (max-width:520px){ .wmark{width:64px} .wlist{gap:8px 18px} }
+@media (max-width:520px){ .wlist{gap:8px 18px} .wg-ex{margin-left:0} }
 /* 拼写页 */
 .sp-head{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
 .sp-word{flex:1;transition:filter .25s,opacity .25s;min-width:0}
@@ -995,9 +1001,13 @@ function wordBtns(list){
 }
 function wordGroups(list){
   return EN_WORDS.grouped(list).map(function(x){
-    const g=x.g, cls=g.c?"mk-"+g.c:"mk-black";
-    return '<div class="wgrp"><div class="wmark"><b class="'+cls+'">'+esc(g.mark)+'</b>'+
-      '<small>'+esc(g.name)+'<br>'+esc(g.zh)+'</small></div>'+wordBtns(x.words)+'</div>';
+    const g=x.g, gi=EN_WORDS.GROUPS.indexOf(g);
+    return '<div class="wgrp g-'+(g.c||"black")+'"><div class="wg-h"><b class="wg-name">'+esc(g.name)+'</b>'+
+      (g.gr?'<span class="wg-gr">'+esc(g.gr)+'</span>':'<span class="wg-gr snd">'+esc(g.sound)+'</span>')+
+      '<button class="wg-ex" data-ex="'+gi+'" aria-expanded="false">[Try reading it out]</button></div>'+
+      '<div class="wg-sent" hidden><button class="wg-say" data-say="'+gi+'" aria-label="读例句">🔊</button><div class="lines">'+
+      g.ex.map(l=>EN_WORDS.lineSvg(l,g.c,{h:30})).join("")+'</div></div>'+
+      wordBtns(x.words)+'</div>';
   }).join("");
 }
 function renderWordGroups(){
@@ -1033,6 +1043,13 @@ function renderLatinPane(which){
 }
 ["#pane-math","#pane-en"].forEach(function(sel){
   $(sel).addEventListener("click",function(e){
+    const ex=e.target.closest("[data-ex]");
+    if(ex){
+      const box=ex.closest(".wgrp").querySelector(".wg-sent"), open=box.hidden;
+      box.hidden=!open; ex.setAttribute("aria-expanded",String(open)); beep("tap"); return;
+    }
+    const sy=e.target.closest("[data-say]");
+    if(sy){ const g=EN_WORDS.GROUPS[+sy.dataset.say]; speakWord(g.ex.map(EN_WORDS.plainLine).join(" ")); return; }
     const wc=e.target.closest("[data-word]");
     if(wc){
       /* 「下一个」沿整张表走，不是只在这一组里 */
