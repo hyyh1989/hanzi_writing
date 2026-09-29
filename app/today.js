@@ -7,7 +7,7 @@
    api 由主页面提供：
        plan() / savePlan(p)  → 周计划 {days:[7 个数组，下标 0 = 周日], custom:{id:文字}}
        days() / saveDays(o)  → 每天的记录 {"2026-09-29": {v, done, pick, skip, cheered}}
-       ready(subj)           → 这个科目做好了没有（没做好的任务显示成「线下」）
+       ready(subj, id)       → 这个任务能不能在 iPad 上做（不能的显示成「线下」，比如音乐的写谱号还没做）
        info(taskId)          → 能在 iPad 上做的任务：{items, label, done, total, doneSet, single}，
                                single = 一次做完的任务（听写），不显示「几 / 几」
                                内容当天第一次生成后就固定（主页面负责）
@@ -184,7 +184,7 @@
     /* 每个任务现在的状态 */
     var cards = ids.map(function (id) {
       var t = kind(id, plan);
-      var offline = t.custom || !(api.ready ? api.ready(t.subj) : true);
+      var offline = t.custom || !(api.ready ? api.ready(t.subj, id) : true);
       if (offline) return { id: id, t: t, offline: true, finished: !!done[id], skipped: !!skip[id] };
       var info = api.info ? api.info(id) : null;
       if (!info || !info.items.length) return { id: id, t: t, empty: true, skipped: !!skip[id] };
@@ -280,7 +280,7 @@
       '<span class="td-body"><b>' + esc(info.label || c.t.label) + '</b>' +
       '<span class="td-items">' + items + '</span></span>' + right + '</div>' +
       (c.finished ? '' :
-        '<div class="td-more"><button data-td-reroll="' + c.id + '">换一批</button>' +
+        '<div class="td-more">' + (info.fixed ? '' : '<button data-td-reroll="' + c.id + '">换一批</button>') +
         '<button data-td-skip="' + c.id + '">今天跳过</button></div>') +
       '</div>';
   }

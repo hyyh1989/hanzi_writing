@@ -416,6 +416,39 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .wsvg .mp-purple{color:var(--mp-purple)}
 .wsvg .wap{fill:none;stroke-width:80;stroke-linecap:round}
 .wsvg .wul{fill:none;stroke:var(--ink);stroke-width:26;stroke-linecap:round;stroke-linejoin:round}
+/* ── 认音符（notes.js）── */
+.nr{padding:4px 0 24px;display:flex;flex-direction:column;align-items:center}
+.nr-q{margin:0 0 4px;font-family:var(--disp);font-size:20px;color:var(--ink)}
+.nr-score{width:100%;max-width:520px}
+.nr-staff{display:block;width:100%;height:auto}
+.nr-staff .nr-l{stroke:var(--ink-2);stroke-width:1.2}
+.nr-staff .nr-clef{fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.nr-staff .nr-cdot{fill:var(--ink)}
+.nr-staff .nr-head{fill:none;stroke:var(--ink);stroke-width:2.4}
+.nr-staff .nr-head.good{stroke:var(--good)}
+.nr-say{min-height:1.6em;margin:2px 0 10px;font-family:var(--disp);font-size:22px;color:var(--good)}
+.nr-kb-wrap{width:100%;max-width:760px;padding:0 2px}
+.nr-kb{position:relative;display:flex;height:150px;user-select:none;-webkit-user-select:none}
+.nr-w{position:relative;flex:1;margin:0 1px;padding:0;background:#fff;border:1px solid #B9C0C8;border-radius:0 0 7px 7px;
+  box-shadow:inset 0 -4px 0 #E5E8EC;cursor:pointer;transition:background .12s}
+.nr-w span{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-family:var(--disp);font-weight:700;
+  font-size:clamp(12px,2.4vw,18px);color:#4B5761}
+.nr-w em{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);white-space:nowrap;font-style:normal;
+  font-size:11px;color:var(--teal-2);font-weight:700}
+.nr-w.mid::before{content:"";position:absolute;left:50%;bottom:36px;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:var(--teal)}
+.nr-w[disabled]{background:#EEF0F2;cursor:default}
+.nr-w[disabled] span{color:#B3BAC1}
+.nr-w.good{background:#CFF2DC}
+.nr-w.bad{background:#FFD9D5}
+.nr-w.show{background:#FFF1B8;box-shadow:inset 0 0 0 3px #F2B600}
+.nr-b{position:absolute;top:0;width:4%;height:60%;background:#23282E;border-radius:0 0 4px 4px;pointer-events:none;z-index:2}
+.nr-pet{width:60px;height:60px;margin-top:26px;pointer-events:none}
+.nr-done-t{color:var(--ink-2);margin:-10px 0 0}
+.nr-preview{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:520px}
+.nr-set{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line-2)}
+.nr-seg{display:flex;gap:6px;flex-wrap:wrap}
+.nr-seg button{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:13px;color:var(--ink-2)}
+.nr-seg button[aria-pressed="true"]{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-2);font-weight:700}
 /* 词表：不用方框，按发音一组一块。组头照 Monster Phonics 官网：怪兽名（组的颜色）+ 这个音的字母组合，
    「Try reading it out」点开是这一组的例句。左边一条组的颜色，把一组框在一起 */
 .wgrp{padding:10px 0 12px 14px;margin:0 0 8px;border-left:5px solid var(--gc,var(--ink));border-radius:2px}
@@ -499,6 +532,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
     </div>
     <div id="pane-math" hidden></div>
     <div id="pane-en" hidden></div>
+    <div id="pane-music" hidden></div>
   </section>
 
   <section id="view-practice" hidden>
@@ -524,6 +558,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   <section id="view-print" hidden></section>
   <section id="view-game" hidden></section>
   <section id="view-word" hidden></section>
+  <section id="view-notes" hidden></section>
   <section id="view-plan" hidden></section>
 </div>
 
@@ -603,6 +638,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <script src="en-words.js"></script>
 <script src="spell.js"></script>
 <script src="wordgame.js"></script>
+<script src="notes.js"></script>
 <script src="cat.js"></script>
 <script src="game.js"></script>
 <script src="today.js"></script>
@@ -663,7 +699,8 @@ const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
          lgbest:"mzg.lgbest", /* 听音选词：上一次用了多久（毫秒） */
          week:"mzg.week",     /* 周计划：7 个数组，下标 0 = 周日（today.js 的 DEFAULT_PLAN 是默认值） */
          days:"mzg.days",     /* 每天：{"2026-09-29":{v:来过, done:{任务:1}, pick:{任务:[字]}, skip:{任务:1}, cheered:1}} */
-         plog:"mzg.plog"};    /* 每个字练过几行、最近哪天：{字:{n,t}}。自动出题靠它轮换 */
+         plog:"mzg.plog",     /* 每个字练过几行、最近哪天：{字:{n,t}}。自动出题靠它轮换 */
+         nstat:"mzg.nstat"};  /* 认音符：每个音答得怎样 {"treble60":{n,ok,t}}（谱号+MIDI 编号） */
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let stars=load(K.stars,{}), wrong=load(K.wrong,{});
@@ -972,10 +1009,10 @@ function renderPractice(){
 }
 /* ── 首页：今天 + 各科目 ──────────────────────────────────── */
 let subj="today";
-const SUBJ_TITLE={today:"练习本",zh:"中文",math:"数学",en:"英文"};
+const SUBJ_TITLE={today:"练习本",zh:"中文",math:"数学",en:"英文",music:"音乐"};
 function setSubj(s){
   subj=s;
-  ["today","zh","math","en"].forEach(function(k){ $("#pane-"+k).hidden=(k!==s); });
+  ["today","zh","math","en","music"].forEach(function(k){ $("#pane-"+k).hidden=(k!==s); });
   if(s!=="today" && window.Today) Today.destroy();   /* 离开今天页就把那里的小猫收掉 */
   $("#title").textContent=SUBJ_TITLE[s];
   renderHome(); renderSelBar(); show("#view-home");
@@ -1000,6 +1037,7 @@ function renderHome(){
   if(subj==="zh") return renderZh();
   if(subj==="math") return renderLatinPane("math");
   if(subj==="en") return renderLatinPane("en");
+  if(subj==="music") return renderMusic();
 }
 /* 数学（数字）、英文（字母）的科目页：一组组字块，点了进练字页（和汉字同一个页面）。
    「要多练」和汉字共用一个存储（mzg.wrong，按字存），这里只挑本科目的字 */
@@ -1113,7 +1151,8 @@ function enTabs(){
 });
 /* 哪些科目上线了。音乐做好之前是 false：首页、周计划编辑页都不出现音乐
    （2026-09-29 用户：音乐之后再一起上）。上线时改成 true，并把 today.js 的默认计划换回带音乐的那版 */
-const MUSIC_READY=false;
+/* 2026-09-29 起：只在预览站（next.）和本机显示音乐，正式站仍然隐藏，做完一起上线时改成 true */
+const MUSIC_READY=/^next\.|^localhost$|^127\.0\.0\.1$|^192\.168\./.test(location.hostname);
 function subjEnabled(s){ return s!=="music" || MUSIC_READY }
 /* 打卡：今天来过（写完一个字、做完一轮听写、玩完一局游戏都算） */
 function markDay(){
@@ -1130,14 +1169,16 @@ function renderToday(){
     days:function(){ return load(K.days,{}) },
     saveDays:function(v){ save(K.days,v) },
     info:taskInfo, start:startTask, reroll:rerollTask,
-    ready:function(s){ return s==="zh"||s==="math"||s==="en" },
+    /* 音乐里「认音符」做好了，「写谱号和音符」还没做 → 仍显示成线下任务 */
+    ready:function(s,id){ return s==="zh"||s==="math"||s==="en"||(s==="music"&&id==="music-read"&&MUSIC_READY) },
     enabled:subjEnabled,
     go:setSubj,
     games:renderGameEntry,
     subjects:function(){ return [
       {id:"zh",   name:"中文", items:"写字 · 听写 · 字库"},
       {id:"math", name:"数学", items:"写数字 0–9"},
-      {id:"en",   name:"英文", items:"拼单词 · 写字母"} ] },
+      {id:"en",   name:"英文", items:"拼单词 · 写字母"} ].concat(MUSIC_READY?[
+      {id:"music",name:"音乐", items:"认音符 · 写谱号（在做）"}]:[]) },
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     beep:beep
   });
@@ -1148,7 +1189,7 @@ function renderToday(){
    挑的顺序（用户定的「任务自动来」）：先「要多练的」，再按「还没练熟 → 最近没练」轮换 */
 let fromTask=null;              /* 从哪个任务进来的（写完最后一个字时按钮变成「回到今天」） */
 const TASK_N={"zh-write":3,"en-letters":4,"en-words":3,"math-digits":3,"zh-dict":8};
-const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","en-words":"en","math-digits":"math"};
+const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","en-words":"en","math-digits":"math","music-read":"music"};
 /* 任务里每一项在星星、练习记录里的键：单词加 w:，字和字母就是自己 */
 function taskKey(id){ return id==="en-words" ? WK : function(c){ return c } }
 function todayRec(){ const all=load(K.days,{}); return all[todayStr()]||{} }
@@ -1231,6 +1272,10 @@ function rerollTask(id){
 }
 const TASK_LABEL={"zh-write":"写 {n} 个字","en-letters":"写 {n} 个字母","en-words":"拼 {n} 个单词","math-digits":"写 {n} 个数字","zh-dict":"听写 {n} 个字"};
 function taskInfo(id){
+  if(id==="music-read"){       /* 一轮 10 个音，做完一轮就算完成 */
+    const d=!!(todayRec().done||{})[id];
+    return {items:["一轮 10 个"],label:"认音符",done:d?1:0,total:1,single:true,fixed:true};   /* fixed：没有「换一批」 */
+  }
   const items=taskPick(id); if(!items.length) return {items:[]};
   const label=TASK_LABEL[id].replace("{n}",items.length);
   if(id==="zh-dict"){ const d=!!(todayRec().done||{})[id]; return {items,label,done:d?1:0,total:1,single:true}; }
@@ -1238,6 +1283,7 @@ function taskInfo(id){
   return {items, label, done:Object.keys(doneSet).length, total:items.length, doneSet};
 }
 function startTask(id){
+  if(id==="music-read"){ beep("tap"); setSubj("music"); fromTask=id; openNotes(); return; }
   const items=taskPick(id); if(!items.length) return;
   beep("tap");
   if(id==="en-words") enTab="words"; else if(id==="en-letters") enTab="letters";
@@ -1371,7 +1417,7 @@ function gridSize(){
   return Math.round(Math.max(230,Math.min(w,h,430)));
 }
 function show(view){
-  ["#view-home","#view-practice","#view-dict","#view-print","#view-game","#view-plan","#view-word"].forEach(x=>$(x).hidden=(x!==view));
+  ["#view-home","#view-practice","#view-dict","#view-print","#view-game","#view-plan","#view-word","#view-notes"].forEach(x=>$(x).hidden=(x!==view));
   renderCrumbs(view);
   const bar=$("#selbar");
   if(bar){ bar.hidden = !(view==="#view-home" && subj==="zh" && tab==="practice");
@@ -2185,12 +2231,59 @@ function openWord(w,list){
   });
 }
 
+/* ── 音乐（MUSIC.md）：认音符。提示全部英文，设置给家长看的用中文 ──
+   低音谱号的题占几成（cfg.bassShare，默认 0.3）：她高音谱号学了一阵、低音谱号刚开始，家长按进度调 */
+let notesCtl=null;
+function notesOff(){ if(notesCtl){ notesCtl.destroy(); notesCtl=null; } }
+function bassShare(){ return typeof cfg.bassShare==="number" ? cfg.bassShare : 0.3 }
+function renderMusic(){
+  const el=$("#pane-music"); if(!el) return;
+  const share=bassShare(), shares=[[0.2,"少（2 个）"],[0.3,"稍少（3 个）"],[0.5,"一半"],[0.7,"多（7 个）"]];
+  const st=load(K.nstat,{});
+  el.innerHTML='<div style="height:14px"></div>'+
+    '<div class="lesson"><div class="lesson-h"><h3>认音符 <small>Note reading</small></h3></div>'+
+    '<p class="lesson-tip">五线谱上出一个音，在琴键上点对应的键。高音谱号 Middle C → Treble C，低音谱号 Bass C → Middle C，一轮 10 个。</p>'+
+    '<div class="nr-preview">'+NoteRead.score("treble",60)+NoteRead.score("bass",60)+'</div>'+
+    '<p class="lesson-tip">上面两个都是 Middle C——同一个琴键，在两个谱号里位置不一样。</p>'+
+    '<div class="nr-set"><span>一轮里低音谱号的题</span><span class="nr-seg">'+shares.map(function(x){
+      return '<button data-share="'+x[0]+'" aria-pressed="'+(Math.abs(share-x[0])<.01)+'">'+x[1]+'</button>'; }).join("")+'</span></div>'+
+    '<div class="nr-set"><span>琴键上显示字母</span><button class="sw" id="sw-nletters" aria-pressed="'+(cfg.noteLetters!==false)+'" aria-label="琴键上显示字母"></button></div>'+
+    '<div class="controls"><button class="btn" id="nr-go">Start</button></div></div>'+
+    '<div class="lesson"><div class="lesson-h"><h3>写谱号 · 写音符 <small>Writing</small></h3></div>'+
+    '<p class="lesson-tip">在做。写法按对照卡上确认的（MUSIC.md）。</p></div>';
+  el.querySelectorAll("[data-share]").forEach(function(b){ b.onclick=function(){
+    cfg.bassShare=+b.dataset.share; save(K.cfg,cfg); beep("tap"); renderMusic(); }; });
+  $("#sw-nletters").onclick=function(){ cfg.noteLetters=!(cfg.noteLetters!==false); save(K.cfg,cfg); beep("tap"); renderMusic(); };
+  $("#nr-go").onclick=function(){ beep("tap"); openNotes(); };
+}
+function openNotes(){
+  if(!window.NoteRead) return;
+  notesOff(); if(writer) writer.cancelQuiz(); petOff(); spellOff();
+  show("#view-notes"); $("#title").textContent="认音符";
+  const st=load(K.nstat,{});
+  notesCtl=NoteRead.attach($("#view-notes"),{
+    letters:function(){ return cfg.noteLetters!==false },
+    bassShare:bassShare,
+    stats:function(){ return st },
+    saveStat:function(k,ok){ const e=st[k]||{n:0,ok:0}; e.n++; if(ok) e.ok++; e.t=todayStr(); st[k]=e; save(K.nstat,st); },
+    speak:speakWord, beep:beep,
+    cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
+    onDone:function(){
+      markDay();
+      if(fromTask==="music-read"){ const r=todayRec(); r.done=r.done||{}; r.done["music-read"]=1; r.v=1; saveTodayRec(r); }
+    },
+    again:function(){ openNotes(); },
+    next: fromTask ? {label:"Back to today →", go:function(){ goHome("today"); }}
+                   : {label:"Done", go:function(){ goHome(); }}
+  });
+}
+
 /* 回到某一层：不传就回到当前科目页（小游戏退出时用）。
    先收拾当前页（停写字、收小猫、关游戏、停语音），再切过去；
    setSubj 里会重画——听写完「要多练的字」变了，不重画的话练习页还是旧的 */
 function goHome(target){
   fromTask=null;
-  if(writer)writer.cancelQuiz(); petOff(); spellOff();
+  if(writer)writer.cancelQuiz(); petOff(); spellOff(); notesOff();
   if(gameCtl&&gameCtl.destroy){gameCtl.destroy();gameCtl=null}
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}
   setSubj(typeof target==="string"?target:subj);
@@ -2223,7 +2316,8 @@ function bakPayload(){
   return JSON.stringify({v:1, t:new Date().toISOString().slice(0,10),
     stars:stars, sel:load(K.sel,[]), wrong:wrong, cfg:cfg,
     week:load(K.week,null), days:load(K.days,{}), plog:load(K.plog,{}),
-    gstat:load(K.gstat,{}), gbest:load(K.gbest,0), lgstat:load(K.lgstat,{}), lgbest:load(K.lgbest,0)});
+    gstat:load(K.gstat,{}), gbest:load(K.gbest,0), lgstat:load(K.lgstat,{}), lgbest:load(K.lgbest,0),
+    nstat:load(K.nstat,{})});
 }
 function bakWhen(){
   const el=$("#bak-when"); if(!el) return;
@@ -2369,6 +2463,7 @@ $("#bak-do").onclick=function(){
   if(typeof d.gbest==="number") save(K.gbest,d.gbest);
   if(d.lgstat&&typeof d.lgstat==="object"&&!Array.isArray(d.lgstat)) save(K.lgstat,d.lgstat);
   if(typeof d.lgbest==="number") save(K.lgbest,d.lgbest);
+  if(d.nstat&&typeof d.nstat==="object"&&!Array.isArray(d.nstat)) save(K.nstat,d.nstat);
   if(d.cfg&&typeof d.cfg==="object"){
     cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,recOrder:"write"},d.cfg);
     save(K.cfg,cfg);

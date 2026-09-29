@@ -50,7 +50,7 @@
 2. **周计划只有家长设，但暂时不做家长权限**（孩子还不认识几个字，没必要）。
    默认周计划在 `today.js` 的 `DEFAULT_PLAN`，存 `mzg.week`：周一五「中文写字 + 英文拼单词」，
    周三「中文写字 + 英文写字母」，周二四「中文写字 + 数学写数字」，周六「中文听写」，周日休息。
-   **音乐做好之前完全不出现**（2026-09-29 用户：音乐之后再一起上）：主页面 `MUSIC_READY=false`，
+   **音乐做好之前正式站完全不出现**（2026-09-29 用户：音乐之后再一起上）：`MUSIC_READY` 只在预览站和本机为真（按网址判断），
    `subjEnabled()` 让首页和计划编辑页都隐藏音乐——就算存下来的计划里有音乐也隐藏。
    音乐上线时：`MUSIC_READY=true`，并把 `DEFAULT_PLAN` 换回注释里那版（钢琴课周日上，周一复习、周六热身）。
 3. **任务内容自动生成**（第 3 步，已完成）。出题在主页面 `taskCandidates()`：
@@ -153,7 +153,7 @@
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
 **`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
-`manifest.webmanifest`、`latin-play.js`、`today.js`、`en-words.js`、`spell.js`、`wordgame.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
+`manifest.webmanifest`、`latin-play.js`、`today.js`、`en-words.js`、`spell.js`、`wordgame.js`、`notes.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
 |---|---|---|
