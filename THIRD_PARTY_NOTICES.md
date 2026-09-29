@@ -8,6 +8,7 @@
 | 笔顺 / 字形数据 | `app/chardata.js`、`app/sd/*.js` | [hanzi-writer-data](https://github.com/chanind/hanzi-writer-data) 2.0.1，源自 [Make Me a Hanzi](https://github.com/skishore/makemeahanzi)，再上游是文鼎（Arphic）字体 | **Arphic Public License** → `licenses/ARPHICPL.TXT` |
 | 笔顺动画与描红引擎 | `app/hanzi-writer.min.js` | [hanzi-writer](https://github.com/chanind/hanzi-writer) 3.7.0，© 2014 David Chanin | MIT → `licenses/hanzi-writer.MIT.txt` |
 | 拼音 | `app/chardata.js` 里的 `p` 字段（构建时由 `build/pinyin.json` 生成） | [pinyin-pro](https://github.com/zh-lx/pinyin-pro)，© zh-lx | MIT → `licenses/pinyin-pro.MIT.txt` |
+| 五线谱上的高音谱号、低音谱号（印刷体） | `app/notes.js` 里的 `G_CLEF` / `F_CLEF` 两条轮廓 | [Bravura](https://github.com/steinbergmedia/bravura)，© 2015 Steinberg Media Technologies GmbH，只取了 U+E050、U+E062 两个字形 | **SIL OFL 1.1** → `licenses/Bravura.OFL.txt` |
 | 兜底组词（手写组词之外的字） | `app/words.js` | [nodejieba](https://github.com/yanyiwu/nodejieba) 2.6.0 的 `jieba.dict.utf8` | MIT → `licenses/nodejieba.MIT.txt` |
 
 **Arphic Public License 的要点**：允许商用分发，但它是 copyleft —— 字形数据及其修改版
