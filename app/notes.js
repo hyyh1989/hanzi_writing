@@ -116,7 +116,7 @@
         '<p class="nr-q">Which note is this?</p>' +
         '<div class="nr-score"></div>' +
         '<p class="nr-say" aria-live="polite"></p>' +
-        '<div class="nr-kb-wrap"><div class="nr-kb"></div></div>' +
+        '<div class="nr-kb-wrap"><div class="nr-kb-view"><div class="nr-kb"></div></div></div>' +
         '<div class="nr-pet"></div>' +
       "</div>";
     var elDots = host.querySelector(".nr-dots"), elScore = host.querySelector(".nr-score"),
@@ -136,8 +136,12 @@
       });
       elKb.innerHTML = h;
     }
+    /* 键盘只露出 11 个键：这个谱号的 8 个 + 靠 Middle C 那边的 3 个（灰的）。
+       整条 15 键的键盘左右滑到位，而不是换一副键盘 —— 让她看出是同一架琴，Middle C 一直在那儿。
+       露得少，每个键就宽（2026-09-29 家长：iPad 上琴键有点窄） */
     function setRange(clef) {
-      var ok = CLEFS[clef].notes;
+      var ok = CLEFS[clef].notes, start = clef === "treble" ? 4 : 0;
+      elKb.style.transform = "translateX(" + (-start / WHITE.length * 100) + "%)";
       [].forEach.call(elKb.querySelectorAll(".nr-w"), function (b) {
         var on = ok.indexOf(+b.dataset.m) >= 0;
         b.disabled = !on; b.classList.remove("good", "bad", "show");
