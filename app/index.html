@@ -421,7 +421,8 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .mw-head{display:flex;align-items:baseline;gap:10px}
 .mw-name{font-family:var(--disp);font-size:22px}
 .mw-pos{color:var(--ink-3);font-size:13px}
-.mw-say{min-height:2.8em;max-width:34em;margin:4px 0 8px;text-align:center;font-family:var(--disp);font-size:18px;color:var(--ink);line-height:1.4}
+/* 平时空着，只有写错时出一句英文提示 */
+.mw-say{min-height:1.6em;max-width:34em;margin:10px 0 4px;text-align:center;font-family:var(--disp);font-size:18px;color:var(--teal-2);line-height:1.4}
 .mw-steps{display:flex;gap:6px;margin-bottom:10px}
 .mw-steps span{padding:3px 12px;border-radius:999px;font-size:13px;font-weight:700;background:var(--sunk);color:var(--ink-3)}
 .mw-steps span.now{background:var(--teal);color:#fff}
@@ -447,15 +448,17 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .mw-hint .dot{fill:var(--teal)}
 .mw-pet{position:absolute;right:-60px;top:4px;width:52px;height:52px;pointer-events:none}
 @media (max-width:560px){ .mw-pet{display:none} }
-.mw.seq .mw-stage{width:min(94vw,700px,calc((100vh - 330px) * 262 / 130))}
-.mw-cell .mw-pclef{fill:var(--ink-3);opacity:.55}
+.mw.seq .mw-stage{width:min(94vw,700px,calc((100vh - 300px) * 200 / 130))}
+.mw-cell .mw-panel-bg{fill:var(--card)}
+.mw-cell{overflow:hidden}
+.mw-cell .mw-pclef{fill:var(--ink-2)}
 .mw-cell .mw-letter{font:700 7px var(--disp);fill:var(--ink-3)}
 .mw-cell .mw-letter.now{fill:var(--teal-2);font-size:8.5px}
 .mw-cell .mw-slot{fill:var(--teal-soft)}
 .mw-guide path.filled{fill:var(--trace)}
 .mw-guide .demo.filled,.mw-hint .filled{fill:currentColor}
 .mw-guide .demo{color:var(--ink)} .mw-hint{color:var(--teal)}
-.mw-icon.wide{width:120px}
+.mw-icon.wide{width:124px}
 .mw-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:6px}
 .mw-chip{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;
   border:1px solid var(--line);border-radius:12px;background:var(--paper)}
