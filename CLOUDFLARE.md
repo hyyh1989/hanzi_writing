@@ -108,6 +108,7 @@ https://dash.cloudflare.com → Workers & Pages → hanzi-writing
 ## 镜像地址（2026-09-29 已退役）
 
 以前在 GitHub Pages 上有一个镜像 `hyyh1989.github.io/hanzi_writing`，推代码到 main 就自动发，
-防备 `pages.dev` 整个域名被屏蔽。用户已经有了中国大陆能打开的替代地址，镜像不用再维护：
+防备 `pages.dev` 整个域名被屏蔽。**2026-09-29 用户确认主站 hanzi-writing.pages.dev 在中国大陆能直接打开**，
+已经把它给了大陆的朋友用（用户的游戏项目也是这样和大陆朋友一起玩的），镜像不用再维护：
 自动部署配置（`.github/workflows/pages.yml`）已删，推代码不会再更新它。
 **现在只有一条发布路：`build/deploy.sh`。**

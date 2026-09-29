@@ -1,6 +1,6 @@
 # 练习本
 
-**正式地址** https://hanzi-writing.pages.dev
+**正式地址** https://hanzi-writing.pages.dev （中国大陆也能直接打开，2026-09-29 确认）
 **预览地址** https://next.hanzi-writing.pages.dev （大改动先发这里在 iPad 上试，数据和正式站分开）
 
 给 5 岁小朋友的练习 app（2026-09-27 前叫「米字格练字本」）。按科目组织：
