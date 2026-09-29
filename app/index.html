@@ -416,6 +416,46 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .wsvg .mp-purple{color:var(--mp-purple)}
 .wsvg .wap{fill:none;stroke-width:80;stroke-linecap:round}
 .wsvg .wul{fill:none;stroke:var(--ink);stroke-width:26;stroke-linecap:round;stroke-linejoin:round}
+/* ── 写谱号 · 写音符（musicwrite.js）── */
+.mw{display:flex;flex-direction:column;align-items:center;padding:6px 0 24px}
+.mw-head{display:flex;align-items:baseline;gap:10px}
+.mw-name{font-family:var(--disp);font-size:22px}
+.mw-pos{color:var(--ink-3);font-size:13px}
+.mw-say{min-height:2.8em;max-width:34em;margin:4px 0 8px;text-align:center;font-family:var(--disp);font-size:18px;color:var(--ink);line-height:1.4}
+.mw-steps{display:flex;gap:6px;margin-bottom:10px}
+.mw-steps span{padding:3px 12px;border-radius:999px;font-size:13px;font-weight:700;background:var(--sunk);color:var(--ink-3)}
+.mw-steps span.now{background:var(--teal);color:#fff}
+.mw-steps span.done{background:var(--teal-soft);color:var(--teal-2)}
+.mw-stage{position:relative;width:min(92vw,420px,calc((100vh - 330px) / 1.3))}
+.mw-cell{display:block;width:100%;height:auto;background:var(--card);border-radius:8px;touch-action:none;
+  box-shadow:var(--shadow)}
+.mw-cell .mw-l,.mw-icon .mw-l{stroke:var(--ink-3);stroke-width:.7}
+.mw-cell .mw-l.key{stroke:var(--zhu);stroke-width:1.3}
+.mw-cell .mw-l.mid{stroke:var(--teal);stroke-width:1.2;stroke-dasharray:3 2}
+.mw-cell .mw-lt{font:700 4.6px var(--disp);fill:var(--zhu)}
+.mw-cell .mw-lt.mid{fill:var(--teal)}
+.mw-guide path{fill:none;stroke:var(--trace);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.mw-guide .dot{fill:var(--trace)}
+.mw-guide .demo{stroke:var(--ink);stroke-width:3.4}
+.mw-guide .dot.demo{fill:var(--ink);stroke:none}
+.mw-ink path{fill:none;stroke:var(--ink);stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+.mw-ink path.filled{fill:var(--ink)}
+.mw-ink .dot{fill:var(--ink)}
+.mw-ink .bad{stroke:var(--bad);opacity:.8}
+.mw-ink .dot.bad{fill:var(--bad)}
+.mw-hint path{fill:none;stroke:var(--teal);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.mw-hint .dot{fill:var(--teal)}
+.mw-pet{position:absolute;right:-8px;top:-58px;width:52px;height:52px;pointer-events:none}
+.mw-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:6px}
+.mw-chip{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;
+  border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.mw-chip:hover{border-color:var(--teal)}
+.mw-chip span{font-size:13px;font-weight:700;color:var(--ink-2)}
+.mw-chip em{position:absolute;right:6px;top:4px;font-style:normal;font-size:9px;color:var(--amber);letter-spacing:-1px}
+.mw-icon{width:56px;height:73px}
+.mw-icon .ic{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.mw-icon .ic.filled{fill:var(--ink)}
+.mw-icon .ic-dot{fill:var(--ink)}
 /* ── 认音符（notes.js）── */
 .nr{padding:4px 0 24px;display:flex;flex-direction:column;align-items:center}
 .nr-q{margin:0 0 4px;font-family:var(--disp);font-size:20px;color:var(--ink)}
@@ -562,6 +602,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   <section id="view-game" hidden></section>
   <section id="view-word" hidden></section>
   <section id="view-notes" hidden></section>
+  <section id="view-mwrite" hidden></section>
   <section id="view-plan" hidden></section>
 </div>
 
@@ -642,6 +683,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <script src="spell.js"></script>
 <script src="wordgame.js"></script>
 <script src="notes.js"></script>
+<script src="musicwrite.js"></script>
 <script src="cat.js"></script>
 <script src="game.js"></script>
 <script src="today.js"></script>
@@ -1172,8 +1214,7 @@ function renderToday(){
     days:function(){ return load(K.days,{}) },
     saveDays:function(v){ save(K.days,v) },
     info:taskInfo, start:startTask, reroll:rerollTask,
-    /* 音乐里「认音符」做好了，「写谱号和音符」还没做 → 仍显示成线下任务 */
-    ready:function(s,id){ return s==="zh"||s==="math"||s==="en"||(s==="music"&&id==="music-read"&&MUSIC_READY) },
+    ready:function(s,id){ return s==="zh"||s==="math"||s==="en"||(s==="music"&&MUSIC_READY) },
     enabled:subjEnabled,
     go:setSubj,
     games:renderGameEntry,
@@ -1181,7 +1222,7 @@ function renderToday(){
       {id:"zh",   name:"中文", items:"写字 · 听写 · 字库"},
       {id:"math", name:"数学", items:"写数字 0–9"},
       {id:"en",   name:"英文", items:"拼单词 · 写字母"} ].concat(MUSIC_READY?[
-      {id:"music",name:"音乐", items:"认音符 · 写谱号（在做）"}]:[]) },
+      {id:"music",name:"音乐", items:"认音符 · 写谱号 · 写音符"}]:[]) },
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     beep:beep
   });
@@ -1191,10 +1232,10 @@ function renderToday(){
    否则她写完一个字、星星一变，重算出来的就是另一批字了。「换一批」才会重挑。
    挑的顺序（用户定的「任务自动来」）：先「要多练的」，再按「还没练熟 → 最近没练」轮换 */
 let fromTask=null;              /* 从哪个任务进来的（写完最后一个字时按钮变成「回到今天」） */
-const TASK_N={"zh-write":3,"en-letters":4,"en-words":3,"math-digits":3,"zh-dict":8};
-const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","en-words":"en","math-digits":"math","music-read":"music"};
+const TASK_N={"zh-write":3,"en-letters":4,"en-words":3,"math-digits":3,"zh-dict":8,"music-write":3};
+const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","en-words":"en","math-digits":"math","music-read":"music","music-write":"music"};
 /* 任务里每一项在星星、练习记录里的键：单词加 w:，字和字母就是自己 */
-function taskKey(id){ return id==="en-words" ? WK : function(c){ return c } }
+function taskKey(id){ return id==="en-words" ? WK : id==="music-write" ? function(c){ return "m:"+c } : function(c){ return c } }
 function todayRec(){ const all=load(K.days,{}); return all[todayStr()]||{} }
 function saveTodayRec(r){ const all=load(K.days,{}); all[todayStr()]=r; save(K.days,all) }
 function practicedToday(c){ const r=load(K.plog,{})[c]; return !!(r&&r.t===todayStr()) }
@@ -1243,6 +1284,11 @@ function taskCandidates(id){
                 byNeed(byLen(E.CEW.filter(w=>both.indexOf(w)<0)),WK),
                 byNeed(byLen(E.HFW.filter(w=>both.indexOf(w)<0)),WK)));
   }
+  if(id==="music-write"){
+    /* 谱号在前（她正在学），再音符；没练熟、越久没练的优先 */
+    if(!window.MusicWrite) return [];
+    return byNeed(MusicWrite.ORDER.slice(),function(c){ return "m:"+c });
+  }
   if(id==="math-digits"){
     const mine=Object.keys(wrong).filter(c=>isDigit(c));
     return uniq(mine.concat(byNeed("23579".split("")), byNeed("0123456789".split(""))));
@@ -1273,7 +1319,7 @@ function rerollTask(id){
   r.pick[id]=uniq(list.slice(start).concat(list)).slice(0,Math.min(n,list.length));
   saveTodayRec(r);
 }
-const TASK_LABEL={"zh-write":"写 {n} 个字","en-letters":"写 {n} 个字母","en-words":"拼 {n} 个单词","math-digits":"写 {n} 个数字","zh-dict":"听写 {n} 个字"};
+const TASK_LABEL={"music-write":"写 {n} 个","zh-write":"写 {n} 个字","en-letters":"写 {n} 个字母","en-words":"拼 {n} 个单词","math-digits":"写 {n} 个数字","zh-dict":"听写 {n} 个字"};
 function taskInfo(id){
   if(id==="music-read"){       /* 一轮 10 个音，做完一轮就算完成 */
     const d=!!(todayRec().done||{})[id];
@@ -1283,6 +1329,11 @@ function taskInfo(id){
   const label=TASK_LABEL[id].replace("{n}",items.length);
   if(id==="zh-dict"){ const d=!!(todayRec().done||{})[id]; return {items,label,done:d?1:0,total:1,single:true}; }
   const key=taskKey(id), doneSet={}; items.forEach(function(c){ if(practicedToday(key(c))) doneSet[c]=1 });
+  if(id==="music-write"){      /* 卡片上显示名字（Treble clef · Minim ↑），不显示内部代号 */
+    const nm=c=>MusicWrite.ITEMS[c].name+(/-up$/.test(c)?" ↑":/-down$/.test(c)?" ↓":""), ds={};
+    Object.keys(doneSet).forEach(c=>{ ds[nm(c)]=1 });
+    return {items:items.map(nm), label, done:Object.keys(doneSet).length, total:items.length, doneSet:ds};
+  }
   return {items, label, done:Object.keys(doneSet).length, total:items.length, doneSet};
 }
 function startTask(id){
@@ -1294,6 +1345,7 @@ function startTask(id){
   if(id==="zh-dict"){ openDict(items,true); return; }
   const key=taskKey(id), first=items.find(c=>!practicedToday(key(c)))||items[0];
   if(id==="en-words"){ enTab="words"; openWord(first,items); return; }
+  if(id==="music-write"){ openMusicWrite(first,items); return; }
   if(id==="en-letters") enTab="letters";
   openChar(first,items);
 }
@@ -1420,7 +1472,7 @@ function gridSize(){
   return Math.round(Math.max(230,Math.min(w,h,430)));
 }
 function show(view){
-  ["#view-home","#view-practice","#view-dict","#view-print","#view-game","#view-plan","#view-word","#view-notes"].forEach(x=>$(x).hidden=(x!==view));
+  ["#view-home","#view-practice","#view-dict","#view-print","#view-game","#view-plan","#view-word","#view-notes","#view-mwrite"].forEach(x=>$(x).hidden=(x!==view));
   renderCrumbs(view);
   const bar=$("#selbar");
   if(bar){ bar.hidden = !(view==="#view-home" && subj==="zh" && tab==="practice");
@@ -2252,16 +2304,47 @@ function renderMusic(){
       return '<button data-share="'+x[0]+'" aria-pressed="'+(Math.abs(share-x[0])<.01)+'">'+x[1]+'</button>'; }).join("")+'</span></div>'+
     '<div class="nr-set"><span>琴键上显示字母</span><button class="sw" id="sw-nletters" aria-pressed="'+(cfg.noteLetters!==false)+'" aria-label="琴键上显示字母"></button></div>'+
     '<div class="controls"><button class="btn" id="nr-go">Start</button></div></div>'+
-    '<div class="lesson"><div class="lesson-h"><h3>写谱号 · 写音符 <small>Writing</small></h3></div>'+
-    '<p class="lesson-tip">在做。写法按对照卡上确认的（MUSIC.md）。</p></div>';
+    (window.MusicWrite?'<div class="lesson"><div class="lesson-h"><h3>写谱号 · 写音符 <small>Writing</small></h3></div>'+
+    '<p class="lesson-tip">看 → 描一遍 → 自己写两遍。写法按对照卡上确认的；符干朝上朝下两种都练，规则用英文讲给她。</p>'+
+    '<div class="mw-list">'+MusicWrite.ORDER.map(function(id){
+      const st=starsOf("m:"+id), it=MusicWrite.ITEMS[id];
+      return '<button class="mw-chip" data-mw="'+id+'">'+MusicWrite.icon(id)+'<span>'+it.name+
+        (/-up$/.test(id)?' ↑':/-down$/.test(id)?' ↓':'')+'</span>'+(st?'<em>'+"★".repeat(st)+'</em>':'')+'</button>';
+    }).join("")+'</div></div>':'');
   el.querySelectorAll("[data-share]").forEach(function(b){ b.onclick=function(){
     cfg.bassShare=+b.dataset.share; save(K.cfg,cfg); beep("tap"); renderMusic(); }; });
   $("#sw-nletters").onclick=function(){ cfg.noteLetters=!(cfg.noteLetters!==false); save(K.cfg,cfg); beep("tap"); renderMusic(); };
   $("#nr-go").onclick=function(){ beep("tap"); openNotes(); };
+  el.querySelectorAll("[data-mw]").forEach(function(b){ b.onclick=function(){ beep("tap"); openMusicWrite(b.dataset.mw, MusicWrite.ORDER); }; });
+}
+/* 写谱号 / 写音符。星星：自己写的两遍都没错 3 颗，错过 2 颗，看了示范 1 颗（记最好的一次，键名 m:id） */
+let mwCtl=null;
+function mwOff(){ if(mwCtl){ mwCtl.destroy(); mwCtl=null; } }
+function openMusicWrite(id,list){
+  if(!window.MusicWrite||!MusicWrite.ITEMS[id]) return;
+  mwOff(); notesOff(); if(writer) writer.cancelQuiz(); petOff(); spellOff();
+  list=list&&list.length?list:[id];
+  const i=Math.max(0,list.indexOf(id)), nx=list[i+1], k="m:"+id;
+  show("#view-mwrite"); $("#title").textContent=MusicWrite.ITEMS[id].name;
+  mwCtl=MusicWrite.attach($("#view-mwrite"),{
+    id:id, pos:(i+1)+" / "+list.length,
+    speak:speakWord, beep:beep,
+    cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
+    leniency:function(){ return cfg.easy?1.25:1 },
+    onDone:function(r){
+      const st=r.hints?1:(r.misses?2:3);
+      if(st>starsOf(k)){ stars[k]=st; save(K.stars,stars); refreshStars(); }
+      markDay();
+      const plg=load(K.plog,{}), pe=plg[k]||{n:0}; plg[k]={n:(pe.n||0)+1,t:todayStr()}; save(K.plog,plg);
+    },
+    next: nx ? {label:"Next →", go:function(){ beep("tap"); openMusicWrite(nx,list); }}
+         : fromTask ? {label:"Back to today →", go:function(){ goHome("today"); }}
+         : {label:"Done", go:function(){ goHome(); }}
+  });
 }
 function openNotes(){
   if(!window.NoteRead) return;
-  notesOff(); if(writer) writer.cancelQuiz(); petOff(); spellOff();
+  notesOff(); mwOff(); if(writer) writer.cancelQuiz(); petOff(); spellOff();
   show("#view-notes"); $("#title").textContent="认音符";
   const st=load(K.nstat,{});
   notesCtl=NoteRead.attach($("#view-notes"),{
@@ -2286,7 +2369,7 @@ function openNotes(){
    setSubj 里会重画——听写完「要多练的字」变了，不重画的话练习页还是旧的 */
 function goHome(target){
   fromTask=null;
-  if(writer)writer.cancelQuiz(); petOff(); spellOff(); notesOff();
+  if(writer)writer.cancelQuiz(); petOff(); spellOff(); notesOff(); mwOff();
   if(gameCtl&&gameCtl.destroy){gameCtl.destroy();gameCtl=null}
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}
   setSubj(typeof target==="string"?target:subj);

@@ -153,7 +153,7 @@
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
 **`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
-`manifest.webmanifest`、`latin-play.js`、`today.js`、`en-words.js`、`spell.js`、`wordgame.js`、`notes.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
+`manifest.webmanifest`、`latin-play.js`、`today.js`、`en-words.js`、`spell.js`、`wordgame.js`、`notes.js`、`musicwrite.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
 |---|---|---|
