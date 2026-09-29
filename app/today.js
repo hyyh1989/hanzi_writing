@@ -34,25 +34,27 @@
     "zh-dict":     { subj: "zh",    tag: "中文", label: "听写" },
     "math-digits": { subj: "math",  tag: "数学", label: "写数字" },
     "en-letters":  { subj: "en",    tag: "英文", label: "写字母" },
+    "en-words":    { subj: "en",    tag: "英文", label: "拼单词" },
     "music-write": { subj: "music", tag: "音乐", label: "写谱号和音符", offline: "钢琴上练 10 分钟" },
     "music-read":  { subj: "music", tag: "音乐", label: "认音符",       offline: "钢琴上认音符" }
   };
-  var ORDER = ["zh-write", "zh-dict", "math-digits", "en-letters", "music-write", "music-read"];
+  var ORDER = ["zh-write", "zh-dict", "math-digits", "en-words", "en-letters", "music-write", "music-read"];
 
-  /* 默认周计划（2026-09-29 用户定：音乐做好再上，先去掉音乐）。周日休息 */
+  /* 默认周计划（2026-09-29 用户定：音乐做好再上，先去掉音乐）。周日休息。
+     英文单词上线后周一、周五换成拼单词（拼单词本身就在练字母），周三保留写字母 */
   var DEFAULT_PLAN = [
     [],                              /* 周日：休息 */
-    ["zh-write", "en-letters"],      /* 周一 */
+    ["zh-write", "en-words"],        /* 周一 */
     ["zh-write", "math-digits"],     /* 周二 */
     ["zh-write", "en-letters"],      /* 周三 */
     ["zh-write", "math-digits"],     /* 周四 */
-    ["zh-write", "en-letters"],      /* 周五 */
+    ["zh-write", "en-words"],        /* 周五 */
     ["zh-dict"],                     /* 周六 */
   ];
   /* 音乐上线时换回这一版（2026-09-27 定的）：钢琴课周日上，课后第一天（周一）复习、
      课前一天（周六）热身。音乐任务「认音符」是练习形式；「音符拼单词」做成游戏放小游戏区，不当任务
-       周一 music-write + zh-write · 周二 zh-write + en-letters · 周三 music-read + zh-write
-       周四 zh-write + math-digits · 周五 music-write + en-letters · 周六 zh-dict + music-read */
+       周一 music-write + zh-write · 周二 zh-write + en-words · 周三 music-read + zh-write
+       周四 zh-write + math-digits · 周五 music-write + en-words · 周六 zh-dict + music-read */
   var WEEK = ["日", "一", "二", "三", "四", "五", "六"];
   var MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
 
@@ -269,7 +271,7 @@
     /* 已经写完的字淡一点，一眼看出还剩哪些 */
     var items = info.items.map(function (x) {
       return info.doneSet && info.doneSet[x] ? '<s>' + esc(x) + '</s>' : esc(x);
-    }).join(" ");
+    }).join(info.items.some(function (x) { return x.length > 1; }) ? " · " : " ");   /* 单词之间要分得开 */
     var right = c.finished
       ? '<span class="td-ok" aria-label="做完了">✓</span>'
       : (info.single ? '' : '<span class="td-prog">' + info.done + ' / ' + info.total + '</span>') +

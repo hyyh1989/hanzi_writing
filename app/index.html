@@ -24,6 +24,9 @@
   --disp:"Baloo 2","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --body:"Nunito","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --han:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  /* Monster Phonics 的颜色（英文单词用，照学校词表） */
+  --mp-red:#CC2F2A; --mp-green:#23914A; --mp-yellow:#E3B400; --mp-pink:#DE4A7F;
+  --mp-blue:#1C8ED6; --mp-brown:#8A3B1E; --mp-gold:#C28A1E;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
@@ -35,6 +38,7 @@
   --good:#5BC07C; --bad:#E8756A;
   --trace:#4A3B39;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
+  --mp-red:#F0625B; --mp-green:#4CC274; --mp-pink:#F07AA6; --mp-blue:#4FB3F0; --mp-brown:#D07A52; --mp-gold:#E3AE45;
 }}
 :root[data-theme="dark"]{
   --paper:#141A1E; --card:#1C2328; --sunk:#232B31;
@@ -46,6 +50,7 @@
   --good:#5BC07C; --bad:#E8756A;
   --trace:#4A3B39;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 24px -14px rgba(0,0,0,.6);
+  --mp-red:#F0625B; --mp-green:#4CC274; --mp-pink:#F07AA6; --mp-blue:#4FB3F0; --mp-brown:#D07A52; --mp-gold:#E3AE45;
 }
 *{box-sizing:border-box}
 [hidden]{display:none !important}
@@ -362,6 +367,17 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .mg-opt.good{background:var(--teal-soft);border-color:var(--teal)}
 .mg-opt.bad{opacity:.3}
 .mg-empty{padding:40px 16px;text-align:center;color:var(--ink-3)}
+/* 听音选词：题目是一个大喇叭，选项是上了学校颜色的词；图只在读对之后出现 */
+.lg-say{width:96px;height:96px;border-radius:50%;border:2px solid var(--line);background:var(--card);
+  font-size:44px;box-shadow:var(--shadow);transition:scale .08s ease-out}
+.lg-say:active{scale:.94}
+.lg-pic{font-size:44px;line-height:1;min-height:44px;opacity:0;transition:opacity .2s;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.lg-pic.show{opacity:1}
+.lg-opts .lg-opt{aspect-ratio:auto;min-height:96px}
+.lg-opts .lg-opt>span{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700;
+  font-size:clamp(30px,8.5vw,44px);color:var(--ink)}
+.lg-opts .lg-opt>span span{font:inherit}   /* 别让 .mg-opt span 的 emoji 字体、黑色盖掉颜色 */
 /* 结算：两条横条对比，短的那条快。不认字也看得懂 */
 .mg-done{padding:28px 4px;text-align:center}
 .mg-done-h{font-family:var(--disp);font-size:24px;color:var(--ink);margin-bottom:22px}
@@ -388,6 +404,42 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 @media (prefers-reduced-motion:reduce){
   .mg-opt,.mg-dots i,.mg-bar-t i{transition:none}
 }
+/* ── 英文单词：Monster Phonics 颜色（照学校词表，en-words.js）── */
+.mp-red{color:var(--mp-red)} .mp-green{color:var(--mp-green)} .mp-pink{color:var(--mp-pink)}
+.mp-blue{color:var(--mp-blue)} .mp-brown{color:var(--mp-brown)} .mp-gold{color:var(--mp-gold)}
+/* 黄色在白底上太淡，学校的表上也描了深色边 */
+.mp-yellow{color:var(--mp-yellow);-webkit-text-stroke:.04em #6B5200;paint-order:stroke fill}
+/* 不发音的字母：空心（学校表上印成只有轮廓） */
+.mp-silent{color:transparent;-webkit-text-stroke:.045em var(--ink)}
+.mp-u-wavy{text-decoration:underline wavy;text-decoration-thickness:.06em;text-underline-offset:.18em}
+.mp-u-line{text-decoration:underline;text-decoration-thickness:.07em;text-underline-offset:.16em}
+.eng{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700}
+.chip.word{width:auto;min-width:64px;padding:0 12px}
+.chip.word .g{position:static;display:block;font-size:24px;line-height:56px}
+/* 拼写页 */
+.sp-head{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
+.sp-word{flex:1;font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700;font-size:clamp(30px,9vw,46px);
+  line-height:1.1;color:var(--ink);transition:filter .25s,opacity .25s;min-width:0;white-space:nowrap}
+.sp-word.covered{filter:blur(14px);opacity:.35;user-select:none}
+.sp-sub{padding:2px 16px 0;color:var(--ink-2);font-size:13px}
+.sp-hint{margin-top:8px}
+.sp-stage{position:relative;padding:6px 4px 0;display:flex;justify-content:center}
+.sp-row{position:relative;display:flex;align-items:stretch;background:var(--card);border-radius:6px;padding:0 4px}
+.sp-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.sp-cell{position:relative;flex:none}
+.sp-cell.now{background:var(--teal-soft);border-radius:6px}
+.sp-sq{position:absolute;top:0;pointer-events:none;touch-action:none}
+.sp-cell.now .sp-sq{pointer-events:auto;z-index:3}
+.sp-w{position:absolute;inset:0;z-index:2}
+.sp-ink,.sp-lp{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.sp-lp{z-index:4}
+.sp-apos{position:absolute;left:50%;top:6%;transform:translateX(-50%);font-family:"Andika",sans-serif;font-weight:700;color:var(--ink)}
+.sp-pet{position:absolute;right:0;top:-54px;width:52px;height:52px;pointer-events:none}
+.sp-check{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 16px 0;padding:12px 14px;
+  background:var(--card);border-radius:12px}
+.sp-check-w{font-family:"Andika","Comic Neue",system-ui,sans-serif;font-weight:700;font-size:34px}
+.sp-check-t{color:var(--ink-2);font-size:15px}
+.sp-pic{font-size:40px}
 
 </style>
 
@@ -439,6 +491,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   <section id="view-dict" hidden></section>
   <section id="view-print" hidden></section>
   <section id="view-game" hidden></section>
+  <section id="view-word" hidden></section>
   <section id="view-plan" hidden></section>
 </div>
 
@@ -509,6 +562,9 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <script src="words.js"></script>
 <script src="latin.js"></script>
 <script src="latin-play.js"></script>
+<script src="en-words.js"></script>
+<script src="spell.js"></script>
+<script src="wordgame.js"></script>
 <script src="cat.js"></script>
 <script src="game.js"></script>
 <script src="today.js"></script>
@@ -564,6 +620,9 @@ const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
          gstat:"mzg.gstat",   /* 认字游戏：每个字的成绩 {ch:{n,ok,rt,last}} */
          gday:"mzg.gday",     /* 认字游戏：今天玩了几局 {d,n} */
          gbest:"mzg.gbest",   /* 认字游戏：上一次用了多久（毫秒） */
+         lgstat:"mzg.lgstat", /* 听音选词：每个词的成绩 {词:{n,ok,rt,last}}（和认字游戏分开记） */
+         lgday:"mzg.lgday",   /* 听音选词：今天玩了几局 {d,n}（两个游戏各自一天 3 局） */
+         lgbest:"mzg.lgbest", /* 听音选词：上一次用了多久（毫秒） */
          week:"mzg.week",     /* 周计划：7 个数组，下标 0 = 周日（today.js 的 DEFAULT_PLAN 是默认值） */
          days:"mzg.days",     /* 每天：{"2026-09-29":{v:来过, done:{任务:1}, pick:{任务:[字]}, skip:{任务:1}, cheered:1}} */
          plog:"mzg.plog"};    /* 每个字练过几行、最近哪天：{字:{n,t}}。自动出题靠它轮换 */
@@ -902,12 +961,36 @@ function latinChips(chars){
            '</span>'+(st?'<span class="dot">'+"★".repeat(st)+'</span>':'')+'</button>';
   }).join("")+'</div>';
 }
+/* 英文单词：存星星、要多练、练习记录时键名前面加 w:，免得单词 a、I 和字母 a、I 撞在一起 */
+function WK(w){ return "w:"+w }
+function wordChips(list){
+  return '<div class="chips">'+list.map(function(w){
+    const st=starsOf(WK(w));
+    return '<button class="chip word" data-word="'+esc(w)+'" data-done="'+(st?1:0)+'"><span class="g eng">'+
+           EN_WORDS.html(w)+'</span>'+(st?'<span class="dot">'+"★".repeat(st)+'</span>':'')+'</button>';
+  }).join("")+'</div>';
+}
+function renderWordGroups(){
+  if(!window.EN_WORDS||!window.Spell) return "";
+  const E=EN_WORDS;
+  const mine=Object.keys(wrong).filter(k=>k.slice(0,2)==="w:").map(k=>k.slice(2)).filter(w=>E.W[w]);
+  let h="";
+  if(mine.length) h+='<div class="lesson wrongbank"><div class="lesson-h"><h3>要多练的单词</h3></div>'+
+    '<p class="lesson-tip">默写时看了提示的、点了「＋多练」的，都在这里。</p>'+wordChips(mine)+'</div>';
+  h+='<div class="lesson"><div class="lesson-h"><h3>例外词 <small>Common Exception Words</small></h3></div>'+
+    '<p class="lesson-tip">学校要求会拼写。颜色和学校发的词表一样：同一种颜色是同一个音，空心的字母不发音。</p>'+
+    wordChips(E.CEW)+'</div>';
+  h+='<div class="lesson"><div class="lesson-h"><h3>高频词 <small>High Frequency Words</small></h3></div>'+
+    '<p class="lesson-tip">学校要求读得快（和上面重复的没再列）。</p>'+
+    wordChips(E.HFW.filter(w=>E.CEW.indexOf(w)<0))+'</div>';
+  return h;
+}
 function renderLatinPane(which){
   const el=$("#pane-"+which);
   const mine=Object.keys(wrong).filter(function(c){
     return isLatin(c) && (which==="math" ? isDigit(c) : !isDigit(c)); });
-  let h="";
-  if(mine.length) h+='<div class="lesson wrongbank"><div class="lesson-h"><h3>要多练的</h3></div>'+
+  let h= which==="en" ? renderWordGroups() : "";
+  if(mine.length) h+='<div class="lesson wrongbank"><div class="lesson-h"><h3>'+(which==="en"?"要多练的字母":"要多练的")+'</h3></div>'+
     '<p class="lesson-tip">练字时点了「＋多练」的，都在这里。</p>'+latinChips(mine)+'</div>';
   h+=LATIN_GROUPS[which].map(function(g){
     return '<div class="lesson"><div class="lesson-h"><h3>'+g[0]+'</h3></div>'+
@@ -917,6 +1000,11 @@ function renderLatinPane(which){
 }
 ["#pane-math","#pane-en"].forEach(function(sel){
   $(sel).addEventListener("click",function(e){
+    const wc=e.target.closest("[data-word]");
+    if(wc){
+      const wl=[...wc.closest(".chips").querySelectorAll("[data-word]")].map(x=>x.dataset.word);
+      return openWord(wc.dataset.word,wl);
+    }
     const chip=e.target.closest("[data-ch]"); if(!chip) return;
     const list=[...chip.closest(".chips").querySelectorAll("[data-ch]")].map(x=>x.dataset.ch);
     openChar(chip.dataset.ch,list);
@@ -948,7 +1036,7 @@ function renderToday(){
     subjects:function(){ return [
       {id:"zh",   name:"中文", items:"写字 · 听写 · 字库"},
       {id:"math", name:"数学", items:"写数字 0–9"},
-      {id:"en",   name:"英文", items:"写字母 a–z、A–Z"} ] },
+      {id:"en",   name:"英文", items:"拼单词 · 写字母"} ] },
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     beep:beep
   });
@@ -958,15 +1046,18 @@ function renderToday(){
    否则她写完一个字、星星一变，重算出来的就是另一批字了。「换一批」才会重挑。
    挑的顺序（用户定的「任务自动来」）：先「要多练的」，再按「还没练熟 → 最近没练」轮换 */
 let fromTask=null;              /* 从哪个任务进来的（写完最后一个字时按钮变成「回到今天」） */
-const TASK_N={"zh-write":3,"en-letters":4,"math-digits":3,"zh-dict":8};
-const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","math-digits":"math"};
+const TASK_N={"zh-write":3,"en-letters":4,"en-words":3,"math-digits":3,"zh-dict":8};
+const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","en-words":"en","math-digits":"math"};
+/* 任务里每一项在星星、练习记录里的键：单词加 w:，字和字母就是自己 */
+function taskKey(id){ return id==="en-words" ? WK : function(c){ return c } }
 function todayRec(){ const all=load(K.days,{}); return all[todayStr()]||{} }
 function saveTodayRec(r){ const all=load(K.days,{}); all[todayStr()]=r; save(K.days,all) }
 function practicedToday(c){ const r=load(K.plog,{})[c]; return !!(r&&r.t===todayStr()) }
 /* 还没练熟的在前（星星少），同样的再按最近练过的日子，越久没练越靠前 */
-function byNeed(list){
-  const pl=load(K.plog,{});
-  return list.slice().sort(function(a,b){
+function byNeed(list,key){
+  const pl=load(K.plog,{}); key=key||function(c){ return c };
+  return list.slice().sort(function(x,y){
+    const a=key(x), b=key(y);
     const sa=Math.min(starsOf(a),3)>=3?1:0, sb=Math.min(starsOf(b),3)>=3?1:0;
     if(sa!==sb) return sa-sb;
     const ta=(pl[a]&&pl[a].t)||"", tb=(pl[b]&&pl[b].t)||"";
@@ -994,6 +1085,18 @@ function taskCandidates(id){
     const mine=Object.keys(wrong).filter(c=>isLatin(c)&&!isDigit(c));
     return uniq(mine.concat(byNeed("bdpqszjNSZJ".split("")),
                 byNeed("abcdefghijklmnopqrstuvwxyz".split("")), byNeed("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""))));
+  }
+  if(id==="en-words"){
+    /* 要多练的 → 两张表都有的 → 只在例外词表上的 → 只在高频词表上的；
+       每组里短的先练（原样稳定排序），再按没练熟、越久没练的优先 */
+    if(!window.EN_WORDS) return [];
+    const E=EN_WORDS, both=E.CEW.filter(w=>E.HFW.indexOf(w)>=0);
+    /* a、I 这种一个字母的词不进任务——拼写没什么可练的，写字母任务里已经有了 */
+    const byLen=a=>a.filter(w=>w.length>1).sort((x,y)=>x.length-y.length);
+    const mine=Object.keys(wrong).filter(k=>k.slice(0,2)==="w:").map(k=>k.slice(2)).filter(w=>E.W[w]);
+    return uniq(mine.concat(byNeed(byLen(both),WK),
+                byNeed(byLen(E.CEW.filter(w=>both.indexOf(w)<0)),WK),
+                byNeed(byLen(E.HFW.filter(w=>both.indexOf(w)<0)),WK)));
   }
   if(id==="math-digits"){
     const mine=Object.keys(wrong).filter(c=>isDigit(c));
@@ -1025,12 +1128,12 @@ function rerollTask(id){
   r.pick[id]=uniq(list.slice(start).concat(list)).slice(0,Math.min(n,list.length));
   saveTodayRec(r);
 }
-const TASK_LABEL={"zh-write":"写 {n} 个字","en-letters":"写 {n} 个字母","math-digits":"写 {n} 个数字","zh-dict":"听写 {n} 个字"};
+const TASK_LABEL={"zh-write":"写 {n} 个字","en-letters":"写 {n} 个字母","en-words":"拼 {n} 个单词","math-digits":"写 {n} 个数字","zh-dict":"听写 {n} 个字"};
 function taskInfo(id){
   const items=taskPick(id); if(!items.length) return {items:[]};
   const label=TASK_LABEL[id].replace("{n}",items.length);
   if(id==="zh-dict"){ const d=!!(todayRec().done||{})[id]; return {items,label,done:d?1:0,total:1,single:true}; }
-  const doneSet={}; items.forEach(function(c){ if(practicedToday(c)) doneSet[c]=1 });
+  const key=taskKey(id), doneSet={}; items.forEach(function(c){ if(practicedToday(key(c))) doneSet[c]=1 });
   return {items, label, done:Object.keys(doneSet).length, total:items.length, doneSet};
 }
 function startTask(id){
@@ -1038,23 +1141,30 @@ function startTask(id){
   beep("tap");
   setSubj(TASK_SUBJ[id]||"zh"); fromTask=id;
   if(id==="zh-dict"){ openDict(items,true); return; }
-  const first=items.find(c=>!practicedToday(c))||items[0];
+  const key=taskKey(id), first=items.find(c=>!practicedToday(key(c)))||items[0];
+  if(id==="en-words"){ openWord(first,items); return; }
   openChar(first,items);
 }
 /* 小游戏入口：放在「今天」页的小游戏区，不属于任何科目（2026-09-27 用户定的）。
    三个点 = 今天还剩几局，不认字也看得懂。 */
-function renderGameEntry(el){
-  if(!el) return;
-  if(!(window.MatchGame&&TEXTBOOK.length)){ el.innerHTML=""; return; }
-  const gleft=gameLeft();
-  el.innerHTML='<button class="mg-entry" id="mg-go"'+(gleft?'':' disabled')+'>'+
-     '<span class="mg-entry-t"><b>认字小游戏</b><small>'+
-     (gleft?('看字选图，'+MatchGame.PER_ROUND+' 个字看用多久'):'今天的玩完啦，明天再来')+
+function gameEntry(id,title,sub,left){
+  return '<button class="mg-entry" id="'+id+'"'+(left?'':' disabled')+'>'+
+     '<span class="mg-entry-t"><b>'+title+'</b><small>'+(left?sub:'今天的玩完啦，明天再来')+
      '</small></span><span class="mg-entry-d">'+
      Array.from({length:GAME_PER_DAY},function(_,i){
-       return '<i class="'+(i<gleft?'left':'')+'"></i>'}).join("")+
+       return '<i class="'+(i<left?'left':'')+'"></i>'}).join("")+
      '</span></button>';
+}
+function renderGameEntry(el){
+  if(!el) return;
+  let h="";
+  if(window.MatchGame&&TEXTBOOK.length)
+    h+=gameEntry("mg-go","认字小游戏",'看字选图，'+MatchGame.PER_ROUND+' 个字看用多久',gameLeft());
+  if(window.ListenGame&&window.EN_WORDS)
+    h+=gameEntry("lg-go","听音选词",'听英文，点对的词，'+ListenGame.PER_ROUND+' 个词看用多久',listenLeft());
+  el.innerHTML=h;
   const gbtn=el.querySelector("#mg-go"); if(gbtn) gbtn.onclick=openGame;
+  const lbtn=el.querySelector("#lg-go"); if(lbtn) lbtn.onclick=openListen;
 }
 function renderZh(){
   const b=$("#home-body");
@@ -1158,7 +1268,7 @@ function gridSize(){
   return Math.round(Math.max(230,Math.min(w,h,430)));
 }
 function show(view){
-  ["#view-home","#view-practice","#view-dict","#view-print","#view-game","#view-plan"].forEach(x=>$(x).hidden=(x!==view));
+  ["#view-home","#view-practice","#view-dict","#view-print","#view-game","#view-plan","#view-word"].forEach(x=>$(x).hidden=(x!==view));
   renderCrumbs(view);
   const bar=$("#selbar");
   if(bar){ bar.hidden = !(view==="#view-home" && subj==="zh" && tab==="practice");
@@ -1872,6 +1982,37 @@ function learnedChars(){
   for(let i=0;i<=upto;i++) if(TEXTBOOK[i]) out.push.apply(out, TEXTBOOK[i].chars);
   return out;
 }
+/* 听音选词：和认字游戏同一套规矩，各自一天 3 局 */
+function listenLeft(){ return window.MatchGame
+  ? MatchGame.leftToday(load(K.lgday,null), GAME_PER_DAY, todayStr()) : 0 }
+function openListen(){
+  if(!window.ListenGame || !window.EN_WORDS || listenLeft()<=0) return;
+  if(gameCtl&&gameCtl.destroy) gameCtl.destroy();
+  show("#view-game"); $("#title").textContent="听音选词";
+  beep("tap");
+  const st=load(K.lgstat,{});
+  gameCtl=ListenGame.attach($("#view-game"),{
+    words:function(){ return EN_WORDS.ALL.slice() },
+    html:EN_WORDS.html,
+    pic:function(w){ return EN_WORDS.PIC[w]||"" },
+    stats:function(){ return st },
+    saveStat:function(w,ok,ms){
+      const e=st[w]||{n:0,ok:0,rt:0,last:0};
+      e.n++; if(ok){ e.ok++; e.rt+=ms }
+      e.last=Date.now(); st[w]=e; save(K.lgstat,st);
+    },
+    best:function(){ return load(K.lgbest,0) },
+    saveBest:function(ms){ save(K.lgbest,ms) },
+    useRound:function(){
+      markDay();
+      const t=todayStr(), r=load(K.lgday,null);
+      save(K.lgday,(r&&r.d===t)?{d:t,n:(r.n||0)+1}:{d:t,n:1});
+    },
+    speak:speakWord, say:say, beep:beep,
+    cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
+    onExit:function(){ goHome("today") }
+  });
+}
 let gameCtl=null;
 function openGame(){
   if(!window.MatchGame || gameLeft()<=0) return;
@@ -1900,12 +2041,53 @@ function openGame(){
   });
 }
 
+/* ── 英文单词拼写页（spell.js）：听 → 描红 → 默写 ──
+   星星：默写没错 3 颗，错过但没看提示 2 颗，看了提示 1 颗（记最好的一次，和写字一样）。
+   看了提示 = 这个词还不会拼，自动进「要多练的单词」——和听写写错自动进「要多练的字」同一个道理 */
+let spellCtl=null;
+function spellOff(){ if(spellCtl){ spellCtl.destroy(); spellCtl=null; } }
+function speakWord(w){
+  if(!cfg.speak||!window.speechSynthesis) return;
+  try{ speechSynthesis.cancel(); speechSynthesis.speak(utterEn(w,.75)); }catch(e){}
+}
+function openWord(w,list){
+  if(!window.Spell||!window.EN_WORDS||!EN_WORDS.W[w]) return;
+  spellOff(); if(writer) writer.cancelQuiz(); petOff();
+  list=list&&list.length?list:[w];
+  const i=Math.max(0,list.indexOf(w)), nx=list[i+1], k=WK(w);
+  show("#view-word"); $("#title").textContent="拼 “"+w+"”";
+  spellCtl=Spell.attach($("#view-word"),{
+    word:w, pos:"第 "+(i+1)+"/"+list.length+" 个",
+    html:EN_WORDS.html, colors:EN_WORDS.letterColors,
+    pic:function(x){ return EN_WORDS.PIC[x]||"" },
+    speak:speakWord, beep:beep,
+    cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
+    leniency:function(){ return cfg.easy?1.5:1.0 },
+    marked:function(){ return !!wrong[k] },
+    toggleMark:function(){
+      if(wrong[k]){ delete wrong[k]; beep("tap"); } else { wrongAdd(k); beep("good"); }
+      save(K.wrong,wrong);
+    },
+    onDone:function(r){
+      const st=r.hints?1:(r.misses?2:3);
+      if(st>starsOf(k)){ stars[k]=st; save(K.stars,stars); refreshStars(); }
+      if(r.hints){ wrongAdd(k); save(K.wrong,wrong); }
+      markDay();
+      const plg=load(K.plog,{}), pe=plg[k]||{n:0};
+      plg[k]={n:(pe.n||0)+1, t:todayStr()}; save(K.plog,plg);
+    },
+    next: nx ? {label:"下一个 「"+nx+"」 →", go:function(){ beep("tap"); openWord(nx,list); }}
+         : fromTask ? {label:"回到今天 →", go:function(){ goHome("today"); }}
+         : {label:"回目录", go:function(){ goHome(); }}
+  });
+}
+
 /* 回到某一层：不传就回到当前科目页（小游戏退出时用）。
    先收拾当前页（停写字、收小猫、关游戏、停语音），再切过去；
    setSubj 里会重画——听写完「要多练的字」变了，不重画的话练习页还是旧的 */
 function goHome(target){
   fromTask=null;
-  if(writer)writer.cancelQuiz(); petOff();
+  if(writer)writer.cancelQuiz(); petOff(); spellOff();
   if(gameCtl&&gameCtl.destroy){gameCtl.destroy();gameCtl=null}
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}
   setSubj(typeof target==="string"?target:subj);
@@ -1916,7 +2098,7 @@ const dlg=$("#dlg");
 function openPlan(){
   if(!window.Today) return;
   /* 注意：计划页也要知道哪些科目上线了，否则会让家长排进还没做的音乐 */
-  if(writer)writer.cancelQuiz(); petOff();
+  if(writer)writer.cancelQuiz(); petOff(); spellOff();
   show("#view-plan"); $("#title").textContent="每周计划";
   Today.renderPlan($("#view-plan"),{
     plan:function(){ return load(K.week,null) },
@@ -1938,7 +2120,7 @@ function bakPayload(){
   return JSON.stringify({v:1, t:new Date().toISOString().slice(0,10),
     stars:stars, sel:load(K.sel,[]), wrong:wrong, cfg:cfg,
     week:load(K.week,null), days:load(K.days,{}), plog:load(K.plog,{}),
-    gstat:load(K.gstat,{}), gbest:load(K.gbest,0)});
+    gstat:load(K.gstat,{}), gbest:load(K.gbest,0), lgstat:load(K.lgstat,{}), lgbest:load(K.lgbest,0)});
 }
 function bakWhen(){
   const el=$("#bak-when"); if(!el) return;
@@ -2067,6 +2249,8 @@ $("#bak-do").onclick=function(){
   if(d.plog&&typeof d.plog==="object"&&!Array.isArray(d.plog)) save(K.plog,d.plog);
   if(d.gstat&&typeof d.gstat==="object"&&!Array.isArray(d.gstat)){ gstat=d.gstat; save(K.gstat,gstat); }
   if(typeof d.gbest==="number") save(K.gbest,d.gbest);
+  if(d.lgstat&&typeof d.lgstat==="object"&&!Array.isArray(d.lgstat)) save(K.lgstat,d.lgstat);
+  if(typeof d.lgbest==="number") save(K.lgbest,d.lgbest);
   if(d.cfg&&typeof d.cfg==="object"){
     cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,recOrder:"write"},d.cfg);
     save(K.cfg,cfg);

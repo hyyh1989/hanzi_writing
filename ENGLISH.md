@@ -1,4 +1,4 @@
-# 英语词表与设计约定（还没开始做，先把依据记下来）
+# 英语词表与设计约定
 
 2026-09-27 整理。孩子在读 **英式课程 Year 1**，学校用 **Monster Phonics**。
 这份文档记录：词表从哪来、怎么核对过的、做英语练习时必须遵守的教学约定。
@@ -100,8 +100,17 @@ Monster Phonics 的核心是**每种颜色代表一个发音**，每个发音配
 | 蓝 | /oo/ | to, do, you, too, into, today, school |
 | 棕 | /ow/ | out, down, now, about, house, our |
 
-其余颜色（橙、黑猫等）的含义**还不确定**，要拿到 Monster Phonics 官方的颜色对照表再做。
-另外：带波浪下划线的是 **th**（the, that, with, this, then, them, there, their）。
+**2026-09-29 已按学校词表逐字母抄进 `app/en-words.js`**（照片逐词放大看、再量颜色确认）。几点和官方颜色表不同，按学校的来：
+- 学校只用了上面 6 色 + **金色（Tricky，不按规则读的部分）** + **空心（Silent，不发音）** + 黑色。
+  look、all、saw、are、were、her、said、was、the 里的特殊部分**全是同一种金色**（量过，色相都在 37–42°）。
+- 带波浪下划线的是 **th**（the, that, with, this, then, them, there, their；they 没有），back 的 ck 是直下划线。
+- 例外词表的 ask put push pull full 在特殊读音的字母下画直线（a、u）。
+- 高频词表上 a 有黑、红两个，例外词表把 a 分在红怪兽组，取红的。
+
+⚠️ **待家长确认的 13 个词**：today says school our friend love once where has ask push pull full。
+它们只在例外词表上，那张表按怪兽分组、字母全黑，颜色是参照同组的词补的：
+today（o 蓝、ay 红）· says（ay 红）· school（h 空心、oo 蓝）· our（ou 棕）· friend（i 空心）·
+love / once（o 金、e 空心）· where（h 空心、ere 金）· has（s 金）· ask push pull full（a/u 下划线）。
 
 ### 4. 音符拼单词
 
@@ -159,8 +168,8 @@ b 先竖、d 先圆、p 先竖也正好是英国防止 b/d 写反的标准教法
 
 ## 还缺的
 
-- [ ] Monster Phonics 官方颜色 / 怪兽对照表（问老师，或官网家长资源）
-- [ ] 200 高频词的后 100 个（补拍）
+- [x] Monster Phonics 颜色：已照学校词表抄完（上面 13 个待确认）
+- [x] 高频词：这学期只有这 100 个（2026-09-29 用户确认）
 - [x] 书写方案：已和孩子确认 21 项，见上面
 - [x] 引笔（不带）、数字 2（平底）
 - [ ] 学校书写方案的名称（问老师，用来核对 J 和 f）
