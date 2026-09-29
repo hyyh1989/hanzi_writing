@@ -439,6 +439,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   <section id="view-dict" hidden></section>
   <section id="view-print" hidden></section>
   <section id="view-game" hidden></section>
+  <section id="view-plan" hidden></section>
 </div>
 
 <div class="selbar" id="selbar" hidden>
@@ -472,6 +473,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
     <p class="note" id="voice-msg" style="margin:9px 0 0;display:none"></p>
     <p class="note" id="voice-tip" style="margin:9px 0 0"></p>
   </div>
+  <div class="setrow"><span>每周计划<br><small style="color:var(--ink-3);font-size:12px">每天做哪几件事</small></span><button class="linkbtn" id="btn-plan">编辑</button></div>
   <div class="setrow"><span>学到第几课<br><small style="color:var(--ink-3);font-size:12px">认字游戏只用这一课之前的字</small></span>
     <select id="sel-lesson" class="sel"></select></div>
   <div class="setrow"><span>版本<br><small style="color:var(--ink-3);font-size:12px" id="build-n"></small></span><button class="linkbtn" id="btn-update">检查更新</button></div>
@@ -563,7 +565,8 @@ const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
          gday:"mzg.gday",     /* 认字游戏：今天玩了几局 {d,n} */
          gbest:"mzg.gbest",   /* 认字游戏：上一次用了多久（毫秒） */
          week:"mzg.week",     /* 周计划：7 个数组，下标 0 = 周日（today.js 的 DEFAULT_PLAN 是默认值） */
-         days:"mzg.days"};    /* 打卡：{"2026-09-27":{v:1, done:{任务id:1}}}。只记来过，不记没来 */
+         days:"mzg.days",     /* 每天：{"2026-09-29":{v:来过, done:{任务:1}, pick:{任务:[字]}, skip:{任务:1}, cheered:1}} */
+         plog:"mzg.plog"};    /* 每个字练过几行、最近哪天：{字:{n,t}}。自动出题靠它轮换 */
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let stars=load(K.stars,{}), wrong=load(K.wrong,{});
@@ -869,7 +872,7 @@ function renderCrumbs(view){
   let h="";
   if(!(view==="#view-home" && subj==="today"))
     h+='<button class="crumb" data-crumb="today">'+HOUSE+'首页</button><i class="sep">›</i>';
-  if(view!=="#view-home" && view!=="#view-game" && subj!=="today")
+  if(view!=="#view-home" && view!=="#view-game" && view!=="#view-plan" && subj!=="today")
     h+='<button class="crumb" data-crumb="'+subj+'">'+SUBJ_TITLE[subj]+'</button><i class="sep">›</i>';
   $("#crumbs-pre").innerHTML=h;
 }
@@ -930,8 +933,10 @@ function renderToday(){
   if(!window.Today){ $("#pane-today").innerHTML=""; return; }
   Today.render($("#pane-today"),{
     plan:function(){ return load(K.week,null) },
+    savePlan:function(p){ save(K.week,p) },
     days:function(){ return load(K.days,{}) },
     saveDays:function(v){ save(K.days,v) },
+    info:taskInfo, start:startTask, reroll:rerollTask,
     ready:function(s){ return s==="zh"||s==="math"||s==="en" },   /* 音乐做好前是线下任务 */
     go:setSubj,
     games:renderGameEntry,
@@ -942,6 +947,94 @@ function renderToday(){
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     beep:beep
   });
+}
+/* ── 今天的任务：自动出题 ──────────────────────────────────
+   每个任务当天第一次显示时挑好内容，存进 mzg.days[今天].pick，【当天固定不变】——
+   否则她写完一个字、星星一变，重算出来的就是另一批字了。「换一批」才会重挑。
+   挑的顺序（用户定的「任务自动来」）：先「要多练的」，再按「还没练熟 → 最近没练」轮换 */
+let fromTask=null;              /* 从哪个任务进来的（写完最后一个字时按钮变成「回到今天」） */
+const TASK_N={"zh-write":3,"en-letters":4,"math-digits":3,"zh-dict":8};
+const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","math-digits":"math"};
+function todayRec(){ const all=load(K.days,{}); return all[todayStr()]||{} }
+function saveTodayRec(r){ const all=load(K.days,{}); all[todayStr()]=r; save(K.days,all) }
+function practicedToday(c){ const r=load(K.plog,{})[c]; return !!(r&&r.t===todayStr()) }
+/* 还没练熟的在前（星星少），同样的再按最近练过的日子，越久没练越靠前 */
+function byNeed(list){
+  const pl=load(K.plog,{});
+  return list.slice().sort(function(a,b){
+    const sa=Math.min(starsOf(a),3)>=3?1:0, sb=Math.min(starsOf(b),3)>=3?1:0;
+    if(sa!==sb) return sa-sb;
+    const ta=(pl[a]&&pl[a].t)||"", tb=(pl[b]&&pl[b].t)||"";
+    return ta<tb?-1:ta>tb?1:0;
+  });
+}
+function uniq(a){ return a.filter(function(c,i){ return a.indexOf(c)===i }) }
+/* 同一天打乱的结果固定（听写用），换一天换顺序 */
+function dayShuffle(a,salt){
+  let h=0; const k=todayStr()+(salt||""); for(let i=0;i<k.length;i++) h=(h*31+k.charCodeAt(i))>>>0;
+  const r=a.slice();
+  for(let i=r.length-1;i>0;i--){ h=(h*1103515245+12345)>>>0; const j=h%(i+1); const t=r[i]; r[i]=r[j]; r[j]=t; }
+  return r;
+}
+function taskCandidates(id){
+  const upto=Math.min(cfg.lesson|0, TEXTBOOK.length-1);
+  if(id==="zh-write"){
+    /* 要多练的字 → 学过的课里「本册要求会写」的字（最近的课在前）→ 学过的其余字 */
+    let w=[], rest=[];
+    for(let i=upto;i>=0;i--){ const l=TEXTBOOK[i]; if(!l) continue;
+      w=w.concat(l.write||[]); rest=rest.concat(l.chars.filter(c=>(l.write||[]).indexOf(c)<0)); }
+    return uniq(wrongList().concat(byNeed(uniq(w)), byNeed(uniq(rest))));
+  }
+  if(id==="en-letters"){
+    const mine=Object.keys(wrong).filter(c=>isLatin(c)&&!isDigit(c));
+    return uniq(mine.concat(byNeed("bdpqszjNSZJ".split("")),
+                byNeed("abcdefghijklmnopqrstuvwxyz".split("")), byNeed("ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""))));
+  }
+  if(id==="math-digits"){
+    const mine=Object.keys(wrong).filter(c=>isDigit(c));
+    return uniq(mine.concat(byNeed("23579".split("")), byNeed("0123456789".split(""))));
+  }
+  if(id==="zh-dict"){
+    /* 这一周练过的字 + 要多练的字 + 当前这一课的字；打乱 */
+    const pl=load(K.plog,{}), wk=new Date(); wk.setDate(wk.getDate()-7);
+    const since=wk.getFullYear()+"-"+String(wk.getMonth()+1).padStart(2,"0")+"-"+String(wk.getDate()).padStart(2,"0");
+    const week=Object.keys(pl).filter(c=>has(c)&&pl[c].t>=since);
+    const cur=TEXTBOOK[upto]?TEXTBOOK[upto].chars:[];
+    return dayShuffle(uniq(week.concat(wrongList(), cur)).filter(has));
+  }
+  return [];
+}
+function taskPick(id){
+  const r=todayRec(); r.pick=r.pick||{};
+  if(!r.pick[id]){ r.pick[id]=taskCandidates(id).slice(0,TASK_N[id]||3); saveTodayRec(r); }
+  return r.pick[id];
+}
+/* 换一批：沿候选顺序往后轮（b d p q → s z j N → S Z J a → …，到头再从头来），
+   不是「排除当前这批再挑」——那样只会在两批之间来回跳 */
+function rerollTask(id){
+  const r=todayRec(); r.pick=r.pick||{}; r.rr=r.rr||{};
+  const list=taskCandidates(id), n=TASK_N[id]||3;
+  if(!list.length) return;
+  const k=(r.rr[id]||0)+1, start=(k*n)%list.length;
+  r.rr[id]=k;
+  r.pick[id]=uniq(list.slice(start).concat(list)).slice(0,Math.min(n,list.length));
+  saveTodayRec(r);
+}
+const TASK_LABEL={"zh-write":"写 {n} 个字","en-letters":"写 {n} 个字母","math-digits":"写 {n} 个数字","zh-dict":"听写 {n} 个字"};
+function taskInfo(id){
+  const items=taskPick(id); if(!items.length) return {items:[]};
+  const label=TASK_LABEL[id].replace("{n}",items.length);
+  if(id==="zh-dict"){ const d=!!(todayRec().done||{})[id]; return {items,label,done:d?1:0,total:1,single:true}; }
+  const doneSet={}; items.forEach(function(c){ if(practicedToday(c)) doneSet[c]=1 });
+  return {items, label, done:Object.keys(doneSet).length, total:items.length, doneSet};
+}
+function startTask(id){
+  const items=taskPick(id); if(!items.length) return;
+  beep("tap");
+  setSubj(TASK_SUBJ[id]||"zh"); fromTask=id;
+  if(id==="zh-dict"){ openDict(items,true); return; }
+  const first=items.find(c=>!practicedToday(c))||items[0];
+  openChar(first,items);
 }
 /* 小游戏入口：放在「今天」页的小游戏区，不属于任何科目（2026-09-27 用户定的）。
    三个点 = 今天还剩几局，不认字也看得懂。 */
@@ -1060,7 +1153,7 @@ function gridSize(){
   return Math.round(Math.max(230,Math.min(w,h,430)));
 }
 function show(view){
-  ["#view-home","#view-practice","#view-dict","#view-print","#view-game"].forEach(x=>$(x).hidden=(x!==view));
+  ["#view-home","#view-practice","#view-dict","#view-print","#view-game","#view-plan"].forEach(x=>$(x).hidden=(x!==view));
   renderCrumbs(view);
   const bar=$("#selbar");
   if(bar){ bar.hidden = !(view==="#view-home" && subj==="zh" && tab==="practice");
@@ -1489,11 +1582,14 @@ function finishAll(){
   say(line,true);
   petHappy();   /* 写完一整个字 —— 不看几颗星，写完就为她高兴一下 */
   markDay();
+  const plg=load(K.plog,{}), pe=plg[cur]||{n:0};
+  plg[cur]={n:(pe.n||0)+1, t:todayStr()}; save(K.plog,plg);
   const rp=$("#replay2"); if(rp) rp.onclick=()=>say(line,true);
   const nx = curIdx<curList.length-1
     ? btn("下一个字 「"+curList[curIdx+1]+"」 →","",()=>openChar(curList[curIdx+1],curList)) : null;
   setControls(btn("再写一行","",()=>{buildPlan();goWatch()}), nx,
-              nx?null:btn("回目录","ghost",goHome));
+              nx?null:(fromTask ? btn("回到今天 →","",()=>goHome("today"))
+                                : btn("回目录","ghost",goHome)));
   $("#scorebox").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
@@ -1723,6 +1819,7 @@ function dResult(){
     save(K.wrong,wrong);
     dRecorded=true;
     markDay();
+    if(fromTask==="zh-dict"){ const r=todayRec(); r.done=r.done||{}; r.done["zh-dict"]=1; r.v=1; saveTodayRec(r); }
   }
   const wrongArr=bad, n=dItems.length, ok=n-wrongArr.length;
   $("#title").textContent="听写结果";
@@ -1744,7 +1841,7 @@ function dResult(){
   setIn("#dctl",
     wrongArr.length? btn("开始练这 "+wrongArr.length+" 个字 →","",function(){ openChar(wrongArr[0],wrongArr) }) : null,
     btn("再听写一遍","quiet",function(){ openDict(dSrc,dShuffle) }),
-    btn("回目录","ghost",goHome));
+    fromTask ? btn("回到今天 →","ghost",()=>goHome("today")) : btn("回目录","ghost",goHome));
   $("#view-dict").onclick=function(e){
     const c=e.target.closest("[data-ch]");
     if(c) openChar(c.dataset.ch, wrongArr.length?wrongArr:dList);
@@ -1802,6 +1899,7 @@ function openGame(){
    先收拾当前页（停写字、收小猫、关游戏、停语音），再切过去；
    setSubj 里会重画——听写完「要多练的字」变了，不重画的话练习页还是旧的 */
 function goHome(target){
+  fromTask=null;
   if(writer)writer.cancelQuiz(); petOff();
   if(gameCtl&&gameCtl.destroy){gameCtl.destroy();gameCtl=null}
   if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(e){}
@@ -1810,6 +1908,17 @@ function goHome(target){
 $("#btn-say").onclick=()=>speak(cur);
 $("#btn-mark").onclick=markToggle;
 const dlg=$("#dlg");
+function openPlan(){
+  if(!window.Today) return;
+  if(writer)writer.cancelQuiz(); petOff();
+  show("#view-plan"); $("#title").textContent="每周计划";
+  Today.renderPlan($("#view-plan"),{
+    plan:function(){ return load(K.week,null) },
+    savePlan:function(p){ save(K.week,p) },
+    beep:beep
+  });
+}
+$("#btn-plan").onclick=function(){ dlg.close(); openPlan(); };
 $("#btn-close").onclick=()=>dlg.close();
 [["#sw-speak","speak"],["#sw-sound","sound"],["#sw-easy","easy"],
  ["#sw-voice","voice"],["#sw-dot","dot"]].forEach(([sel,key])=>{
@@ -1820,7 +1929,9 @@ $("#btn-close").onclick=()=>dlg.close();
 /* ── 备份 / 恢复 ── */
 function bakPayload(){
   return JSON.stringify({v:1, t:new Date().toISOString().slice(0,10),
-    stars:stars, sel:load(K.sel,[]), wrong:wrong, cfg:cfg});
+    stars:stars, sel:load(K.sel,[]), wrong:wrong, cfg:cfg,
+    week:load(K.week,null), days:load(K.days,{}), plog:load(K.plog,{}),
+    gstat:load(K.gstat,{}), gbest:load(K.gbest,0)});
 }
 function bakWhen(){
   const el=$("#bak-when"); if(!el) return;
@@ -1943,6 +2054,12 @@ $("#bak-do").onclick=function(){
   if(d.stars&&typeof d.stars==="object"){ stars=d.stars; save(K.stars,stars); }
   if(Array.isArray(d.sel)){ save(K.sel,d.sel); }
   if(d.wrong&&typeof d.wrong==="object"){ wrong=d.wrong; save(K.wrong,wrong); }
+  /* 2026-09-29 起备份里多了这几项；老备份没有就跳过 */
+  if(d.week&&typeof d.week==="object") save(K.week,d.week);
+  if(d.days&&typeof d.days==="object"&&!Array.isArray(d.days)) save(K.days,d.days);
+  if(d.plog&&typeof d.plog==="object"&&!Array.isArray(d.plog)) save(K.plog,d.plog);
+  if(d.gstat&&typeof d.gstat==="object"&&!Array.isArray(d.gstat)){ gstat=d.gstat; save(K.gstat,gstat); }
+  if(typeof d.gbest==="number") save(K.gbest,d.gbest);
   if(d.cfg&&typeof d.cfg==="object"){
     cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,recOrder:"write"},d.cfg);
     save(K.cfg,cfg);
