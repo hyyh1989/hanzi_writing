@@ -418,18 +418,25 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .wsvg .wul{fill:none;stroke:var(--ink);stroke-width:26;stroke-linecap:round;stroke-linejoin:round}
 /* 词表：不用方框，按发音一组一块。组头照 Monster Phonics 官网：怪兽名（组的颜色）+ 这个音的字母组合，
    「Try reading it out」点开是这一组的例句。左边一条组的颜色，把一组框在一起 */
-.wgrp{padding:12px 0 14px 14px;margin:0 0 6px;border-left:5px solid var(--gc,var(--ink));border-radius:2px}
-.wg-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;margin-bottom:8px}
-.wg-name{font-family:var(--disp);font-size:20px;line-height:1.2;color:var(--gc,var(--ink))}
-.wg-gr{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--gc,var(--ink));letter-spacing:.01em}
+.wgrp{padding:10px 0 12px 14px;margin:0 0 8px;border-left:5px solid var(--gc,var(--ink));border-radius:2px}
+/* 左边：怪兽名 + 这个音的字母组合 + 例句喇叭；右边：词（2026-09-29 用户定的布局） */
+.wg-row{display:flex;gap:18px;align-items:flex-start}
+.wg-side{flex:none;width:168px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.wg-name{font-family:var(--disp);font-size:19px;line-height:1.15;color:var(--gc,var(--ink))}
+.wg-gr{font-family:var(--disp);font-weight:700;font-size:14px;line-height:1.35;color:var(--gc,var(--ink))}
 .wg-gr.snd{font-weight:500;color:var(--ink-2)}
-.wg-ex{margin-left:auto;font-size:13px;color:var(--teal-2);background:none;border:0;padding:4px 0;cursor:pointer;
-  font-style:italic}
-.wg-sent{display:flex;gap:12px;align-items:flex-start;margin:0 0 12px;padding:10px 12px;background:var(--sunk);border-radius:10px}
+.wg-gr i{font-style:normal;white-space:nowrap}
+.wg-say{margin-top:4px;width:44px;height:44px;border-radius:50%;border:2px solid var(--gc,var(--line));
+  background:var(--card);display:grid;place-items:center;color:var(--gc,var(--ink));transition:scale .08s ease-out}
+.wg-say:active{scale:.93}
+.wg-say svg{width:22px;height:22px}
+.wg-row .wlist{flex:1;padding-top:2px}
+.wg-sent{position:relative;margin:10px 0 2px;padding:10px 40px 10px 12px;background:var(--sunk);border-radius:10px}
 .wg-sent[hidden]{display:none}
-.wg-sent .lines{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.wg-sent .lines{display:flex;flex-direction:column;gap:8px;min-width:0}
 .wg-sent .wsvg{max-width:100%;height:auto}
-.wg-say{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px}
+.wg-x{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;background:none;font-size:20px;color:var(--ink-3)}
+@media (max-width:560px){ .wg-side{width:104px} .wg-name{font-size:16px} .wg-gr{font-size:12.5px} .wg-row{gap:12px} }
 .g-red{--gc:var(--mp-red)} .g-green{--gc:var(--mp-green)} .g-yellow{--gc:var(--mp-yellow-t)} .g-pink{--gc:var(--mp-pink)}
 .g-purple{--gc:var(--mp-purple)} .g-blue{--gc:var(--mp-blue)} .g-brown{--gc:var(--mp-brown)} .g-gold{--gc:var(--mp-gold)}
 .g-silent{--gc:var(--mp-silent)} .g-silent .wg-name{color:var(--ink-2)}
@@ -440,7 +447,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   color:var(--amber);letter-spacing:-1px}
 .wtoggle{font-size:13px;color:var(--teal-2);background:none;border:0;padding:4px 0;text-decoration:underline;
   text-underline-offset:3px;cursor:pointer}
-@media (max-width:520px){ .wlist{gap:8px 18px} .wg-ex{margin-left:0} }
+@media (max-width:520px){ .wlist{gap:8px 16px} .wbtn .wsvg{height:32px;width:auto} }
 /* 拼写页 */
 .sp-head{display:flex;align-items:center;gap:10px;padding:14px 16px 0}
 .sp-word{flex:1;transition:filter .25s,opacity .25s;min-width:0}
@@ -547,6 +554,12 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
           <option value="0.85">慢</option><option value="1">正常</option><option value="1.15">快</option>
         </select>
         <button class="linkbtn" id="btn-try">试听</button></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:9px">
+      <span style="flex:none">英文声音</span>
+      <span class="vrow">
+        <select id="sel-voice-en" class="sel"><option value="">自动（英式女声）</option></select>
+        <button class="linkbtn" id="btn-try-en">试听</button></span>
     </div>
     <p class="note" id="voice-msg" style="margin:9px 0 0;display:none"></p>
     <p class="note" id="voice-tip" style="margin:9px 0 0"></p>
@@ -694,12 +707,30 @@ function letterName(ch){ return /[A-Z]/.test(ch) ? "capital "+ch : ch.toUpperCas
 function utterEn(txt,base){
   const u=new SpeechSynthesisUtterance(txt);
   u.lang="en-GB"; u.pitch=1; u.rate=(base||.8)*(cfg.rate||1);
-  try{
-    const all=window.speechSynthesis.getVoices()||[];
-    const v=all.find(x=>/^en[-_]GB/i.test(x.lang||"")) || all.find(x=>/^en/i.test(x.lang||""));
-    if(v){ u.voice=v; u.lang=v.lang; }
-  }catch(e){}
+  const v=pickVoiceEn(); if(v){ u.voice=v; u.lang=v.lang; }
   return u;
+}
+/* 英文声音：设置里选的（cfg.voiceEn）；没选就自动挑【英式女声】（2026-09-29 用户：默认是男低音，
+   孩子喜欢年轻女声）。以前直接取第一个 en-GB，iPad 上那是 Daniel（男声）。
+   名字表是 iPad / Mac / Chrome 上常见的英文女声；没有英式女声就退到其他英文女声，再退到任意英式 */
+/* 按顺序挑：自然的英式女声 → 其他英文女声 → Flo/Sandy/Shelley（苹果的「趣味」声音，偏机器，放最后） */
+const EN_FEMALE=["serena","kate","martha","stephanie","libby","sonia","maisie","google uk english female","female",
+  "samantha","karen","moira","tessa","fiona","victoria","allison","ava","susan","zoe","nicky","catherine",
+  "flo","sandy","shelley"];
+function enVoices(){
+  try{
+    return (window.speechSynthesis.getVoices()||[]).filter(v=>/^en/i.test(v.lang||""))
+      .sort((a,b)=>(/^en[-_]GB/i.test(b.lang)?1:0)-(/^en[-_]GB/i.test(a.lang)?1:0));
+  }catch(e){ return []; }
+}
+function pickVoiceEn(){
+  const all=enVoices(); if(!all.length) return null;
+  if(cfg.voiceEn){ const v=all.find(x=>x.voiceURI===cfg.voiceEn); if(v) return v; }
+  const gb=all.filter(x=>/^en[-_]GB/i.test(x.lang||""));
+  const byName=function(list){
+    for(const n of EN_FEMALE){ const v=list.find(x=>(x.name||"").toLowerCase().indexOf(n)>=0); if(v) return v; }
+    return null; };
+  return byName(gb) || byName(all) || gb[0] || all[0];
 }
 
 let VOICES=[];
@@ -999,15 +1030,17 @@ function wordBtns(list){
            (st?'<span class="wst">'+"★".repeat(st)+'</span>':'')+'</button>';
   }).join("")+'</div>';
 }
+const SPEAKER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
 function wordGroups(list){
   return EN_WORDS.grouped(list).map(function(x){
     const g=x.g, gi=EN_WORDS.GROUPS.indexOf(g);
-    return '<div class="wgrp g-'+(g.c||"black")+'"><div class="wg-h"><b class="wg-name">'+esc(g.name)+'</b>'+
-      (g.gr?'<span class="wg-gr">'+esc(g.gr)+'</span>':'<span class="wg-gr snd">'+esc(g.sound)+'</span>')+
-      '<button class="wg-ex" data-ex="'+gi+'" aria-expanded="false">[Try reading it out]</button></div>'+
-      '<div class="wg-sent" hidden><button class="wg-say" data-say="'+gi+'" aria-label="读例句">🔊</button><div class="lines">'+
-      g.ex.map(l=>EN_WORDS.lineSvg(l,g.c,{h:30})).join("")+'</div></div>'+
-      wordBtns(x.words)+'</div>';
+    return '<div class="wgrp g-'+(g.c||"black")+'"><div class="wg-row"><div class="wg-side">'+
+      '<b class="wg-name">'+esc(g.name)+'</b>'+
+      (g.gr?'<span class="wg-gr">'+g.gr.split(", ").map(x=>'<i>'+esc(x)+'</i>').join(", ")+'</span>':'<span class="wg-gr snd">'+esc(g.sound)+'</span>')+
+      '<button class="wg-say" data-say="'+gi+'" aria-label="听例句">'+SPEAKER+'</button></div>'+
+      wordBtns(x.words)+'</div>'+
+      '<div class="wg-sent" hidden><div class="lines">'+g.ex.map(l=>EN_WORDS.lineSvg(l,g.c,{h:30})).join("")+'</div>'+
+      '<button class="wg-x" data-close aria-label="收起">×</button></div></div>';
   }).join("");
 }
 function renderWordGroups(){
@@ -1026,30 +1059,47 @@ function renderWordGroups(){
     wordGroups(E.HFW.filter(w=>E.CEW.indexOf(w)<0))+'</div>';
   return h;
 }
+/* 英文页分两个页签：单词 / 字母（2026-09-29 用户：一页放两样太长）。
+   从任务进来时切到对应的页签（startTask 里设） */
+let enTab="words";
 function renderLatinPane(which){
   const el=$("#pane-"+which);
+  if(which==="en" && enTab==="words"){
+    el.innerHTML=enTabs()+renderWordGroups();
+    const wc=$("#w-color");
+    if(wc) wc.onclick=function(){ cfg.wordColor=!wordColorOn(); save(K.cfg,cfg); beep("tap"); renderLatinPane("en"); };
+    return;
+  }
   const mine=Object.keys(wrong).filter(function(c){
     return isLatin(c) && (which==="math" ? isDigit(c) : !isDigit(c)); });
-  let h= which==="en" ? renderWordGroups() : "";
+  let h="";
   if(mine.length) h+='<div class="lesson wrongbank"><div class="lesson-h"><h3>'+(which==="en"?"要多练的字母":"要多练的")+'</h3></div>'+
     '<p class="lesson-tip">练字时点了「＋多练」的，都在这里。</p>'+latinChips(mine)+'</div>';
   h+=LATIN_GROUPS[which].map(function(g){
     return '<div class="lesson"><div class="lesson-h"><h3>'+g[0]+'</h3></div>'+
       '<p class="lesson-tip">'+g[2]+'</p>'+latinChips(g[1])+'</div>';
   }).join("");
-  el.innerHTML='<div style="height:14px"></div>'+h;
-  const wc=$("#w-color");
-  if(wc) wc.onclick=function(){ cfg.wordColor=!wordColorOn(); save(K.cfg,cfg); beep("tap"); renderLatinPane("en"); };
+  el.innerHTML=(which==="en"?enTabs():'<div style="height:14px"></div>')+h;
+}
+function enTabs(){
+  if(!window.EN_WORDS||!window.Spell) return '<div style="height:14px"></div>';
+  return '<div class="tabs" role="tablist">'+[["words","单词"],["letters","字母"]].map(function(t){
+    return '<button role="tab" data-entab="'+t[0]+'" aria-selected="'+(enTab===t[0])+'">'+t[1]+'</button>';
+  }).join("")+'</div>';
 }
 ["#pane-math","#pane-en"].forEach(function(sel){
   $(sel).addEventListener("click",function(e){
-    const ex=e.target.closest("[data-ex]");
-    if(ex){
-      const box=ex.closest(".wgrp").querySelector(".wg-sent"), open=box.hidden;
-      box.hidden=!open; ex.setAttribute("aria-expanded",String(open)); beep("tap"); return;
-    }
+    /* 例句：点喇叭 = 展开例句并读出来（再点再读一遍），× 收起 */
     const sy=e.target.closest("[data-say]");
-    if(sy){ const g=EN_WORDS.GROUPS[+sy.dataset.say]; speakWord(g.ex.map(EN_WORDS.plainLine).join(" ")); return; }
+    if(sy){
+      const g=EN_WORDS.GROUPS[+sy.dataset.say];
+      sy.closest(".wgrp").querySelector(".wg-sent").hidden=false;
+      speakWord(g.ex.map(EN_WORDS.plainLine).join(" ")); return;
+    }
+    const cx=e.target.closest("[data-close]");
+    if(cx){ cx.closest(".wg-sent").hidden=true; if(window.speechSynthesis) try{speechSynthesis.cancel()}catch(_){ } beep("tap"); return; }
+    const et=e.target.closest("[data-entab]");
+    if(et){ enTab=et.dataset.entab; beep("tap"); renderLatinPane("en"); return; }
     const wc=e.target.closest("[data-word]");
     if(wc){
       /* 「下一个」沿整张表走，不是只在这一组里 */
@@ -1190,10 +1240,12 @@ function taskInfo(id){
 function startTask(id){
   const items=taskPick(id); if(!items.length) return;
   beep("tap");
+  if(id==="en-words") enTab="words"; else if(id==="en-letters") enTab="letters";
   setSubj(TASK_SUBJ[id]||"zh"); fromTask=id;
   if(id==="zh-dict"){ openDict(items,true); return; }
   const key=taskKey(id), first=items.find(c=>!practicedToday(key(c)))||items[0];
-  if(id==="en-words"){ openWord(first,items); return; }
+  if(id==="en-words"){ enTab="words"; openWord(first,items); return; }
+  if(id==="en-letters") enTab="letters";
   openChar(first,items);
 }
 /* 小游戏入口：放在「今天」页的小游戏区，不属于任何科目（2026-09-27 用户定的）。
@@ -2207,12 +2259,27 @@ function fillVoiceSel(){
     '网页没法自己加音色，所以每台设备看到的都不一样。<br>'+
     '想要更自然的：<b>iPad 设置 → 辅助功能 → 朗读内容 → 声音 → 中文</b>（不同 iPadOS 版本'+
     '措辞略有出入），把带下载标记的音色下下来，尤其是标「增强」或「高级」的。'+
-    '下完回到这里点<b>刷新</b>；还没出现就把这个页面关掉重开一次。';
+    '下完回到这里点<b>刷新</b>；还没出现就把这个页面关掉重开一次。<br>'+
+    '英文声音同一个地方选<b>英语（英国）</b>，女声有 Serena、Kate、Martha 等，下载「增强」版更自然。';
 }
 $("#sel-voice").onchange=function(){ cfg.voiceURI=this.value; save(K.cfg,cfg); };
+/* 英文声音列表：英式的排前面，名字后面标出口音 */
+function fillVoiceSelEn(){
+  const el=$("#sel-voice-en"); if(!el) return;
+  const all=enVoices(), cur=cfg.voiceEn||"", auto=pickVoiceEn();
+  const acc=l=>/GB/i.test(l)?"英式":/US/i.test(l)?"美式":/AU/i.test(l)?"澳洲":/IE/i.test(l)?"爱尔兰":/IN/i.test(l)?"印度":/ZA/i.test(l)?"南非":"英文";
+  el.innerHTML='<option value="">自动（英式女声'+(auto&&!cur?"：":"")+(auto&&!cur?esc(auto.name):"")+'）</option>'+
+    all.map(v=>'<option value="'+esc(v.voiceURI)+'">'+esc(v.name)+' · '+acc(v.lang||"")+'</option>').join("");
+  el.value = all.some(v=>v.voiceURI===cur) ? cur : "";
+}
+$("#sel-voice-en").onchange=function(){ cfg.voiceEn=this.value; save(K.cfg,cfg); fillVoiceSelEn(); };
+$("#btn-try-en").onclick=function(){
+  if(!window.speechSynthesis) return;
+  try{ speechSynthesis.cancel(); speechSynthesis.speak(utterEn("Hello! They play in the rain.",.8)); }catch(e){}
+};
 $("#btn-vrefresh").onclick=function(){
   const before=VOICES.length;
-  loadVoices(); fillVoiceSel(); beep("tap");
+  loadVoices(); fillVoiceSel(); fillVoiceSelEn(); beep("tap");
   const m=$("#voice-msg"); if(!m) return;
   m.style.display="block";
   m.innerHTML = VOICES.length>before
@@ -2239,7 +2306,7 @@ $("#sel-lesson").onchange=function(){
   cfg.lesson=parseInt(this.value,10)||0; save(K.cfg,cfg);
   renderHome();   /* 可玩的字变了，入口卡的说明也跟着变 */
 };
-$("#btn-set").onclick=function(){ loadVoices(); fillVoiceSel(); fillLessonSel();
+$("#btn-set").onclick=function(){ loadVoices(); fillVoiceSel(); fillVoiceSelEn(); fillLessonSel();
   const rs=$("#sel-rate");
   rs.value=String(cfg.rate||1);
   if(!rs.value){ rs.value="1"; cfg.rate=1; save(K.cfg,cfg); }  /* 存的档位没了就回正常 */
@@ -2318,7 +2385,7 @@ $("#bak-do").onclick=function(){
 
 if(window.speechSynthesis){
   loadVoices();
-  try{ window.speechSynthesis.onvoiceschanged=function(){ loadVoices(); fillVoiceSel(); }; }catch(e){}
+  try{ window.speechSynthesis.onvoiceschanged=function(){ loadVoices(); fillVoiceSel(); fillVoiceSelEn(); }; }catch(e){}
 }
 
 /* 请求持久化存储，减少 iOS 自动清理的概率 */

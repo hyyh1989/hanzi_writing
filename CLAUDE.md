@@ -270,7 +270,12 @@ Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 C
    Monster Phonics 官网**（Angry Red A → Green Froggy → Yellow I → Miss Oh No → U-Hoo → Cool Blue → Brown Owl →
    Silent Monsters → Tricky → The Black Cats），2026-09-29 用户要求的，别换成「长 a」这类中文说法。
    每组「[Try reading it out]」点开是例句，**例句是自己写的，没照抄官网**（仓库公开，那是他们的内容），
-   风格照官网：只给这一组的字母上色，尽量用她词表里的词。词本身上不上色有开关（`cfg.wordColor`，词表页「词表里不上色」），
+   风格照官网：只给这一组的字母上色，尽量用她词表里的词。
+   布局（用户定的）：每组左边是怪兽名 + 字母组合 + 喇叭（点了展开例句并朗读），右边是词。
+7. **英文页分「单词 / 字母」两个页签**（`enTab`），从任务进来切到对应页签。
+8. **英文声音**：设置里「英文声音」（`cfg.voiceEn`），默认自动挑英式女声（`pickVoiceEn` 按 `EN_FEMALE` 顺序：
+   Serena/Kate/Martha… → 其他英文女声 → Flo/Sandy/Shelley 这类偏机器的放最后）。
+   以前直接取第一个 en-GB，iPad 上是 Daniel 男声，用户反馈孩子喜欢年轻女声。词本身上不上色有开关（`cfg.wordColor`，词表页「词表里不上色」），
    用户说过「觉得乱就只分组、颜色只在拼写页」。颜色 2026-09-29 按用户要求调亮，红和粉拉开色相；
    不发音的字母从空心改成浅灰（空心连在词里看着怪）。
 
