@@ -17,7 +17,7 @@
        低音谱号：F 线上点圆起笔 → 画弧 → 两个点。
      Treble notes：Middle C D E F G（她的练习册就是这样一串写下来，不是单独练一个全音符）
      Bass notes：F G A B Middle C
-       每次练习随机一种音符（二分最多，有时四分、全音符），同一次里全部一样。
+       固定写二分音符（家长试过后定的，见 pickType）。
        符干朝向跟着位置走：高音这 5 个都在中线下 → 朝上在右；低音这 5 个都在中线上 → 朝下在左。
        Middle C 她是连加线一起写的（练习册上是一个圈中间一道横），加线也要她写。
 
@@ -79,8 +79,9 @@
       notes: [["F", 6], ["G", 7], ["A", 8], ["B", 9], ["C", 10, "Middle C"]] }
   };
   var TYPES = { minim: { stem: true }, crotchet: { stem: true, fill: true }, semibreve: { stem: false } };
-  /* 这次练哪种：二分音符最多（家长说平时一般是二分），有时四分、全音符 */
-  function pickType() { var r = Math.random(); return r < 0.6 ? "minim" : r < 0.8 ? "crotchet" : "semibreve"; }
+  /* 固定写二分音符（2026-09-29 家长：她平时一般写二分；四分音符画完圈自动涂黑看着怪）。
+     四分、全音符的数据留着：以后要轮换，得在开头用语音说清「这次写什么」，四分音符让她自己涂 */
+  function pickType() { return "minim"; }
 
   /* 写音符的格子：看得见的宽 VIEW_W，左边 PANEL 宽一块固定放谱号；音符排在一条「长纸带」上，
      间距 NOTE_DX（原来 34 太挤），写到第几个音，纸带就往左滑到让这个音落在 FOCUS_X 附近 */

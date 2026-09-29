@@ -40,21 +40,18 @@
   };
   var ORDER = ["zh-write", "zh-dict", "math-digits", "en-words", "en-letters", "music-write", "music-read"];
 
-  /* 默认周计划（2026-09-29 用户定：音乐做好再上，先去掉音乐）。周日休息。
-     英文单词上线后周一、周五换成拼单词（拼单词本身就在练字母），周三保留写字母 */
+  /* 默认周计划。2026-09-29 音乐上线，换回带音乐的那版（2026-09-27 定的）：钢琴课周日上，
+     课后第一天（周一）复习、课前一天（周六）热身。周日休息。
+     「音符拼单词」做成游戏放小游戏区，不当任务 */
   var DEFAULT_PLAN = [
-    [],                              /* 周日：休息 */
-    ["zh-write", "en-words"],        /* 周一 */
-    ["zh-write", "math-digits"],     /* 周二 */
-    ["zh-write", "en-letters"],      /* 周三 */
+    [],                              /* 周日：休息（钢琴课） */
+    ["music-write", "zh-write"],     /* 周一 */
+    ["zh-write", "en-words"],        /* 周二 */
+    ["music-read", "zh-write"],      /* 周三 */
     ["zh-write", "math-digits"],     /* 周四 */
-    ["zh-write", "en-words"],        /* 周五 */
-    ["zh-dict"],                     /* 周六 */
+    ["music-write", "en-words"],     /* 周五 */
+    ["zh-dict", "music-read"]        /* 周六 */
   ];
-  /* 音乐上线时换回这一版（2026-09-27 定的）：钢琴课周日上，课后第一天（周一）复习、
-     课前一天（周六）热身。音乐任务「认音符」是练习形式；「音符拼单词」做成游戏放小游戏区，不当任务
-       周一 music-write + zh-write · 周二 zh-write + en-words · 周三 music-read + zh-write
-       周四 zh-write + math-digits · 周五 music-write + en-words · 周六 zh-dict + music-read */
   var WEEK = ["日", "一", "二", "三", "四", "五", "六"];
   var MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
 

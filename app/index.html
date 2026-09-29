@@ -1209,8 +1209,8 @@ function enTabs(){
 });
 /* 哪些科目上线了。音乐做好之前是 false：首页、周计划编辑页都不出现音乐
    （2026-09-29 用户：音乐之后再一起上）。上线时改成 true，并把 today.js 的默认计划换回带音乐的那版 */
-/* 2026-09-29 起：只在预览站（next.）和本机显示音乐，正式站仍然隐藏，做完一起上线时改成 true */
-const MUSIC_READY=/^next\.|^localhost$|^127\.0\.0\.1$|^192\.168\./.test(location.hostname);
+/* 音乐 2026-09-29 上线（认音符、写谱号、写音符都做完了）。之前只在预览站显示 */
+const MUSIC_READY=true;
 function subjEnabled(s){ return s!=="music" || MUSIC_READY }
 /* 打卡：今天来过（写完一个字、做完一轮听写、玩完一局游戏都算） */
 function markDay(){
@@ -2320,7 +2320,7 @@ function renderMusic(){
     '<div class="controls"><button class="btn" id="nr-go">Start</button></div></div>'+
     (window.MusicWrite?'<div class="lesson"><div class="lesson-h"><h3>写谱号 · 写音符 <small>Writing</small></h3></div>'+
     '<p class="lesson-tip">谱号：看 → 描一遍 → 自己写两遍，起笔先点圆。音符：和练习册一样按顺序写一串'+
-    '（高音谱号 Middle C D E F G，低音谱号 F G A B Middle C），每次随机换一种音符，二分音符最多。'+
+    '（高音谱号 Middle C D E F G，低音谱号 F G A B Middle C），写二分音符。'+
     '符干朝向跟着位置走，规则用英文讲给她。</p>'+
     '<div class="mw-list">'+MusicWrite.ORDER.map(function(id){
       const st=starsOf("m:"+id);
