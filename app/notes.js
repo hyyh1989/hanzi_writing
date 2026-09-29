@@ -207,5 +207,12 @@
     return { destroy: function () { dead = true; timers.forEach(clearTimeout); if (pet && pet.destroy) pet.destroy(); host.innerHTML = ""; } };
   }
 
-  root.NoteRead = { attach: attach, score: score, noteName: noteName, CLEFS: CLEFS, step: step, makeRound: makeRound, PER_ROUND: PER_ROUND };
+  /* 印刷体谱号，给别的格子用（写音符的格子左边当背景）。space = 那个格子一个间多高，gy/fy = G 线、F 线的 y */
+  function clefPath(clef, space, gy, fy, x) {
+    var k = space / 250;
+    return clef === "treble"
+      ? '<path transform="translate(' + x + " " + gy + ") scale(" + k + " " + (-k) + ')" d="' + G_CLEF + '"/>'
+      : '<path transform="translate(' + x + " " + fy + ") scale(" + k + " " + (-k) + ')" d="' + F_CLEF + '"/>';
+  }
+  root.NoteRead = { attach: attach, clefPath: clefPath, score: score, noteName: noteName, CLEFS: CLEFS, step: step, makeRound: makeRound, PER_ROUND: PER_ROUND };
 })(window);

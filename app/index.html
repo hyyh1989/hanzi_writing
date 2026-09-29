@@ -445,8 +445,18 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .mw-ink .dot.bad{fill:var(--bad)}
 .mw-hint path{fill:none;stroke:var(--teal);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
 .mw-hint .dot{fill:var(--teal)}
-.mw-pet{position:absolute;right:-8px;top:-58px;width:52px;height:52px;pointer-events:none}
-.mw-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:6px}
+.mw-pet{position:absolute;right:-60px;top:4px;width:52px;height:52px;pointer-events:none}
+@media (max-width:560px){ .mw-pet{display:none} }
+.mw.seq .mw-stage{width:min(94vw,700px,calc((100vh - 330px) * 262 / 130))}
+.mw-cell .mw-pclef{fill:var(--ink-3);opacity:.55}
+.mw-cell .mw-letter{font:700 7px var(--disp);fill:var(--ink-3)}
+.mw-cell .mw-letter.now{fill:var(--teal-2);font-size:8.5px}
+.mw-cell .mw-slot{fill:var(--teal-soft)}
+.mw-guide path.filled{fill:var(--trace)}
+.mw-guide .demo.filled,.mw-hint .filled{fill:currentColor}
+.mw-guide .demo{color:var(--ink)} .mw-hint{color:var(--teal)}
+.mw-icon.wide{width:120px}
+.mw-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:6px}
 .mw-chip{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;
   border:1px solid var(--line);border-radius:12px;background:var(--paper)}
 .mw-chip:hover{border-color:var(--teal)}
@@ -1232,7 +1242,7 @@ function renderToday(){
    否则她写完一个字、星星一变，重算出来的就是另一批字了。「换一批」才会重挑。
    挑的顺序（用户定的「任务自动来」）：先「要多练的」，再按「还没练熟 → 最近没练」轮换 */
 let fromTask=null;              /* 从哪个任务进来的（写完最后一个字时按钮变成「回到今天」） */
-const TASK_N={"zh-write":3,"en-letters":4,"en-words":3,"math-digits":3,"zh-dict":8,"music-write":3};
+const TASK_N={"zh-write":3,"en-letters":4,"en-words":3,"math-digits":3,"zh-dict":8,"music-write":2};
 const TASK_SUBJ={"zh-write":"zh","zh-dict":"zh","en-letters":"en","en-words":"en","math-digits":"math","music-read":"music","music-write":"music"};
 /* 任务里每一项在星星、练习记录里的键：单词加 w:，字和字母就是自己 */
 function taskKey(id){ return id==="en-words" ? WK : id==="music-write" ? function(c){ return "m:"+c } : function(c){ return c } }
@@ -1285,9 +1295,10 @@ function taskCandidates(id){
                 byNeed(byLen(E.HFW.filter(w=>both.indexOf(w)<0)),WK)));
   }
   if(id==="music-write"){
-    /* 谱号在前（她正在学），再音符；没练熟、越久没练的优先 */
+    /* 每天两项：一个谱号 + 一串音符，谱号和音符各自按「没练熟、越久没练」轮换 */
     if(!window.MusicWrite) return [];
-    return byNeed(MusicWrite.ORDER.slice(),function(c){ return "m:"+c });
+    const key=function(c){ return "m:"+c }, cl=byNeed(["treble","bass"],key), ns=byNeed(["notes-treble","notes-bass"],key);
+    return [cl[0],ns[0],cl[1],ns[1]];
   }
   if(id==="math-digits"){
     const mine=Object.keys(wrong).filter(c=>isDigit(c));
@@ -1330,7 +1341,7 @@ function taskInfo(id){
   if(id==="zh-dict"){ const d=!!(todayRec().done||{})[id]; return {items,label,done:d?1:0,total:1,single:true}; }
   const key=taskKey(id), doneSet={}; items.forEach(function(c){ if(practicedToday(key(c))) doneSet[c]=1 });
   if(id==="music-write"){      /* 卡片上显示名字（Treble clef · Minim ↑），不显示内部代号 */
-    const nm=c=>MusicWrite.ITEMS[c].name+(/-up$/.test(c)?" ↑":/-down$/.test(c)?" ↓":""), ds={};
+    const nm=c=>MusicWrite.NAMES[c], ds={};
     Object.keys(doneSet).forEach(c=>{ ds[nm(c)]=1 });
     return {items:items.map(nm), label, done:Object.keys(doneSet).length, total:items.length, doneSet:ds};
   }
@@ -2305,11 +2316,13 @@ function renderMusic(){
     '<div class="nr-set"><span>琴键上显示字母</span><button class="sw" id="sw-nletters" aria-pressed="'+(cfg.noteLetters!==false)+'" aria-label="琴键上显示字母"></button></div>'+
     '<div class="controls"><button class="btn" id="nr-go">Start</button></div></div>'+
     (window.MusicWrite?'<div class="lesson"><div class="lesson-h"><h3>写谱号 · 写音符 <small>Writing</small></h3></div>'+
-    '<p class="lesson-tip">看 → 描一遍 → 自己写两遍。写法按对照卡上确认的；符干朝上朝下两种都练，规则用英文讲给她。</p>'+
+    '<p class="lesson-tip">谱号：看 → 描一遍 → 自己写两遍，起笔先点圆。音符：和练习册一样按顺序写一串'+
+    '（高音谱号 Middle C D E F G，低音谱号 F G A B Middle C），每次随机换一种音符，二分音符最多。'+
+    '符干朝向跟着位置走，规则用英文讲给她。</p>'+
     '<div class="mw-list">'+MusicWrite.ORDER.map(function(id){
-      const st=starsOf("m:"+id), it=MusicWrite.ITEMS[id];
-      return '<button class="mw-chip" data-mw="'+id+'">'+MusicWrite.icon(id)+'<span>'+it.name+
-        (/-up$/.test(id)?' ↑':/-down$/.test(id)?' ↓':'')+'</span>'+(st?'<em>'+"★".repeat(st)+'</em>':'')+'</button>';
+      const st=starsOf("m:"+id);
+      return '<button class="mw-chip" data-mw="'+id+'">'+MusicWrite.icon(id)+'<span>'+MusicWrite.NAMES[id]+
+        '</span>'+(st?'<em>'+"★".repeat(st)+'</em>':'')+'</button>';
     }).join("")+'</div></div>':'');
   el.querySelectorAll("[data-share]").forEach(function(b){ b.onclick=function(){
     cfg.bassShare=+b.dataset.share; save(K.cfg,cfg); beep("tap"); renderMusic(); }; });
@@ -2321,16 +2334,18 @@ function renderMusic(){
 let mwCtl=null;
 function mwOff(){ if(mwCtl){ mwCtl.destroy(); mwCtl=null; } }
 function openMusicWrite(id,list){
-  if(!window.MusicWrite||!MusicWrite.ITEMS[id]) return;
+  if(!window.MusicWrite||!MusicWrite.NAMES[id]) return;
   mwOff(); notesOff(); if(writer) writer.cancelQuiz(); petOff(); spellOff();
   list=list&&list.length?list:[id];
   const i=Math.max(0,list.indexOf(id)), nx=list[i+1], k="m:"+id;
-  show("#view-mwrite"); $("#title").textContent=MusicWrite.ITEMS[id].name;
+  show("#view-mwrite"); $("#title").textContent=MusicWrite.NAMES[id];
   mwCtl=MusicWrite.attach($("#view-mwrite"),{
     id:id, pos:(i+1)+" / "+list.length,
     speak:speakWord, beep:beep,
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     leniency:function(){ return cfg.easy?1.25:1 },
+    /* 写音符的格子：一个间 14，G 线 79、F 线 51 */
+    clefSvg:function(c){ return window.NoteRead ? NoteRead.clefPath(c,14,79,51,12) : "" },
     onDone:function(r){
       const st=r.hints?1:(r.misses?2:3);
       if(st>starsOf(k)){ stars[k]=st; save(K.stars,stars); refreshStars(); }
