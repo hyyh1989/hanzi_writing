@@ -1452,7 +1452,8 @@ function cellDone(){
      想听单格点评就点分卡上的 🔊。 */
   const rp=$("#replay"); if(rp) rp.onclick=()=>say(line,true);
   setControls(btn("这格重写","quiet",()=>runCell(cellIdx)), nextBtn());
-  $("#scorebox").scrollIntoView({behavior:"smooth",block:"nearest"});
+  /* 不在这里自动滚到评分卡：一行还没写完，滚下去她得再往上划才能接着写（2026-09-29 用户反馈）。
+     整行写完（finishAll）才滚到总评，那时已经不写了 */
 }
 function finishAll(){
   phase="done"; awaiting=true;
