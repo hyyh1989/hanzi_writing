@@ -105,12 +105,9 @@ https://dash.cloudflare.com → Workers & Pages → hanzi-writing
 
 ---
 
-## 镜像地址
+## 镜像地址（2026-09-29 已退役）
 
-https://hyyh1989.github.io/hanzi_writing/ ——同一份内容，部署在 GitHub Pages。
-
-**为什么要两个**：`pages.dev` / `workers.dev` 这类域名在某些网络下会被整域名屏蔽
-（朋友在韩国打不开另一个项目的主站，挂 VPN 才行）。镜像是完全不同的域名。
-
-主站仍然用 `build/deploy.sh` 手动发；镜像是**推代码到 main 就自动发**
-（见 `.github/workflows/pages.yml`），不需要手动操作。
+以前在 GitHub Pages 上有一个镜像 `hyyh1989.github.io/hanzi_writing`，推代码到 main 就自动发，
+防备 `pages.dev` 整个域名被屏蔽。用户已经有了中国大陆能打开的替代地址，镜像不用再维护：
+自动部署配置（`.github/workflows/pages.yml`）已删，推代码不会再更新它。
+**现在只有一条发布路：`build/deploy.sh`。**
