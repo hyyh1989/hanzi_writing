@@ -565,9 +565,13 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .sp-cell{position:relative;flex:none}
 .sp-cell.now{background:var(--teal-soft);border-radius:6px}
 .sp-sq{position:absolute;top:0;pointer-events:none;touch-action:none}
-.sp-cell.now .sp-sq{pointer-events:auto;z-index:3}
+/* 叠放顺序（从下到上）：当前格底色 → 四线格的线(1) → 所有字母的描红轮廓(2) → 所有字母她写的笔迹(3) → 示范(4)。
+   格子的 .sp-sq 不设 z-index（设了就自成一层，整格的轮廓会压到隔壁字母的笔迹上），
+   这样每一层在所有字母之间统一排：她写的字永远在最上面，不会被自己或隔壁字母的浅色轮廓盖住
+   （2026-09-30 用户截图：t、h 的笔迹被描红字压在下面）。只有正在写的格子接收触摸 */
+.sp-cell.now .sp-sq{pointer-events:auto}
 .sp-w{position:absolute;inset:0;z-index:2}
-.sp-ink,.sp-lp{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.sp-ink,.sp-lp{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
 .sp-lp{z-index:4}
 .sp-apos{position:absolute;left:50%;top:6%;transform:translateX(-50%);font-family:"Andika",sans-serif;font-weight:700;color:var(--ink)}
 .sp-pet{position:absolute;right:0;top:-54px;width:52px;height:52px;pointer-events:none}
