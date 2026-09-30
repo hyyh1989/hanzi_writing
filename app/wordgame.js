@@ -93,6 +93,9 @@
     var elDots = host.querySelector(".mg-dots"), elOpts = host.querySelector(".lg-opts"),
         elPic = host.querySelector(".lg-pic"), elSay = host.querySelector(".lg-say");
     elSay.onclick = function () { api.speak(items[idx].w); };
+    /* 这台设备根本不能朗读（很少见）：直接说明，别让她对着没声音的喇叭干等 */
+    if (api.noVoice) host.querySelector(".mg-prompt").insertAdjacentHTML("beforeend",
+      '<span class="lg-novoice">这台设备不能朗读英文，玩不了这个游戏</span>');
 
     function render() {
       var it = items[idx], h = "";

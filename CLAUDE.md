@@ -486,6 +486,10 @@ Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 C
 
 所有朗读走 `utter(文本, 基准语速)` —— 它统一套用 `cfg.voiceURI` 和 `cfg.rate`。
 **不要再直接 `new SpeechSynthesisUtterance`。**
+英文走 `utterEn` / `speakWord`。两条坑（2026-09-30 听音选词在 iPad 上没声音）：
+- **听音选词的念词不看「朗读读音」开关**（`speakWord(w, true)`）——题目就是这句话，开关关了游戏就没法玩
+- **iPad Safari：`cancel()` 之后紧接着 `speak()`，新的一句有时被吞掉。** `speakWord` 只在确实有话在念时才打断、
+  隔 80ms 再念；没在念就立刻念（iOS 要求第一句在点击的那一刻念出来，延迟了就不放行）
 
 - 声音列表来自 `speechSynthesis.getVoices()` 筛 `zh*`，首次可能为空，靠 `onvoiceschanged` 补。
   浏览器只能用系统装了的声音，**加不了自定义音色**（除非上云端 TTS，要钱要联网）。

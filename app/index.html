@@ -375,6 +375,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .lg-pic{font-size:44px;line-height:1;min-height:44px;opacity:0;transition:opacity .2s;
   font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 .lg-pic.show{opacity:1}
+.lg-novoice{font-size:14px;color:var(--ink-3)}
 .lg-opts .lg-opt{aspect-ratio:auto;min-height:96px}
 .lg-opts .lg-opt>span{display:block;padding:0 8px}
 .lg-opts .lg-opt .wsvg{max-width:100%;height:auto;margin:0 auto}
@@ -2244,7 +2245,8 @@ function openListen(){
       const t=todayStr(), r=load(K.lgday,null);
       save(K.lgday,(r&&r.d===t)?{d:t,n:(r.n||0)+1}:{d:t,n:1});
     },
-    speak:speakWord, say:say, beep:beep,
+    speak:function(w){ speakWord(w,true) }, say:say, beep:beep,
+    noVoice:!window.speechSynthesis,
     cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
     onExit:function(){ goHome("today") }
   });
@@ -2306,9 +2308,17 @@ function openGame(){
    看了提示 = 这个词还不会拼，自动进「要多练的单词」——和听写写错自动进「要多练的字」同一个道理 */
 let spellCtl=null;
 function spellOff(){ if(spellCtl){ spellCtl.destroy(); spellCtl=null; } }
-function speakWord(w){
-  if(!cfg.speak||!window.speechSynthesis) return;
-  try{ speechSynthesis.cancel(); speechSynthesis.speak(utterEn(w,.75)); }catch(e){}
+/* 念英文。force：不看「朗读读音」开关——听音选词的题目就是这句话，关了游戏就没法玩（2026-09-30 用户反馈没声音）。
+   iPad Safari 的毛病：cancel() 之后紧接着 speak()，新的一句有时被吞掉不出声。所以只在确实有话在念时才打断，
+   打断后隔一小会儿再念；没在念就立刻念（第一句必须在点击的那一刻念出来，iOS 才放行语音） */
+function speakWord(w,force){
+  if((!cfg.speak&&!force)||!window.speechSynthesis) return;
+  try{
+    const ss=window.speechSynthesis, u=utterEn(w,.75);
+    if(ss.paused) ss.resume();
+    if(ss.speaking||ss.pending){ ss.cancel(); setTimeout(function(){ try{ ss.speak(u); }catch(e){} },80); }
+    else ss.speak(u);
+  }catch(e){}
 }
 function openWord(w,list){
   if(!window.Spell||!window.EN_WORDS||!EN_WORDS.W[w]) return;
