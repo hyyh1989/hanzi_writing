@@ -559,7 +559,9 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .sp-hint{margin-top:8px}
 .sp-stage{position:relative;padding:6px 4px 0;display:flex;justify-content:center}
 .sp-row{position:relative;display:flex;align-items:stretch;background:var(--card);border-radius:6px;padding:0 4px}
-.sp-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* 四线格的线在「当前格底色」上面（z-index 1），在正在写的格子（.sp-sq z-index 3）下面。
+   之前线在最底下，当前格的浅青底色把这一格的线盖住了（2026-09-30 用户在 iPad 上发现，描红默写都看不到线） */
+.sp-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
 .sp-cell{position:relative;flex:none}
 .sp-cell.now{background:var(--teal-soft);border-radius:6px}
 .sp-sq{position:absolute;top:0;pointer-events:none;touch-action:none}

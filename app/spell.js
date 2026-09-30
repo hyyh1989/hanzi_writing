@@ -110,7 +110,7 @@
       var ext = letters.map(function (ch) { return root.LATIN[ch] ? extent(ch) : { x0: 0, w: 260 }; });
       var ratio = ext.reduce(function (a, e) { return a + e.w / 1024; }, 0);
       var avail = Math.max(260, stage.clientWidth - 8);
-      S = Math.round(Math.max(56, Math.min(210, avail / ratio, (root.innerHeight - 330) * 0.9)));
+      S = Math.round(Math.max(56, Math.min(250, avail / ratio, (root.innerHeight - 330) * 0.9)));
       row.style.height = S + "px";
       /* 四线格：整排一条，和字母格同一套比例（顶线 118 / 中线 378 / 基线 670 / 底线 929） */
       row.insertAdjacentHTML("beforeend",
