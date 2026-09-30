@@ -177,7 +177,9 @@
         onCorrectStroke: function (d) {
           api.beep("tap");
           var pts = (d.drawnPath && d.drawnPath.points) || [];
-          c.ink.push(pts.map(function (q) { return { x: q.x, y: 900 - q.y }; }));
+          /* i、j 的点：dotAssist 替她交的一笔，墨迹画在她实际点的地方 */
+          var tap = root.LatinPlay && root.LatinPlay.isDot(c.ch, d.strokeNum) && dotHelp && dotHelp.lastTap();
+          c.ink.push(tap ? [{ x: tap.x, y: 900 - tap.y }] : pts.map(function (q) { return { x: q.x, y: 900 - q.y }; }));
           paintInk(c);
           controlsFor();
         },
@@ -262,6 +264,14 @@
     }
     root.addEventListener("resize", onResize);
 
+    /* i、j 的点替引擎判（引擎会丢掉只点了一下的笔画，见 latin-play.js 的 dotAssist） */
+    var dotHelp = root.LatinPlay && root.LatinPlay.dotAssist ? root.LatinPlay.dotAssist(row, function () {
+      if ((phase !== "trace" && phase !== "write") || cur < 0 || !cells[cur] || !cells[cur].w) return null;
+      var c = cells[cur];
+      return { ch: c.ch, stroke: c.ink.length, svg: c.sq.querySelector(".sp-w svg"),
+               leniency: api.leniency() * (phase === "trace" ? 1.25 : 1) };
+    }) : null;
+
     look();
 
     return {
@@ -269,6 +279,7 @@
         dead = true;
         timers.forEach(clearTimeout);
         root.removeEventListener("resize", onResize);
+        if (dotHelp) dotHelp.destroy();
         cells.forEach(function (c) { if (c.w) try { c.w.cancelQuiz(); } catch (e) {} if (c.lp && root.LatinPlay) root.LatinPlay.clear(c.lp); });
         if (pet && pet.destroy) pet.destroy();
         host.innerHTML = "";

@@ -109,5 +109,75 @@
     });
   }
 
-  root.LatinPlay = { play: play, hint: hint, clear: clear };
+  /* ── i、j 的点：替写字引擎判 ──
+     引擎把「只有一个点」的笔画直接丢掉（hanzi-writer endUserStroke：points.length === 1 就 return），
+     而孩子点一下笔多半就只有一个点 → 怎么点都没反应；手指稍微动一点，引擎又会把这一小笔放大了比形状，
+     和「从上往下一小竖」的中线比，也经常不过（2026-09-30 用户：i 的点怎么写都判不过）。
+     所以轮到点的这一笔时，我们先截下她的输入：
+       · 很短（点一下或一小笔）、落在点附近 → 替她沿中线「写」一遍交给引擎，引擎判对
+       · 否则 → 把她的原笔迹原样交给引擎，照常判（写错照样算错）
+     用法：LatinPlay.dotAssist(外层元素, function(){ return {ch, stroke, svg} 或 null })，
+     返回 {lastTap()}：她实际点的位置（引擎坐标），onCorrectStroke 里画墨迹用 */
+  function isDot(ch, i) {
+    var g = root.LATIN && root.LATIN[ch], m = g && g.m && g.m[i];
+    return !!(m && m.length === 2 && Math.hypot(m[1][0] - m[0][0], m[1][1] - m[0][1]) < 80);
+  }
+  function dotAssist(el, getState) {
+    var cur = null, pts = [], replaying = false, lastTouch = 0, last = null;
+    function st() { var s = getState(); return s && s.svg && isDot(s.ch, s.stroke) ? s : null; }
+    function pt(e) { var t = e.touches && e.touches[0] || e.changedTouches && e.changedTouches[0] || e; return { x: t.clientX, y: t.clientY }; }
+    function send(svg, list) {           /* 按引擎认的事件（mousedown 在 svg 上、mouseup 在 document 上）重放一笔 */
+      replaying = true;
+      try {
+        var o = function (p) { return { clientX: p.x, clientY: p.y, bubbles: true, cancelable: true, view: root }; };
+        svg.dispatchEvent(new MouseEvent("mousedown", o(list[0])));
+        for (var i = 1; i < list.length; i++) svg.dispatchEvent(new MouseEvent("mousemove", o(list[i])));
+        document.dispatchEvent(new MouseEvent("mouseup", o(list[list.length - 1])));
+      } finally { replaying = false; }
+    }
+    function down(e) {
+      if (replaying) return;
+      if (e.type === "mousedown" && Date.now() - lastTouch < 800) { e.stopPropagation(); e.preventDefault(); return; }  /* 触摸之后浏览器补发的鼠标事件 */
+      var s = st(); if (!s) return;
+      if (e.type === "touchstart") lastTouch = Date.now();
+      e.stopPropagation(); if (e.cancelable) e.preventDefault();
+      cur = s; pts = [pt(e)];
+    }
+    function move(e) {
+      if (replaying || !cur) return;
+      e.stopPropagation(); if (e.cancelable) e.preventDefault();
+      pts.push(pt(e));
+    }
+    function up(e) {
+      if (replaying || !cur) return;
+      e.stopPropagation(); if (e.cancelable) e.preventDefault();
+      if (e.type === "touchend") lastTouch = Date.now();
+      var s = cur; cur = null;
+      var r = s.svg.getBoundingClientRect(), S = r.width, m = root.LATIN[s.ch].m[s.stroke];
+      var toPx = function (q) { return { x: r.left + q[0] / 1024 * S, y: r.top + (900 - q[1]) / 1024 * S }; };
+      var c = { x: 0, y: 0 }; pts.forEach(function (p) { c.x += p.x; c.y += p.y; }); c.x /= pts.length; c.y /= pts.length;
+      var L = 0; for (var i = 1; i < pts.length; i++) L += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      var mid = toPx([(m[0][0] + m[1][0]) / 2, (m[0][1] + m[1][1]) / 2]);
+      var tol = (s.leniency || 1) * 0.12 * S;
+      if (L < 0.16 * S && Math.hypot(c.x - mid.x, c.y - mid.y) < tol) {
+        last = { x: (c.x - r.left) / S * 1024, y: 900 - (c.y - r.top) / S * 1024 };
+        var a = toPx(m[0]), b = toPx(m[1]), line = [];
+        for (var k = 0; k <= 6; k++) line.push({ x: a.x + (b.x - a.x) * k / 6, y: a.y + (b.y - a.y) * k / 6 });
+        send(s.svg, line);
+      } else if (pts.length > 1) send(s.svg, pts);
+    }
+    ["touchstart", "mousedown"].forEach(function (t) { el.addEventListener(t, down, { capture: true, passive: false }); });
+    ["touchmove", "mousemove"].forEach(function (t) { el.addEventListener(t, move, { capture: true, passive: false }); });
+    ["touchend", "touchcancel", "mouseup"].forEach(function (t) { root.addEventListener(t, up, { capture: true, passive: false }); });
+    return {
+      lastTap: function () { return last; },
+      destroy: function () {
+        ["touchstart", "mousedown"].forEach(function (t) { el.removeEventListener(t, down, true); });
+        ["touchmove", "mousemove"].forEach(function (t) { el.removeEventListener(t, move, true); });
+        ["touchend", "touchcancel", "mouseup"].forEach(function (t) { root.removeEventListener(t, up, true); });
+      }
+    };
+  }
+
+  root.LatinPlay = { play: play, hint: hint, clear: clear, isDot: isDot, dotAssist: dotAssist };
 })(window);
