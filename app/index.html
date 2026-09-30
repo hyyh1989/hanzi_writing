@@ -469,6 +469,18 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .mw-icon .ic{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .mw-icon .ic.filled{fill:var(--ink)}
 .mw-icon .ic-dot{fill:var(--ink)}
+/* ── 音符拼单词（notegame.js，复用认音符的琴键样式）── */
+.ng-score{width:100%;max-width:560px;margin-top:4px}
+.ng-staff{display:block;width:100%;height:auto;max-height:260px}
+.ng-staff .nr-l{stroke:var(--ink-2);stroke-width:1.2}
+.ng-staff .nr-clefg{fill:var(--ink)}
+.ng-staff .nr-head{fill:none;stroke:var(--ink);stroke-width:2.4}
+.ng-staff .nr-head.good{stroke:var(--good)}
+.ng-staff .ng-now{fill:var(--teal-soft)}
+.ng-staff .ng-l{font:700 17px "Andika","Comic Neue",system-ui,sans-serif;fill:var(--good)}
+.ng-staff .ng-l.fixed{fill:var(--ink)}
+.ng-staff .ng-blank{stroke:var(--ink-3);stroke-width:1.6;stroke-linecap:round}
+.ng-word{font-size:28px;color:var(--ink)}
 /* ── 认音符（notes.js）── */
 .nr{padding:4px 0 24px;display:flex;flex-direction:column;align-items:center}
 .nr-q{margin:0 0 4px;font-family:var(--disp);font-size:20px;color:var(--ink)}
@@ -697,6 +709,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <script src="wordgame.js"></script>
 <script src="notes.js"></script>
 <script src="musicwrite.js"></script>
+<script src="notegame.js"></script>
 <script src="cat.js"></script>
 <script src="game.js"></script>
 <script src="today.js"></script>
@@ -755,6 +768,8 @@ const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
          lgstat:"mzg.lgstat", /* 听音选词：每个词的成绩 {词:{n,ok,rt,last}}（和认字游戏分开记） */
          lgday:"mzg.lgday",   /* 听音选词：今天玩了几局 {d,n}（两个游戏各自一天 3 局） */
          lgbest:"mzg.lgbest", /* 听音选词：上一次用了多久（毫秒） */
+         ngday:"mzg.ngday",   /* 音符拼单词：今天玩了几局 {d,n}（各个游戏各自一天 3 局） */
+         ngbest:"mzg.ngbest", /* 音符拼单词：上一次用了多久（毫秒） */
          week:"mzg.week",     /* 周计划：7 个数组，下标 0 = 周日（today.js 的 DEFAULT_PLAN 是默认值） */
          days:"mzg.days",     /* 每天：{"2026-09-29":{v:来过, done:{任务:1}, pick:{任务:[字]}, skip:{任务:1}, cheered:1}} */
          plog:"mzg.plog",     /* 每个字练过几行、最近哪天：{字:{n,t}}。自动出题靠它轮换 */
@@ -1380,9 +1395,12 @@ function renderGameEntry(el){
     h+=gameEntry("mg-go","认字小游戏",'看字选图，'+MatchGame.PER_ROUND+' 个字看用多久',gameLeft());
   if(window.ListenGame&&window.EN_WORDS)
     h+=gameEntry("lg-go","听音选词",'听英文，点对的词，'+ListenGame.PER_ROUND+' 个词看用多久',listenLeft());
+  if(window.NoteGame&&window.NoteRead&&MUSIC_READY)
+    h+=gameEntry("ng-go","音符拼单词",'看五线谱上的音符拼出单词，'+NoteGame.PER_ROUND+' 个词看用多久',noteGameLeft());
   el.innerHTML=h;
   const gbtn=el.querySelector("#mg-go"); if(gbtn) gbtn.onclick=openGame;
   const lbtn=el.querySelector("#lg-go"); if(lbtn) lbtn.onclick=openListen;
+  const nbtn=el.querySelector("#ng-go"); if(nbtn) nbtn.onclick=openNoteGame;
 }
 function renderZh(){
   const b=$("#home-body");
@@ -2231,6 +2249,30 @@ function openListen(){
     onExit:function(){ goHome("today") }
   });
 }
+/* 音符拼单词：规矩和另外两个小游戏一样，各自一天 3 局 */
+function noteGameLeft(){ return window.MatchGame
+  ? MatchGame.leftToday(load(K.ngday,null), GAME_PER_DAY, todayStr()) : 0 }
+function openNoteGame(){
+  if(!window.NoteGame || noteGameLeft()<=0) return;
+  if(gameCtl&&gameCtl.destroy) gameCtl.destroy();
+  show("#view-game"); $("#title").textContent="音符拼单词";
+  beep("tap");
+  gameCtl=NoteGame.attach($("#view-game"),{
+    bassShare:bassShare,
+    letters:function(){ return cfg.noteLetters!==false },
+    clefPath:NoteRead.clefPath,
+    best:function(){ return load(K.ngbest,0) },
+    saveBest:function(ms){ save(K.ngbest,ms) },
+    useRound:function(){
+      markDay();
+      const t=todayStr(), r=load(K.ngday,null);
+      save(K.ngday,(r&&r.d===t)?{d:t,n:(r.n||0)+1}:{d:t,n:1});
+    },
+    speak:speakWord, say:say, beep:beep,
+    cat:function(host){ return window.Cat?Cat.attach(host,{mood:"calm"}):null },
+    onExit:function(){ goHome("today") }
+  });
+}
 let gameCtl=null;
 function openGame(){
   if(!window.MatchGame || gameLeft()<=0) return;
@@ -2421,7 +2463,7 @@ function bakPayload(){
     stars:stars, sel:load(K.sel,[]), wrong:wrong, cfg:cfg,
     week:load(K.week,null), days:load(K.days,{}), plog:load(K.plog,{}),
     gstat:load(K.gstat,{}), gbest:load(K.gbest,0), lgstat:load(K.lgstat,{}), lgbest:load(K.lgbest,0),
-    nstat:load(K.nstat,{})});
+    nstat:load(K.nstat,{}), ngbest:load(K.ngbest,0)});
 }
 function bakWhen(){
   const el=$("#bak-when"); if(!el) return;
@@ -2568,6 +2610,7 @@ $("#bak-do").onclick=function(){
   if(d.lgstat&&typeof d.lgstat==="object"&&!Array.isArray(d.lgstat)) save(K.lgstat,d.lgstat);
   if(typeof d.lgbest==="number") save(K.lgbest,d.lgbest);
   if(d.nstat&&typeof d.nstat==="object"&&!Array.isArray(d.nstat)) save(K.nstat,d.nstat);
+  if(typeof d.ngbest==="number") save(K.ngbest,d.ngbest);
   if(d.cfg&&typeof d.cfg==="object"){
     cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,recOrder:"write"},d.cfg);
     save(K.cfg,cfg);

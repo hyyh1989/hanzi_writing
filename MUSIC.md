@@ -109,6 +109,16 @@ Notes on or above the middle line: stem down, on the left.* **只限这一条，
 符干朝向跟着位置走（高音这 5 个在中线下 → 朝上在右；低音这 5 个在中线上 → 朝下在左），讲解里念规则。
 星星键名 `m:treble` / `m:bass` / `m:notes-treble` / `m:notes-bass`；每日任务「写谱号和音符」每天两项：一个谱号 + 一串音符。
 
+## 已做：音符拼单词小游戏（2026-09-30，`app/notegame.js`）
+
+- 首页小游戏区，不当任务。五线谱上一串音符（先画谱号），在琴键上按顺序点出来，字母出现在音符下面，拼成一个词
+- A–G 以外的字母直接印出来（had = h + A D、made = m + A D E），这样她高频词表里的词也能玩
+- 词：纯 A–G 的（bag bed cab dad egg face bee bad fed age add beg cage feed）+ 高频词里至少两个 A–G 字母的
+  （had and big back came made see be）
+- 规矩照搬另外两个小游戏：一局 6 个词看用多久、点错不前进、一天 3 局、小猫绑做完、图只在拼出来之后出现
+- **只看字母，不看八度**（这是拼字游戏；认音符才要点对具体的键）。低音谱号的比例跟认音符的设置（`cfg.bassShare`）
+- 存 `mzg.ngday` / `mzg.ngbest`，已进备份
+
 ## 上线时
 
 - `index.html` 的 `MUSIC_READY` 改成 `true`，`today.js` 的 `DEFAULT_PLAN` 换回注释里带音乐的那版

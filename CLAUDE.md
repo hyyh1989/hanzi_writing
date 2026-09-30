@@ -72,7 +72,7 @@
      和音乐一样显示成线下任务、家长打勾。`mzg.week` 早期是 7 个数组，现在是 `{days, custom}`，两种都认
    - 备份里加了 `week / days / plog / gstat / gbest`（老备份没有就跳过）
 4. **小游戏不属于任何科目**，放在「今天」页的小游戏区，随时能玩（一天 3 局的限量照旧）。
-   以后的「音符拼单词」做成游戏，也放这里，不当任务。
+   「音符拼单词」（`app/notegame.js`，2026-09-30）也在这里，不当任务。三个游戏各自一天 3 局。
 5. **任务不是门票**：游戏、小猫都不需要先完成任务。
 6. **没做完不惩罚**：本周打卡里没来的日子只是空着，不打叉、不变红；**不做「连续 N 天」**
    （断了孩子会沮丧）。打卡（`mzg.days`，只记来过）在写完一个字、做完一轮听写、玩完一局游戏时记。
@@ -153,7 +153,7 @@
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
 **`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
-`manifest.webmanifest`、`latin-play.js`、`today.js`、`en-words.js`、`spell.js`、`wordgame.js`、`notes.js`、`musicwrite.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
+`manifest.webmanifest`、`latin-play.js`、`today.js`、`en-words.js`、`spell.js`、`wordgame.js`、`notes.js`、`musicwrite.js`、`notegame.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
 |---|---|---|
