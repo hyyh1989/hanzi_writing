@@ -722,6 +722,7 @@ details.parent summary{cursor:pointer;font-size:13px;color:var(--ink-3)}
 <script src="hanzi-writer.min.js"></script>
 <script src="chardata.js"></script>
 <script src="words.js"></script>
+<script src="hongen.js"></script>
 <script src="latin.js"></script>
 <script src="latin-play.js"></script>
 <script src="en-words.js"></script>
@@ -1023,10 +1024,19 @@ function selSet(){ return new Set(load(K.sel,[])); }
 function saveSel(set){ save(K.sel, Array.from(set)); }
 /* 练习页的字表来源：教材 / 洪恩识字（cfg.pSrc）。2026-10-06 用户：有时按洪恩的顺序学更合理，教材的字对不上。
    洪恩的字表家长手工录入（K.hongen，一串字），这里按 10 个一单元切开 */
-function hongenChars(){
-  const raw=load(K.hongen,"")||"", out=[];
-  (String(raw).match(/[\u3400-\u9fff]/g)||[]).forEach(function(c){ if(out.indexOf(c)<0) out.push(c); });
+/* 一串文字 → 不重复的汉字（保持顺序；标点、空格、拼音都忽略） */
+function hanList(raw){
+  const out=[];
+  (String(raw||"").match(/[\u3400-\u9fff]/g)||[]).forEach(function(c){ if(out.indexOf(c)<0) out.push(c); });
   return out;
+}
+/* 洪恩字表：内置一份（app/hongen.js，所有设备都有），设备上自己录的另存 K.hongen。
+   设备上录的字内置里全都有 → 用内置的（以后内置补了字，这台也跟着更新）；
+   录了内置里没有的字 → 用设备上的（家长在这台设备上往后加了新字） */
+function hongenChars(){
+  const base=hanList(window.HONGEN_DEFAULT), mine=hanList(load(K.hongen,""));
+  if(!mine.length) return base;
+  return mine.every(c=>base.indexOf(c)>=0) ? base : mine;
 }
 function hongenUnits(){
   const cs=hongenChars(), us=[];

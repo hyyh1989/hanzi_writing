@@ -152,7 +152,7 @@
 单文件 app，无框架、无构建步骤。`app/index.html` 按顺序是：
 head 标签 → CSS → HTML → 三个 `<script src>`（hanzi-writer 库 / 字库 / 组词）→ 一个 IIFE 应用脚本。
 
-**`app/` 下除 `index.html`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
+**`app/` 下除 `index.html`、`hongen.js`、`hanzi-writer.min.js`、`cat.js`、`game.js`、`meow.wav`、`_headers`、
 `manifest.webmanifest`、`latin-play.js`、`today.js`、`en-words.js`、`spell.js`、`wordgame.js`、`notes.js`、`musicwrite.js`、`notegame.js` 以外都是生成物，不要手改。** 源文件在 `build/`：
 
 | 手改这个 | 跑这个 | 产出 |
@@ -453,6 +453,9 @@ Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 C
   一串字，标点拼音重复都忽略），每 10 个字一个单元（`hongenUnits()`）。用户说有时按洪恩的顺序学更合理。
   `selOrdered()` 先按当前页签的顺序，另一张表的字接在后面。已进备份。
   「学到第几课」（认字游戏、每日任务用的）仍然只按教材，没跟洪恩联动
+- **洪恩字表内置一份**（`app/hongen.js` 的 `HONGEN_DEFAULT`，手写数据），所有设备打开就有，不用每台重录。
+  `hongenChars()`：设备上没录过、或录的字内置里全有 → 用内置的；录了内置里没有的字 → 用设备上的。
+  家长在某台设备上加了新字，要让所有设备都有，就把那串字发给 Claude 补进 `hongen.js`
 
 `groups()` 按 `cfg.lessonMode`（`"text"` / `"stroke"`）返回 `TEXTBOOK` 或 `LESSONS`。
 
