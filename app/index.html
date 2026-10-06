@@ -312,18 +312,18 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .p-title{font-family:var(--han);font-size:10.5pt;color:#333;margin:0 0 4mm;
          display:flex;justify-content:space-between;border-bottom:.4pt solid #bbb;
          padding-bottom:2mm}
-.p-ch{margin-bottom:5mm}
-.p-ch-h{font-family:var(--han);font-size:11pt;color:#333;margin-bottom:1.5mm}
-.p-ch-h b{font-size:15pt}
-.p-ch-h i{font-style:normal;color:#888;font-size:9pt}
+/* 每个字一块：上面一行小字（字、拼音、笔画数）3.5mm → 笔顺分解（可选）→ 练习行；块之间 2.5mm。
+   这些 mm 数和 pHeight() 对得上，改了要一起改 */
+.p-ch{padding-top:3.5mm;margin-bottom:2.5mm;position:relative;page-break-inside:avoid}
+.p-py{position:absolute;left:0;top:0;font-family:var(--han);font-size:7.5pt;color:#666;line-height:3mm;white-space:nowrap}
+.p-py i{font-style:normal;color:#999}
 .p-ord{display:flex;flex-wrap:wrap;gap:1mm;margin-bottom:1.5mm}
 .p-oc{text-align:center}
-.p-oc span{display:block;font-size:7pt;color:#888;font-family:var(--disp)}
+.p-oc span{display:block;height:3mm;font-size:6.5pt;line-height:3mm;color:#888;font-family:var(--disp)}
 .p-row{display:flex;gap:0}
-/* 紧凑版：一行 10 格，行距 2.5mm；拼音小字印在范字格上方的行距里 */
-.p-page.compact .p-title{margin-bottom:3mm}
-.p-line{position:relative;padding-top:2.5mm;page-break-inside:avoid}
-.p-py{position:absolute;left:0;top:-.6mm;font-family:var(--han);font-size:7pt;color:#888;line-height:1}
+.p-opts{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:4px 0 10px;font-size:14px;color:var(--ink-2)}
+.p-opts .seg{margin:0 8px 0 0}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
 @media print{
   @page{size:A4 portrait;margin:11mm}
   body{background:#fff}
@@ -2042,67 +2042,79 @@ function pOrder(ch,i){
   if(m&&m.length) g+='<circle cx="'+m[0][0]+'" cy="'+(900-m[0][1])+'" r="74" fill="#1B2530"/>';
   return g;
 }
-function pBlock(ch,U,UO){
-  const d=D[ch];
-  const ord=d.s.map((_,i)=>
-    '<div class="p-oc">'+pSvg(UO,pOrder(ch,i))+'<span>'+(i+1)+'</span></div>').join("");
-  const kinds=["model","trace","trace","none","none"];
-  const row=kinds.map(k=>pSvg(U, k==="model"?pModel(ch,"#1B2530")
-                              : k==="trace"?pModel(ch,"#E3CFCC") : "")).join("");
-  return '<div class="p-ch"><div class="p-ch-h"><b>'+ch+'</b>　'+d.p+'　共 '+d.n+' 画'+
-    '　<i>黑点＝这一笔从哪里起笔</i></div>'+
-    '<div class="p-ord">'+ord+'</div><div class="p-row">'+row+'</div></div>';
+/* 打印字帖的两个选项（2026-10-06 用户要的）：要不要笔顺分解（cfg.printOrder，默认要）、
+   每行几格（cfg.printCols：6 / 8 / 10，默认 8）。每行 = 1 格范字 + 描红 + 自己写，描红是 (格数-1)/2 取整
+   （10 格：1+4+5，8 格：1+3+4，6 格：1+2+3）。
+   A4 去掉 11mm 页边距后可用 188 × 275mm；一行格子总宽留 4mm 余量（184mm）。
+   一页放几个字不写死：按每个字实际占的高度（笔画多的字笔顺分解会折成两行）往下排，排满换页。
+   下面这些 mm 数和 CSS（.p-ch / .p-ord / .p-oc span）对得上，改了要一起改 */
+const P_W=184, P_H=275-12,   /* 页顶标题实测 11.4mm */ P_LABEL=3.5, P_NUM=3, P_ORDGAP=1, P_GAP=2.5;
+function pOpts(){
+  const cols=[6,8,10].indexOf(cfg.printCols)>=0 ? cfg.printCols : 8;
+  const U=Math.floor(P_W/cols*10)/10, UO=Math.min(16,Math.max(10,Math.round(U*0.55)));
+  return {order:cfg.printOrder!==false, cols:cols, U:U, UO:UO, trace:Math.floor((cols-1)/2)};
 }
-/* 紧凑版（2026-10-06 用户要的，默认）：一个字一行 10 格——1 格范字、4 格描红（2–5）、5 格自己写（6–10）。
-   A4 去掉 11mm 页边距后可用 188 × 275mm：一格 18.4mm 放 10 格（留 4mm 余量）；一行连行距 21mm，
-   标题占 10mm 左右，一页放 12 个字。拼音、笔画数小字印在范字格上方，不另占一行 */
-function pLine(ch,U){
-  const d=D[ch], kinds=["model","trace","trace","trace","trace","none","none","none","none","none"];
-  return '<div class="p-line"><div class="p-row">'+kinds.map(k=>pSvg(U, k==="model"?pModel(ch,"#1B2530")
-            : k==="trace"?pModel(ch,"#E3CFCC") : "")).join("")+'</div>'+
-         '<span class="p-py">'+d.p+'　'+d.n+' 画</span></div>';
+/* 笔顺分解一行放得下几格 */
+function pOrdPerLine(o){ return Math.max(1,Math.floor((P_W+P_ORDGAP)/(o.UO+P_ORDGAP))); }
+function pHeight(ch,o){
+  let h=P_LABEL+o.U+P_GAP;
+  if(o.order) h+=Math.ceil(D[ch].s.length/pOrdPerLine(o))*(o.UO+P_NUM+P_ORDGAP)+1.5;
+  return h;
 }
-function pPages(chars,title,U,UO,per,compact){
-  let out="";
-  for(let i=0;i<chars.length;i+=per){
-    out+='<div class="p-page'+(compact?" compact":"")+'"><div class="p-title"><span>'+title+
-      '　（'+(Math.floor(i/per)+1)+'/'+Math.ceil(chars.length/per)+'）</span>'+
-      '<span>姓名 __________　日期 __________</span></div>'+
-      chars.slice(i,i+per).map(c=>compact?pLine(c,U):pBlock(c,U,UO)).join("")+'</div>';
-  }
-  return out;
+function pBlock(ch,o){
+  const d=D[ch], U=o.U+"mm", UO=o.UO+"mm";
+  const ord=o.order ? '<div class="p-ord">'+d.s.map((_,i)=>
+    '<div class="p-oc">'+pSvg(UO,pOrder(ch,i))+'<span>'+(i+1)+'</span></div>').join("")+'</div>' : "";
+  let row="";
+  for(let k=0;k<o.cols;k++)
+    row+=pSvg(U, k===0?pModel(ch,"#1B2530") : k<=o.trace?pModel(ch,"#E3CFCC") : "");
+  return '<div class="p-ch"><span class="p-py">'+ch+'　'+d.p+'　'+d.n+' 画'+
+    (o.order?'　<i>黑点＝这一笔从哪里起笔</i>':'')+'</span>'+ord+'<div class="p-row">'+row+'</div></div>';
+}
+function pPages(chars,title,o){
+  const pages=[]; let cur=[], used=0;
+  chars.forEach(function(c){
+    const h=pHeight(c,o);
+    if(cur.length && used+h>P_H){ pages.push(cur); cur=[]; used=0; }
+    cur.push(c); used+=h;
+  });
+  if(cur.length) pages.push(cur);
+  return {n:pages.length, html:pages.map(function(pg,i){
+    return '<div class="p-page"><div class="p-title"><span>'+title+'　（'+(i+1)+'/'+pages.length+'）</span>'+
+      '<span>姓名 __________　日期 __________</span></div>'+pg.map(c=>pBlock(c,o)).join("")+'</div>';
+  }).join("")};
 }
 function openPrint(chars,title){
   if(!chars.length) return;
   if(chars.some(function(c){return !D[c]}))
     return ensureChars(chars,function(){ openPrint(chars,title) });
-  /* 两种版式（cfg.printFull）：紧凑（默认，一页 12 个字）/ 带笔顺分解（一页 4 个字，格子 35mm） */
-  const full=!!cfg.printFull, per=full?4:12, pages=Math.ceil(chars.length/per);
+  const o=pOpts(), r=pPages(chars,title,o);
+  const seg=(key,opts,cur)=>'<span class="seg">'+opts.map(x=>
+    '<button data-'+key+'="'+x[0]+'" aria-pressed="'+(x[0]===cur)+'">'+x[1]+'</button>').join("")+'</span>';
   $("#title").textContent="打印字帖";
   $("#view-print").innerHTML=
     '<div class="panel no-print" style="margin-top:16px"><h3 class="pt">'+title+'　·　'+
-    chars.length+' 个字　·　'+pages+' 页</h3>'+
-    '<div class="seg" role="tablist" style="margin:4px 0 10px">'+
-      '<button role="tab" data-pfull="0" aria-selected="'+(!full)+'">一页 12 个字</button>'+
-      '<button role="tab" data-pfull="1" aria-selected="'+full+'">带笔顺分解 · 一页 4 个字</button></div>'+
-    (full
-      ? '<p class="note">每个字两行：上面是<b>笔顺分解</b>（黑点标出每一笔从哪里起笔），'+
-        '下面是<b>练习行</b>——1 格范字、2 格描红、2 格自己写。米字格 35mm。</p>'
-      : '<p class="note">每个字一行 10 格：<b>第 1 格范字，2–5 格描红，6–10 格自己写</b>。米字格 18.4mm。</p>')+
+    chars.length+' 个字　·　'+r.n+' 页</h3>'+
+    '<div class="p-opts"><span>笔顺分解</span>'+seg("pord",[["1","有"],["0","没有"]],o.order?"1":"0")+
+    '<span>每行格数</span>'+seg("pcols",[["6","6 格"],["8","8 格"],["10","10 格"]],String(o.cols))+'</div>'+
+    '<p class="note">每个字：'+(o.order?'上面一行<b>笔顺分解</b>（黑点标出每一笔从哪里起笔），下面':'')+
+    '一行 '+o.cols+' 格——<b>第 1 格范字，2–'+(o.trace+1)+' 格描红，'+(o.trace+2)+'–'+o.cols+' 格自己写</b>。'+
+    '米字格 '+o.U+'mm，这样一页大约 '+Math.floor(P_H/pHeight(chars[0],o))+' 个字（笔画多的字占得多一点）。</p>'+
     '<p class="note">点下面的按钮会打开系统打印窗口。没有打印机的话选「存储为 PDF」，'+
     '发到手机拿去打印店印，几毛钱一张。</p>'+
-    (chars.length>60?'<p class="miss">选了 '+chars.length+' 个字，'+pages+
+    (chars.length>60?'<p class="miss">选了 '+chars.length+' 个字，'+r.n+
       ' 页，下面的预览可能要等几秒才画完。</p>':'')+
     '<div class="row"><button class="btn" id="do-print">打印 / 存为 PDF</button>'+
     '<button class="btn ghost" id="print-back">返回</button></div></div>'+
     '<h2 class="theme-h no-print">预览　<small style="font-weight:600;color:var(--ink-3)">'+
-    '下面就是打印出来的样子，全部 '+pages+' 页（可以横向滑动）</small></h2>'+
+    '下面就是打印出来的样子，全部 '+r.n+' 页（可以横向滑动）</small></h2>'+
     '<div class="p-scroll"><div id="printable"></div></div>';
   show("#view-print");
-  $("#printable").innerHTML=full ? pPages(chars,title,"35mm","17mm",per,false)
-                                 : pPages(chars,title,"18.4mm","",per,true);
-  $("#view-print").querySelectorAll("[data-pfull]").forEach(function(b){ b.onclick=function(){
-    cfg.printFull=b.dataset.pfull==="1"; save(K.cfg,cfg); beep("tap"); openPrint(chars,title); }; });
+  $("#printable").innerHTML=r.html;
+  $("#view-print").querySelectorAll("[data-pord]").forEach(function(b){ b.onclick=function(){
+    cfg.printOrder=b.dataset.pord==="1"; save(K.cfg,cfg); beep("tap"); openPrint(chars,title); }; });
+  $("#view-print").querySelectorAll("[data-pcols]").forEach(function(b){ b.onclick=function(){
+    cfg.printCols=+b.dataset.pcols; save(K.cfg,cfg); beep("tap"); openPrint(chars,title); }; });
   $("#do-print").onclick=()=>window.print();
   $("#print-back").onclick=()=>goHome();
 }
