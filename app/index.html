@@ -320,6 +320,10 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 .p-oc{text-align:center}
 .p-oc span{display:block;font-size:7pt;color:#888;font-family:var(--disp)}
 .p-row{display:flex;gap:0}
+/* 紧凑版：一行 10 格，行距 2.5mm；拼音小字印在范字格上方的行距里 */
+.p-page.compact .p-title{margin-bottom:3mm}
+.p-line{position:relative;padding-top:2.5mm;page-break-inside:avoid}
+.p-py{position:absolute;left:0;top:-.6mm;font-family:var(--han);font-size:7pt;color:#888;line-height:1}
 @media print{
   @page{size:A4 portrait;margin:11mm}
   body{background:#fff}
@@ -2049,13 +2053,22 @@ function pBlock(ch,U,UO){
     '　<i>黑点＝这一笔从哪里起笔</i></div>'+
     '<div class="p-ord">'+ord+'</div><div class="p-row">'+row+'</div></div>';
 }
-function pPages(chars,title,U,UO,per){
+/* 紧凑版（2026-10-06 用户要的，默认）：一个字一行 10 格——1 格范字、4 格描红（2–5）、5 格自己写（6–10）。
+   A4 去掉 11mm 页边距后可用 188 × 275mm：一格 18.4mm 放 10 格（留 4mm 余量）；一行连行距 21mm，
+   标题占 10mm 左右，一页放 12 个字。拼音、笔画数小字印在范字格上方，不另占一行 */
+function pLine(ch,U){
+  const d=D[ch], kinds=["model","trace","trace","trace","trace","none","none","none","none","none"];
+  return '<div class="p-line"><div class="p-row">'+kinds.map(k=>pSvg(U, k==="model"?pModel(ch,"#1B2530")
+            : k==="trace"?pModel(ch,"#E3CFCC") : "")).join("")+'</div>'+
+         '<span class="p-py">'+d.p+'　'+d.n+' 画</span></div>';
+}
+function pPages(chars,title,U,UO,per,compact){
   let out="";
   for(let i=0;i<chars.length;i+=per){
-    out+='<div class="p-page"><div class="p-title"><span>'+title+
+    out+='<div class="p-page'+(compact?" compact":"")+'"><div class="p-title"><span>'+title+
       '　（'+(Math.floor(i/per)+1)+'/'+Math.ceil(chars.length/per)+'）</span>'+
       '<span>姓名 __________　日期 __________</span></div>'+
-      chars.slice(i,i+per).map(c=>pBlock(c,U,UO)).join("")+'</div>';
+      chars.slice(i,i+per).map(c=>compact?pLine(c,U):pBlock(c,U,UO)).join("")+'</div>';
   }
   return out;
 }
@@ -2063,13 +2076,19 @@ function openPrint(chars,title){
   if(!chars.length) return;
   if(chars.some(function(c){return !D[c]}))
     return ensureChars(chars,function(){ openPrint(chars,title) });
-  const per=4, pages=Math.ceil(chars.length/per);
+  /* 两种版式（cfg.printFull）：紧凑（默认，一页 12 个字）/ 带笔顺分解（一页 4 个字，格子 35mm） */
+  const full=!!cfg.printFull, per=full?4:12, pages=Math.ceil(chars.length/per);
   $("#title").textContent="打印字帖";
   $("#view-print").innerHTML=
     '<div class="panel no-print" style="margin-top:16px"><h3 class="pt">'+title+'　·　'+
     chars.length+' 个字　·　'+pages+' 页</h3>'+
-    '<p class="note">每个字两行：上面是<b>笔顺分解</b>（黑点标出每一笔从哪里起笔），'+
-    '下面是<b>练习行</b>——1 格范字、2 格描红、2 格自己写。米字格 35mm，适合 5 岁的手。</p>'+
+    '<div class="seg" role="tablist" style="margin:4px 0 10px">'+
+      '<button role="tab" data-pfull="0" aria-selected="'+(!full)+'">一页 12 个字</button>'+
+      '<button role="tab" data-pfull="1" aria-selected="'+full+'">带笔顺分解 · 一页 4 个字</button></div>'+
+    (full
+      ? '<p class="note">每个字两行：上面是<b>笔顺分解</b>（黑点标出每一笔从哪里起笔），'+
+        '下面是<b>练习行</b>——1 格范字、2 格描红、2 格自己写。米字格 35mm。</p>'
+      : '<p class="note">每个字一行 10 格：<b>第 1 格范字，2–5 格描红，6–10 格自己写</b>。米字格 18.4mm。</p>')+
     '<p class="note">点下面的按钮会打开系统打印窗口。没有打印机的话选「存储为 PDF」，'+
     '发到手机拿去打印店印，几毛钱一张。</p>'+
     (chars.length>60?'<p class="miss">选了 '+chars.length+' 个字，'+pages+
@@ -2080,7 +2099,10 @@ function openPrint(chars,title){
     '下面就是打印出来的样子，全部 '+pages+' 页（可以横向滑动）</small></h2>'+
     '<div class="p-scroll"><div id="printable"></div></div>';
   show("#view-print");
-  $("#printable").innerHTML=pPages(chars,title,"35mm","17mm",per);
+  $("#printable").innerHTML=full ? pPages(chars,title,"35mm","17mm",per,false)
+                                 : pPages(chars,title,"18.4mm","",per,true);
+  $("#view-print").querySelectorAll("[data-pfull]").forEach(function(b){ b.onclick=function(){
+    cfg.printFull=b.dataset.pfull==="1"; save(K.cfg,cfg); beep("tap"); openPrint(chars,title); }; });
   $("#do-print").onclick=()=>window.print();
   $("#print-back").onclick=()=>goHome();
 }

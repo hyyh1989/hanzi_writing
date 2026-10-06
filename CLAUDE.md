@@ -361,6 +361,10 @@ Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 C
    撤销一笔就是靠它：`ink.pop()` 后 `cancelQuiz()` 再 `startQuiz(trace,false,ink.length)`。
    ⚠️ `startQuiz` 里**不要**清空 `ink`/`mistakes`（撤销要保留前面的笔画），由 `runCell` 清。
 
+6a. **打印字帖两种版式**（2026-10-06）：默认**紧凑版**，一个字一行 10 格（1 范字、2–5 描红、6–10 自己写），
+   格子 18.4mm，一页 12 个字（A4 去 11mm 边距后 188×275mm 算出来的，改格子大小要重算）；
+   原来的「笔顺分解 + 35mm 大格，一页 4 个字」留作选项（`cfg.printFull`）。
+
 6. **打印预览就是打印内容本身，别做第二套渲染。** `#printable` 在 `#view-print` 里面，
    屏幕上按 210mm 实宽直接显示，`@media print` 只把其余部分（`.top`/`.no-print`/`.selbar`）藏掉。
    **`#printable` 不能有 `display:none`** —— 踩过：DOM 里三页都在、JS 检查全过，
