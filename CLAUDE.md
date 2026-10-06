@@ -385,6 +385,11 @@ Artifact 只用于家长在电脑上看、或者需要把选择结果存回给 C
 10. **`.gitignore` 不支持行尾注释。** `build/cache/  # 说明` 整行被当成路径，
     结果 9574 个缓存文件全提交了。注释要单独一行。
 
+12. **测试时别动用户可能在用的数据**（2026-10-06 踩过）：用户在内置浏览器面板的本机测试页
+    （localhost:8080）上录了 100 个洪恩识字的字，我的测试脚本 `localStorage.removeItem('mzg.hongen')`
+    把它清掉了，磁盘上也找不回。**测试前先 `JSON.stringify(localStorage)` 整份备份，测完原样写回**，
+    不要直接 removeItem / clear。并提醒用户：真实数据在正式站录，本机测试页的数据随时可能被测试改动。
+
 11. **本地 `python3 -m http.server` 不发 charset，中文乱码。** 用 `build/serve.py`
     （它补了 charset 并绑 0.0.0.0 让 iPad 能连）。
 
