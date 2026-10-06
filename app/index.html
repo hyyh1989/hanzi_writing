@@ -94,6 +94,11 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 .tabs{display:flex;gap:6px;background:var(--sunk);padding:4px;border-radius:12px;margin:18px 0 16px}
 .tabs button{flex:1;padding:9px 4px;border-radius:9px;font-weight:700;font-size:14px;color:var(--ink-3)}
 .tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+/* 练习页的字表来源：教材 / 洪恩识字（比上面的三个大页签小一号） */
+.seg{display:inline-flex;gap:4px;background:var(--sunk);padding:3px;border-radius:10px;margin:0 0 12px}
+.seg button{padding:7px 16px;border-radius:8px;font-weight:700;font-size:13.5px;color:var(--ink-3)}
+.seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.hongen-ed textarea{width:100%;font-size:20px;letter-spacing:.12em;line-height:1.6}
 
 .lesson{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
         padding:14px 15px;margin-bottom:10px;box-shadow:var(--shadow)}
@@ -145,7 +150,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 .selbar-in b{font-family:var(--disp);font-size:19px;color:var(--teal);
              font-variant-numeric:tabular-nums}
 .selbar-in .btn{min-height:46px;padding:11px 16px;font-size:14px}
-.selbar-btns{display:flex;gap:8px;flex:none}
+.selbar-btns{display:flex;gap:8px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end}
 body.has-bar .app{padding-bottom:100px}
 .pt{font-size:15px;margin-bottom:7px}
 .note{font-size:12.5px;color:var(--ink-3);line-height:1.55;margin:0 0 10px}
@@ -641,6 +646,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
 <div class="selbar" id="selbar" hidden>
   <div class="selbar-in"><span>已选 <b id="sel-n">0</b> 个字</span>
   <span class="selbar-btns"><button class="btn ghost" id="go-print">打印字帖</button>
+  <button class="btn quiet" id="go-write">开始练字 →</button>
   <button class="btn" id="go-dict">开始听写 →</button></span></div>
 </div>
 
@@ -649,7 +655,7 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   <div class="setrow"><span>朗读读音</span><button class="sw" id="sw-speak" aria-pressed="true" aria-label="朗读读音"></button></div>
   <div class="setrow"><span>提示音效</span><button class="sw" id="sw-sound" aria-pressed="true" aria-label="提示音效"></button></div>
   <div class="setrow"><span>判定宽松<br><small style="color:var(--ink-3);font-size:12px">刚开始建议宽松</small></span><button class="sw" id="sw-easy" aria-pressed="true" aria-label="判定宽松"></button></div>
-  <div class="setrow"><span>语音点评<br><small style="color:var(--ink-3);font-size:12px">写完念出问题和改法</small></span><button class="sw" id="sw-voice" aria-pressed="true" aria-label="语音点评"></button></div>
+  <div class="setrow"><span>写字时的语音提示<br><small style="color:var(--ink-3);font-size:12px">起笔提醒、写错提醒、写完的点评。关掉后只看屏幕上的红点和示范</small></span><button class="sw" id="sw-voice" aria-pressed="true" aria-label="写字时的语音提示"></button></div>
   <div class="setrow"><span>起笔点提示<br><small style="color:var(--ink-3);font-size:12px">默写时也标出每笔从哪起</small></span><button class="sw" id="sw-dot" aria-pressed="true" aria-label="起笔点提示"></button></div>
   <div class="setrow" style="display:block">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
@@ -780,7 +786,8 @@ const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
          week:"mzg.week",     /* 周计划：7 个数组，下标 0 = 周日（today.js 的 DEFAULT_PLAN 是默认值） */
          days:"mzg.days",     /* 每天：{"2026-09-29":{v:来过, done:{任务:1}, pick:{任务:[字]}, skip:{任务:1}, cheered:1}} */
          plog:"mzg.plog",     /* 每个字练过几行、最近哪天：{字:{n,t}}。自动出题靠它轮换 */
-         nstat:"mzg.nstat"};  /* 认音符：每个音答得怎样 {"treble60":{n,ok,t}}（谱号+MIDI 编号） */
+         nstat:"mzg.nstat",
+         hongen:"mzg.hongen"};  /* 洪恩识字的字表（家长按洪恩的顺序手工录入的一串字），练习页按 10 个一单元显示 */  /* 认音符：每个音答得怎样 {"treble60":{n,ok,t}}（谱号+MIDI 编号） */
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let stars=load(K.stars,{}), wrong=load(K.wrong,{});
@@ -1007,10 +1014,28 @@ function wrongCount(){ return wrongList().length; }
 /* ── 练习页：跨单元挑字听写 ── */
 function selSet(){ return new Set(load(K.sel,[])); }
 function saveSel(set){ save(K.sel, Array.from(set)); }
-/* 按课本顺序排，不按勾选顺序 */
+/* 练习页的字表来源：教材 / 洪恩识字（cfg.pSrc）。2026-10-06 用户：有时按洪恩的顺序学更合理，教材的字对不上。
+   洪恩的字表家长手工录入（K.hongen，一串字），这里按 10 个一单元切开 */
+function hongenChars(){
+  const raw=load(K.hongen,"")||"", out=[];
+  (String(raw).match(/[\u3400-\u9fff]/g)||[]).forEach(function(c){ if(out.indexOf(c)<0) out.push(c); });
+  return out;
+}
+function hongenUnits(){
+  const cs=hongenChars(), us=[];
+  for(let i=0;i<cs.length;i+=10){
+    const part=cs.slice(i,i+10);
+    us.push({name:"第 "+(i/10+1)+" 单元", sub:(i+1)+"–"+(i+part.length), chars:part});
+  }
+  return us;
+}
+function pSrc(){ return cfg.pSrc==="hongen" ? "hongen" : "text" }
+function practiceSets(){ return pSrc()==="hongen" ? hongenUnits() : lessonSets(); }
+/* 按当前字表（教材或洪恩）的顺序排，不按勾选顺序；另一张表里的字接在后面 */
 function selOrdered(){
   const set=selSet(), out=[];
-  lessonSets().forEach(function(l){
+  const first=practiceSets(), second=pSrc()==="hongen" ? lessonSets() : hongenUnits();
+  first.concat(second).forEach(function(l){
     l.chars.forEach(function(c){ if(set.has(c) && out.indexOf(c)<0) out.push(c); });
   });
   /* 库里可能有不在当前教材里的字（换版本之后），别漏掉 */
@@ -1032,6 +1057,7 @@ function renderSelBar(){
   document.body.classList.toggle("has-bar", !bar.hidden);
   $("#sel-n").textContent=n;
   $("#go-dict").disabled = (n===0);
+  $("#go-write").disabled = (n===0);
   $("#go-print").disabled = (n===0);
 }
 let tidy=false;   /* 「要多练的字」的「整理」模式：点字=删掉，不是勾选 */
@@ -1055,33 +1081,61 @@ function wrongCard(set){
         '<span class="dot wn">'+(tidy?"×":n)+'</span></button>';
     }).join("")+'</div></div>';
 }
+let hongenEdit=false;   /* 洪恩字表的录入框开着没有 */
+function hongenEditor(){
+  const cs=hongenChars(), miss=cs.filter(c=>!has(c));
+  /* 编辑框里每行 10 个，和单元对得上，方便核对 */
+  const lines=[]; for(let i=0;i<cs.length;i+=10) lines.push(cs.slice(i,i+10).join(""));
+  return '<div class="panel hongen-ed">'+
+    '<p class="note" style="margin:0 0 8px">按洪恩识字里<b>学的顺序</b>把字打进来（或粘贴）。'+
+    '标点、空格、换行、拼音都会被忽略，重复的字只算第一次。保存后每 10 个字自动分成一个单元。</p>'+
+    '<textarea id="hongen-text" rows="6" placeholder="例如：一二三上下口耳目手足…">'+esc(lines.join("\n"))+'</textarea>'+
+    '<p class="note" id="hongen-msg" style="margin:6px 0 0">'+(cs.length?'现在一共 <b>'+cs.length+'</b> 个字。':'')+
+    (miss.length?' 这几个字没有笔顺数据，练不了：'+esc(miss.join(" ")):'')+'</p>'+
+    '<div class="row" style="margin-top:8px"><button class="btn" id="hongen-save">保存</button>'+
+    (cs.length?'<button class="btn quiet" id="hongen-cancel">不改了</button>':'')+'</div></div>';
+}
 function renderPractice(){
-  const set=selSet(), gs=lessonSets();
+  const set=selSet(), src=pSrc(), gs=practiceSets();
+  const hongen=src==="hongen", empty=hongen&&!gs.length;
   $("#home-body").innerHTML=
+    /* 字表来源：教材 / 洪恩识字，并列两个小页签 */
+    '<div class="seg psrc" role="tablist">'+
+      '<button role="tab" data-psrc="text" aria-selected="'+(!hongen)+'">教材</button>'+
+      '<button role="tab" data-psrc="hongen" aria-selected="'+hongen+'">洪恩识字</button></div>'+
     '<div class="panel" style="margin-bottom:12px">'+
-    '<p class="note" style="margin:0 0 10px">勾选今天要听写的字。<b>可以跨单元一起选</b>——'+
+    '<p class="note" style="margin:0 0 10px">勾选今天要练的字。<b>可以跨单元一起选</b>——'+
     '把前面学过的单元也带上，顺便复习旧字。点单元名前面的方块可以整组勾选／取消。'+
+    '选好后在最下面点<b>开始练字</b>（直接描红、默写）或<b>开始听写</b>。'+
     (wrongCount()?'<br>写错的、和你标了「多练」的字都在下面的<b>要多练的字</b>里，随时可以多考几次。':'')+'</p>'+
-    '<div class="row"><button class="btn quiet" id="sel-write">只选要求会写的</button>'+
+    '<div class="row">'+(hongen?'<button class="btn quiet" id="hongen-edit">编辑洪恩字表</button>'
+                              :'<button class="btn quiet" id="sel-write">只选要求会写的</button>')+
     (wrongCount()?'<button class="btn quiet" id="sel-wrong">只选要多练的</button>':'')+
     '<button class="btn quiet" id="sel-none">全部清空</button></div></div>'+
+    (hongen&&(hongenEdit||empty)?hongenEditor():'')+
     wrongCard(set)+
     gs.map(function(l,i){
       const on=l.chars.filter(function(c){return set.has(c)}).length;
       return '<div class="lesson"><div class="lesson-h">'+
         '<button class="ubox'+(on===0?"":(on===l.chars.length?" all":" some"))+'" data-u="'+i+
         '" aria-label="勾选整组">'+(on===l.chars.length?"✓":(on?"–":""))+'</button>'+
-        '<h3>'+l.name+'</h3>'+
+        '<h3>'+l.name+(l.sub?' <small>'+l.sub+'</small>':'')+'</h3>'+
         '<span class="lesson-k">'+on+'/'+l.chars.length+'</span></div>'+
         selChips(l.chars,set)+'</div>';
     }).join("");
   renderSelBar();
+  $("#home-body").querySelectorAll("[data-psrc]").forEach(function(b){ b.onclick=function(){
+    cfg.pSrc=b.dataset.psrc; save(K.cfg,cfg); hongenEdit=false; beep("tap"); renderPractice(); }; });
+  const he=$("#hongen-edit"); if(he) he.onclick=function(){ hongenEdit=!hongenEdit; beep("tap"); renderPractice(); };
+  const hs=$("#hongen-save"); if(hs) hs.onclick=function(){
+    save(K.hongen,$("#hongen-text").value); hongenEdit=false; beep("good"); renderPractice(); };
+  const hc=$("#hongen-cancel"); if(hc) hc.onclick=function(){ hongenEdit=false; beep("tap"); renderPractice(); };
   $("#sel-none").onclick=function(){ saveSel(new Set()); renderPractice(); beep("tap"); };
   const sw=$("#sel-wrong");
   if(sw) sw.onclick=function(){ saveSel(new Set(wrongList())); renderPractice(); beep("good"); };
   const tb=$("#tidy-btn");
   if(tb) tb.onclick=function(){ tidy=!tidy; renderPractice(); beep("tap"); };
-  $("#sel-write").onclick=function(){
+  const swr=$("#sel-write"); if(swr) swr.onclick=function(){
     const w=new Set();
     gs.forEach(function(l){ (l.write||[]).forEach(function(c){ w.add(c) }); });
     saveSel(w); renderPractice(); beep("good");
@@ -1478,7 +1532,7 @@ $("#home-body").addEventListener("click",e=>{
   }
   const ub=e.target.closest("[data-u]");
   if(ub){
-    const l=lessonSets()[+ub.dataset.u]; if(!l) return;
+    const l=practiceSets()[+ub.dataset.u]; if(!l) return;
     const set=selSet();
     const allOn=l.chars.every(function(c){return set.has(c)});
     l.chars.forEach(function(c){ if(allOn) set.delete(c); else set.add(c); });
@@ -2489,7 +2543,7 @@ function bakPayload(){
     stars:stars, sel:load(K.sel,[]), wrong:wrong, cfg:cfg,
     week:load(K.week,null), days:load(K.days,{}), plog:load(K.plog,{}),
     gstat:load(K.gstat,{}), gbest:load(K.gbest,0), lgstat:load(K.lgstat,{}), lgbest:load(K.lgbest,0),
-    nstat:load(K.nstat,{}), ngbest:load(K.ngbest,0)});
+    nstat:load(K.nstat,{}), ngbest:load(K.ngbest,0), hongen:load(K.hongen,"")});
 }
 function bakWhen(){
   const el=$("#bak-when"); if(!el) return;
@@ -2637,6 +2691,7 @@ $("#bak-do").onclick=function(){
   if(typeof d.lgbest==="number") save(K.lgbest,d.lgbest);
   if(d.nstat&&typeof d.nstat==="object"&&!Array.isArray(d.nstat)) save(K.nstat,d.nstat);
   if(typeof d.ngbest==="number") save(K.ngbest,d.ngbest);
+  if(typeof d.hongen==="string") save(K.hongen,d.hongen);
   if(d.cfg&&typeof d.cfg==="object"){
     cfg=Object.assign({speak:true,sound:true,easy:true,voice:true,dot:true,recOrder:"write"},d.cfg);
     save(K.cfg,cfg);
@@ -2671,6 +2726,11 @@ window.addEventListener("resize",()=>{
       buildGrid(); placePet(); if(phase==="do") runCell(cellIdx); else goWatch();
     }},220);
 });
+/* 开始练字：选中的字直接一个个进「看笔顺 → 描红 → 默写」，和听写完练错字是同一个流程，只是不先听写 */
+$("#go-write").onclick=function(){
+  const list=selOrdered();
+  if(list.length){ beep("tap"); openChar(list[0],list); }
+};
 $("#go-dict").onclick=function(){
   const list=selOrdered();
   if(list.length) openDict(list,true);      /* 听写打乱 */
