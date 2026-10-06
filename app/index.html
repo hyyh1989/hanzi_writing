@@ -336,6 +336,9 @@ dialog::backdrop{background:rgba(20,26,30,.45)}
   .p-page:last-child{page-break-after:auto}
   .p-ch{page-break-inside:avoid}
 }
+/* 整行写完后的评分收在这里，默认收起：屏幕上给孩子看的只有「写完啦」 */
+details.parent{margin-top:8px;border-top:1px solid var(--line-2);padding-top:8px}
+details.parent summary{cursor:pointer;font-size:13px;color:var(--ink-3)}
 /* 起笔点 + 反复练 + 改正建议 */
 .startdot{animation:dotpulse 1.5s ease-in-out infinite}
 @keyframes dotpulse{0%,100%{fill-opacity:.92}50%{fill-opacity:.28}}
@@ -1561,6 +1564,10 @@ $("#home-body").addEventListener("click",e=>{
 /* ── 练习：范字 → 描红 ×N → 默写 ×M ── */
 let writer=null, cur="", curList=[], curIdx=0, ink=[], mistakes=0, gsize=340;
 let plan=[], cellIdx=0, cells=[], nTrace=3, nWrite=3, phase="watch", awaiting=false;
+/* 改错模式（2026-10-06 用户：听写错了再练时她很烦躁，关了语音也一样——烦的是被反复拦住、每格都被打分）：
+   这个字在「要多练的字」里（听写写错的、或标了多练的）就进改错模式——少写几格（描 1 写 2）、写的过程不出声。
+   平时学新字照旧。assists = 这一行里 app 替她示范了几笔（同一笔错 2 次就替她写，见 assistStroke） */
+let fixMode=false, assists=0, autoStroke=false;
 const INK_W=40;
 
 function gridSize(){
@@ -1583,11 +1590,12 @@ function modelPaths(fill){
 /* 把小朋友自己的笔迹画出来——不是字库里的标准笔画 */
 function inkPaths(strokes,color,w){
   return strokes.map(st=>{
+    const c = st.assist ? "var(--teal)" : color;      /* app 替她示范写的那一笔 */
     if(st.length>1) return '<polyline points="'+
-      st.map(q=>q.x.toFixed(0)+","+q.y.toFixed(0)).join(" ")+'" fill="none" stroke="'+color+
+      st.map(q=>q.x.toFixed(0)+","+q.y.toFixed(0)).join(" ")+'" fill="none" stroke="'+c+
       '" stroke-width="'+(w||INK_W)+'" stroke-linecap="round" stroke-linejoin="round"/>';
     if(st.length===1) return '<circle cx="'+st[0].x.toFixed(0)+'" cy="'+st[0].y.toFixed(0)+
-      '" r="'+((w||INK_W)/2)+'" fill="'+color+'"/>';
+      '" r="'+((w||INK_W)/2)+'" fill="'+c+'"/>';
     return "";
   }).join("");
 }
@@ -1696,9 +1704,27 @@ function setControls(){ setIn.apply(null,["#controls"].concat([].slice.call(argu
 
 function buildPlan(){
   plan=[];
-  for(let i=0;i<nTrace;i++) plan.push("trace");
-  for(let i=0;i<nWrite;i++) plan.push("write");
-  cells=[]; cellIdx=0;
+  const t=fixMode?1:nTrace, w=fixMode?2:nWrite;
+  for(let i=0;i<t;i++) plan.push("trace");
+  for(let i=0;i<w;i++) plan.push("write");
+  cells=[]; cellIdx=0; assists=0;
+}
+/* 同一笔错到第 2 次：app 沿正确的中线替她「写」这一笔，交给引擎判对，然后接着写下一笔——
+   不让她卡在一笔上反复失败。这一笔用青色画（看得出是示范的），这个字记进「要多练的字」。
+   不用引擎自带的 markStrokeCorrectAfterMisses：它让第 2 次怎么写都算对，分不清她是写对了还是被放过 */
+function assistStroke(i){
+  const svg=$("#writer svg"), m=glyph(cur)&&glyph(cur).m[i]; if(!svg||!m) return;
+  const r=svg.getBoundingClientRect(), S=r.width;
+  const P=q=>({clientX:r.left+q[0]/1024*S, clientY:r.top+(900-q[1])/1024*S, bubbles:true, cancelable:true, view:window});
+  const pts=[];
+  for(let k=0;k<m.length-1;k++) for(let t=0;t<1;t+=0.25) pts.push([m[k][0]+(m[k+1][0]-m[k][0])*t, m[k][1]+(m[k+1][1]-m[k][1])*t]);
+  pts.push(m[m.length-1]);
+  autoStroke=true;
+  try{
+    svg.dispatchEvent(new MouseEvent("mousedown",P(pts[0])));
+    pts.slice(1).forEach(q=>svg.dispatchEvent(new MouseEvent("mousemove",P(q))));
+    document.dispatchEvent(new MouseEvent("mouseup",P(pts[pts.length-1])));
+  }finally{ autoStroke=false; }
 }
 function renderRow(){
   const parts=['<div class="rc model"><svg viewBox="0 0 1024 1024" aria-hidden="true">'+gridOf(cur)+
@@ -1709,17 +1735,19 @@ function renderRow(){
                 : (kind==="trace" ? modelPaths("var(--trace)") : "");
     parts.push('<div class="rc'+(now?" now":"")+'">'+
       '<svg viewBox="0 0 1024 1024" aria-hidden="true">'+gridOf(cur)+g+'</svg>'+
-      '<span>'+(e?"★".repeat(e.stars):(kind==="trace"?"描":"写"))+'</span></div>');
+      '<span>'+(e?"✓":(kind==="trace"?"描":"写"))+'</span></div>');      /* 写完的格子打勾，不显示星星 */
   });
   $("#rowstrip").innerHTML=
-    '<div class="rc-h"><span>描红 '+nTrace+' 格　·　默写 '+nWrite+' 格</span>'+
-    '<button id="rc-n">改格数</button></div><div class="rc-row">'+parts.join("")+'</div>';
+    '<div class="rc-h"><span>'+(fixMode?'改错练习　·　':'')+'描红 '+plan.filter(k=>k==="trace").length+
+    ' 格　·　默写 '+plan.filter(k=>k==="write").length+' 格</span>'+
+    (fixMode?'':'<button id="rc-n">改格数</button>')+'</div><div class="rc-row">'+parts.join("")+'</div>';
   const b=$("#rc-n");
   if(b) b.onclick=()=>{ nTrace=nWrite=(nTrace===3?5:3);
                         buildPlan(); goWatch(); beep("tap"); };
 }
 function openChar(ch,list){
   if(!has(ch) && !isLatin(ch)) return;
+  fixMode=!!wrong[ch];          /* 在「要多练的字」里 = 改错练习：少写几格、不出声 */
   if(!glyph(ch)) return ensureChars([ch],function(){ if(D[ch]) openChar(ch,list) });
   const g=glyph(ch), lat=isLatin(ch);
   cur=ch; curList=list&&list.length?list:[ch]; curIdx=Math.max(0,curList.indexOf(ch));
@@ -1787,14 +1815,16 @@ function startQuiz(trace,cue,from){
        同样的偏差 b 能过 d 过不了，见 CLAUDE.md 坑 6 */
     leniency:(cfg.easy?1.5:1.0)*(trace?1.25:1)*(isLatin(cur)?(LATIN[cur].k||1):1),
     /* 写错几次后的示范：字母数字用 latin-play.js 自己画（引擎的会冒出多余部分，坑 5） */
-    showHintAfterMisses:isLatin(cur)?false:(trace?1:3),
+    /* 描红错 1 次就闪一下这一笔；默写不再闪——错到第 2 次直接替她写（assistStroke） */
+    showHintAfterMisses:isLatin(cur)?false:(trace?1:false),
     highlightOnComplete:false,      /* 别闪标准字形 */
     onMistake:d=>{
       mistakes++; beep("bad");
-      if(isLatin(cur) && window.LatinPlay && d.mistakesOnStroke>=(trace?1:3))
+      if(isLatin(cur) && window.LatinPlay && trace && d.mistakesOnStroke===1)
         LatinPlay.hint($("#lpl"),cur,d.strokeNum,{ink:getComputedStyle(document.body).getPropertyValue("--teal").trim()||"#12796F"});
-      /* 一格里最多提醒两次起笔，再多就只留红点不出声——越急躁越帮倒忙 */
-      if(d.mistakesOnStroke===1 && mistakes<=2){
+      if(d.mistakesOnStroke>=2){ paintOverlay(d.strokeNum,true); setTimeout(()=>assistStroke(d.strokeNum),350); return; }
+      /* 一格里最多提醒两次起笔，再多就只留红点不出声——越急躁越帮倒忙。改错模式不出声 */
+      if(!fixMode && d.mistakesOnStroke===1 && mistakes<=2){
         const st=strokeStart(d.strokeNum);
         if(st) say("这一笔从"+regionOf(st.a)+"起笔。",true);
       }
@@ -1806,7 +1836,9 @@ function startQuiz(trace,cue,from){
       /* drawnPath.points 是字形内部坐标(y 轴朝上)，与 medians 同一套。
          i、j 的点是 dotAssist 替她交的一笔，墨迹就画在她实际点的地方（一个圆点） */
       const tap=isLatin(cur)&&window.LatinPlay&&LatinPlay.isDot(cur,d.strokeNum)&&dotHelp&&dotHelp.lastTap();
-      ink.push(tap ? [{x:tap.x, y:900-tap.y}] : pts.map(q=>({x:q.x, y:900-q.y})));
+      const st=tap ? [{x:tap.x, y:900-tap.y}] : pts.map(q=>({x:q.x, y:900-q.y}));
+      if(autoStroke){ st.assist=true; if(plan[cellIdx]==="write") assists++; }   /* app 替她写的这一笔：青色 */
+      ink.push(st);
       paintOverlay(d.strokesRemaining>0?d.strokeNum+1:null, guide);
       cellControls();               /* 写了笔才出现「这笔重写」 */
     },
@@ -1814,7 +1846,7 @@ function startQuiz(trace,cue,from){
   });
   paintOverlay(start,guide);
   const s0=strokeStart(start);
-  if(guide&&cue&&s0) say((start?"接着写，":"第一笔，")+"从"+regionOf(s0.a)+"起笔。",true);
+  if(!fixMode&&guide&&cue&&s0) say((start?"接着写，":"第一笔，")+"从"+regionOf(s0.a)+"起笔。",true);
 }
 /* 上一笔写得不满意，退回去重写这一笔 */
 function undoStroke(){
@@ -1932,14 +1964,14 @@ function nextBtn(){
 function cellDone(){
   awaiting=true;
   const trace=(plan[cellIdx]==="trace");
-  const snap=ink.map(a=>a.slice());
+  const snap=ink.map(a=>{ const b=a.slice(); b.assist=a.assist; return b; });
   if(trace){
     /* 描红只看笔顺对不对——位置和大小是底字给的，评了没意义 */
     const st = mistakes===0?3 : mistakes<=2?2 : 1;
     cells[cellIdx]={kind:"trace", ink:snap, stars:st, mistakes:mistakes};
     beep(st===3?"good":"tap"); renderRow();
-    const msg = mistakes===0 ? "笔顺全对，描得很好。" : "笔顺提示了 "+mistakes+" 次，再描一格试试。";
-    $("#hintbar").innerHTML=msg;
+    /* 写的过程中不评价（2026-10-06）：描完只说描好了，不提错了几次 */
+    $("#hintbar").innerHTML = mistakes===0 ? "笔顺全对，描得很好。" : "描好了。";
     setControls(btn("这格重描","quiet",()=>runCell(cellIdx)), nextBtn());
     return;
   }
@@ -1947,29 +1979,15 @@ function cellDone(){
   if(!r){ $("#hintbar").textContent="没记录到笔迹，再写一次试试。";
           setControls(btn("再写一遍","",()=>runCell(cellIdx))); return; }
   beep(r.total===3?"good":"tap");
-  drawOverlay(r);
   cells[cellIdx]={kind:"write", ink:snap, stars:r.total, mistakes:mistakes,
-                  pos:r.pos, size:r.size, str:r.str};
+                  pos:r.pos, size:r.size, str:r.str, r:r};
   renderRow();
   if(r.total>starsOf(cur)){stars[cur]=r.total;save(K.stars,stars);refreshStars()}
-  const head=r.total===3?"写得真好！":r.total===2?"不错，还能更好。":"再练一次会更好。";
-  const adv=advice(r), line=head+"　"+adv;
-  $("#hintbar").innerHTML='<span class="legend"><span><i class="lg-t"></i>应该占的位置</span>'+
-    '<span><i class="lg-u"></i>你写的位置</span></span>';
-  $("#scorebox").innerHTML=
-    '<div class="score"><div class="score-top"><span class="score-stars" style="color:var(--amber)">'+
-    starStr(r.total)+'</span><h3>'+head+'</h3></div>'+
-    '<div class="advice"><span>'+adv+'</span><button id="replay" aria-label="再说一遍">🔊</button></div>'+
-    [["位置",r.posMsg,r.pos],["大小",r.sizeMsg,r.size],["间架",r.strMsg,r.str],
-     ["笔顺",r.ordMsg,mistakes===0?3:mistakes<=2?2:1]]
-      .map(([k,v,st])=>'<div class="metric"><span class="metric-k">'+k+'</span>'+
-        '<span class="metric-v">'+v+'</span><span class="metric-s" style="color:var(--amber)">'+
-        starStr(st)+'</span></div>').join("")+'</div>';
+  /* 写的过程中不打分（2026-10-06 用户：关了语音她还是烦，烦的是每格都被评、被拦）：
+     这一格只留她写的字，不出星星、不画「应该占的位置」、不出改法。
+     分数照算照存，整行写完后收在「给家长看」里（finishAll）。写得好时小猫照样冒爱心（只往上不往下） */
+  $("#hintbar").innerHTML="写好了。";
   if((r.pos+r.size+r.str)/3>=PRAISE_AT) petPraise();
-  /* 格与格之间【完全不出声】—— 孩子反馈「不错，继续」这类也太频繁了（2026-09-17）。
-     评价只在整个字写完时说一次（finishAll）。这里的内容照常显示在屏幕上给家长看，
-     想听单格点评就点分卡上的 🔊。 */
-  const rp=$("#replay"); if(rp) rp.onclick=()=>say(line,true);
   setControls(btn("这格重写","quiet",()=>runCell(cellIdx)), nextBtn());
   /* 不在这里自动滚到评分卡：一行还没写完，滚下去她得再往上划才能接着写（2026-09-29 用户反馈）。
      整行写完（finishAll）才滚到总评，那时已经不写了 */
@@ -1996,16 +2014,21 @@ function finishAll(){
   const line = avg>=2.6
     ? ("默写了 "+n+" 格，平均 "+avg.toFixed(1)+" 颗星。"+trend+"写得很好，保持住。")
     : ("默写了 "+n+" 格，平均 "+avg.toFixed(1)+" 颗星。"+trend+"最需要改的是"+w[0]+"，"+w[2]+"。");
+  /* 给孩子看的只有「写完啦」；星星、改法收进「给家长看」（默认收起）。
+     念出来的也只说好的，不挑毛病（2026-10-06）；改错模式一句都不念 */
+  if(assists){ wrongAdd(cur); save(K.wrong,wrong); }   /* 有笔是 app 替她写的 → 还不熟，进「要多练的字」 */
   $("#hintbar").innerHTML="";
   $("#scorebox").innerHTML='<div class="score"><div class="score-top">'+
-    '<span class="score-stars" style="color:var(--amber)">'+starStr(Math.round(avg))+'</span>'+
-    '<h3>“'+cur+'” 写完一行</h3></div>'+
-    '<div class="advice"><span>'+line+'</span><button id="replay2" aria-label="再说一遍">🔊</button></div>'+
+    '<h3>“'+cur+'” 写完啦！</h3></div>'+
+    '<details class="parent"><summary>给家长看：这一行的评分</summary>'+
+    '<div class="score-top" style="margin-top:8px"><span class="score-stars" style="color:var(--amber)">'+starStr(Math.round(avg))+'</span></div>'+
+    '<div class="advice"><span>'+line+(assists?'　有 '+assists+' 笔是 app 示范的（青色），这个字已放进「要多练的字」。':'')+'</span>'+
+    '<button id="replay2" aria-label="再说一遍">🔊</button></div>'+
     dims.map(d=>'<div class="metric"><span class="metric-k">'+d[0]+'</span>'+
       '<span class="metric-v">'+n+' 格平均 '+d[1].toFixed(1)+' 星</span>'+
       '<span class="metric-s" style="color:var(--amber)">'+starStr(Math.round(d[1]))+
-      '</span></div>').join("")+'</div>';
-  say(line,true);
+      '</span></div>').join("")+'</details></div>';
+  if(!fixMode) say(avg>=2.6?"写得很好，保持住。":"写完啦。",true);
   petHappy();   /* 写完一整个字 —— 不看几颗星，写完就为她高兴一下 */
   markDay();
   const plg=load(K.plog,{}), pe=plg[cur]||{n:0};
@@ -2279,8 +2302,10 @@ function dResult(){
   }
   const wrongArr=bad, n=dItems.length, ok=n-wrongArr.length;
   $("#title").textContent="听写结果";
+  /* 听写完先停一下（2026-10-06）：错字不马上练，已进「要多练的字」，第二天的写字任务会先练它们。
+     刚考完紧接着改错，情绪是叠加的；想当场练也可以点下面的次要按钮 */
   const line = wrongArr.length
-    ? ("写对 "+ok+" 个，有 "+wrongArr.length+" 个还不会：" + wrongArr.join("、") + "。我们来练一练。")
+    ? ("写对 "+ok+" 个，坚持写完了！" + wrongArr.join("、") + " 放进了要多练的字，明天写字的时候先练。")
     : ("全对！"+n+" 个字都写对了。");
   $("#view-dict").innerHTML=
     '<div class="score" style="margin-top:16px"><div class="score-top">'+
@@ -2295,9 +2320,9 @@ function dResult(){
   say(line,true);
   const rp=$("#d-replay"); if(rp) rp.onclick=function(){ say(line,true) };
   setIn("#dctl",
-    wrongArr.length? btn("开始练这 "+wrongArr.length+" 个字 →","",function(){ openChar(wrongArr[0],wrongArr) }) : null,
-    btn("再听写一遍","quiet",function(){ openDict(dSrc,dShuffle) }),
-    fromTask ? btn("回到今天 →","ghost",()=>goHome("today")) : btn("回目录","ghost",goHome));
+    btn(wrongArr.length?"休息一下 →":(fromTask?"回到今天 →":"回目录"),"",function(){ goHome(fromTask?"today":undefined) }),
+    wrongArr.length? btn("现在就练这 "+wrongArr.length+" 个字","quiet",function(){ openChar(wrongArr[0],wrongArr) }) : null,
+    btn("再听写一遍","ghost",function(){ openDict(dSrc,dShuffle) }));
   $("#view-dict").onclick=function(e){
     const c=e.target.closest("[data-ch]");
     if(c) openChar(c.dataset.ch, wrongArr.length?wrongArr:dList);
