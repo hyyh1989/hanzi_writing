@@ -804,7 +804,7 @@ const K={stars:"mzg.stars",cfg:"mzg.cfg",sel:"mzg.sel",wrong:"mzg.wrong",
          days:"mzg.days",     /* 每天：{"2026-09-29":{v:来过, done:{任务:1}, pick:{任务:[字]}, skip:{任务:1}, cheered:1}} */
          plog:"mzg.plog",     /* 每个字练过几行、最近哪天：{字:{n,t}}。自动出题靠它轮换 */
          nstat:"mzg.nstat",
-         hongen:"mzg.hongen"};  /* 洪恩识字的字表（家长按洪恩的顺序手工录入的一串字），练习页按 10 个一单元显示 */  /* 认音符：每个音答得怎样 {"treble60":{n,ok,t}}（谱号+MIDI 编号） */
+         hongen:"mzg.hongen"};  /* 洪恩识字的字表（家长按洪恩的顺序手工录入的一串字），练习页按 5 个一单元显示 */
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 let stars=load(K.stars,{}), wrong=load(K.wrong,{});
@@ -1032,7 +1032,9 @@ function wrongCount(){ return wrongList().length; }
 function selSet(){ return new Set(load(K.sel,[])); }
 function saveSel(set){ save(K.sel, Array.from(set)); }
 /* 练习页的字表来源：教材 / 洪恩识字（cfg.pSrc）。2026-10-06 用户：有时按洪恩的顺序学更合理，教材的字对不上。
-   洪恩的字表家长手工录入（K.hongen，一串字），这里按 10 个一单元切开 */
+   洪恩的字表家长手工录入（K.hongen，一串字），这里按 HONGEN_UNIT 个一单元切开 */
+/* 洪恩识字一个单元几个字（2026-10-11 用户：从 10 个改成 5 个） */
+const HONGEN_UNIT=5;
 /* 一串文字 → 不重复的汉字（保持顺序；标点、空格、拼音都忽略） */
 function hanList(raw){
   const out=[];
@@ -1049,9 +1051,9 @@ function hongenChars(){
 }
 function hongenUnits(){
   const cs=hongenChars(), us=[];
-  for(let i=0;i<cs.length;i+=10){
-    const part=cs.slice(i,i+10);
-    us.push({name:"第 "+(i/10+1)+" 单元", sub:(i+1)+"–"+(i+part.length), chars:part});
+  for(let i=0;i<cs.length;i+=HONGEN_UNIT){
+    const part=cs.slice(i,i+HONGEN_UNIT);
+    us.push({name:"第 "+(i/HONGEN_UNIT+1)+" 单元", sub:(i+1)+"–"+(i+part.length), chars:part});
   }
   return us;
 }
@@ -1110,11 +1112,11 @@ function wrongCard(set){
 let hongenEdit=false;   /* 洪恩字表的录入框开着没有 */
 function hongenEditor(){
   const cs=hongenChars(), miss=cs.filter(c=>!has(c));
-  /* 编辑框里每行 10 个，和单元对得上，方便核对 */
-  const lines=[]; for(let i=0;i<cs.length;i+=10) lines.push(cs.slice(i,i+10).join(""));
+  /* 编辑框里每行一个单元，方便核对 */
+  const lines=[]; for(let i=0;i<cs.length;i+=HONGEN_UNIT) lines.push(cs.slice(i,i+HONGEN_UNIT).join(""));
   return '<div class="panel hongen-ed">'+
     '<p class="note" style="margin:0 0 8px">按洪恩识字里<b>学的顺序</b>把字打进来（或粘贴）。'+
-    '标点、空格、换行、拼音都会被忽略，重复的字只算第一次。保存后每 10 个字自动分成一个单元。</p>'+
+    '标点、空格、换行、拼音都会被忽略，重复的字只算第一次。保存后每 '+HONGEN_UNIT+' 个字自动分成一个单元。</p>'+
     '<textarea id="hongen-text" rows="6" placeholder="例如：一二三上下口耳目手足…">'+esc(lines.join("\n"))+'</textarea>'+
     '<p class="note" id="hongen-msg" style="margin:6px 0 0">'+(cs.length?'现在一共 <b>'+cs.length+'</b> 个字。':'')+
     (miss.length?' 这几个字没有笔顺数据，练不了：'+esc(miss.join(" ")):'')+'</p>'+
